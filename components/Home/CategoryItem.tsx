@@ -12,10 +12,10 @@ interface CategoryItemProps {
 
 export default function CategoryItem({ categoryItem }: CategoryItemProps) {
     return (
-        <View className="w-[87.5px] auto bg-white rounded-lg items-center justify-center">
-            <Image source={categoryItem.image} className="w-13 h-13 mt-2" resizeMode="contain" />
+        <View className="w-[87.5px]  bg-white rounded-lg items-center justify-center">
+            <Image source={categoryItem.image} className="w-[45px] h-[45px] mt-2" resizeMode="contain" />
             <Text
-                className="text-center font-bold mt-2 mb-2  text-[15px] w-[70px]"
+                className="text-center font-semibold mt-2 mb-2  text-[15px] w-[70px]"
                 numberOfLines={2}
             >
                 {categoryItem.name}

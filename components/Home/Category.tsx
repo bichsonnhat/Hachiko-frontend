@@ -48,7 +48,7 @@ export default function Category() {
         <View className='mt-4 px-5 '>
             {/* <Text>Category</Text> */}
             <FlatList
-                className='rounded-xl border-2 border-gray-300'
+                className='rounded-xl border-[1.5px] border-gray-300'
                 data={list}
                 horizontal
                 showsHorizontalScrollIndicator={false}

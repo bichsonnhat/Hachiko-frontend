@@ -7,10 +7,10 @@ import Category from '@/components/Home/Category';
 
 export default function HomeScreen() {
     return (
-        <ThemedView className='flex'>
+        <View className='flex bg-white h-full'>
             <Header />
             <Slider />
             <Category />
-        </ThemedView>
+        </View>
     );
 }
