@@ -7,27 +7,32 @@ export default function Category() {
         {
             id: 1,
             image: require('@/assets/images/Category/item_1.png'),
-            name: "Giao hàng"
+            name: "Giao hàng",
+            path: '/profile/update-info'
         },
         {
             id: 2,
             image: require('@/assets/images/Category/item_2.png'),
-            name: "Mang đi"
+            name: "Mang đi",
+            path: ''
         },
         {
             id: 3,
             image: require('@/assets/images/Category/item_3.png'),
-            name: "Tại bàn"
+            name: "Tại bàn",
+            path: ''
         },
         {
             id: 4,
             image: require('@/assets/images/Category/item_4.png'),
-            name: "Cà phê hạt rang"
+            name: "Cà phê hạt rang",
+            path: ''
         },
         {
             id: 5,
             image: require('@/assets/images/Category/item_5.png'),
-            name: "Đổi bean"
+            name: "Đổi bean",
+            path: ''
         },
         // {
         //     id: 6,
@@ -40,7 +45,8 @@ export default function Category() {
         {
             id: 8,
             image: require('@/assets/images/Category/item_8.png'),
-            name: "Hạng thành viên"
+            name: "Hạng thành viên",
+            path: ''
         },
     ]
 
