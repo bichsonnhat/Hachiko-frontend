@@ -1,8 +1,8 @@
 import React from "react";
-import {View, Text, Image, TouchableOpacity, Modal, Dimensions} from "react-native";
-import {Locate, Navigation} from "lucide-react-native";
-import Slider from "@/components/Home/Slider";
-import {Store} from "@/constants";
+import { View, Text, Image, TouchableOpacity, Modal, Dimensions } from "react-native";
+import { Locate, Navigation } from "lucide-react-native";
+import Slider from "@/components/HomeScreen/Slider";
+import { Store } from "@/constants";
 
 interface ShopModalProps {
     store?: Store;
@@ -11,11 +11,11 @@ interface ShopModalProps {
 }
 const { height } = Dimensions.get('window');
 
-const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose,store }) => {
+const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose, store }) => {
     const formattedOpenTime = store?.open_time.toLocaleTimeString("vi-VN", {
         hour: "2-digit",
         minute: "2-digit",
-    });const formattedCloseTime = store?.close_time.toLocaleTimeString("vi-VN", {
+    }); const formattedCloseTime = store?.close_time.toLocaleTimeString("vi-VN", {
         hour: "2-digit",
         minute: "2-digit",
     });
@@ -24,7 +24,7 @@ const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose,store }) => {
             <View className="flex-1 bg-white">
                 {/* Ảnh */}
                 <Image
-                    source={{ uri: store?.image  }}
+                    source={{ uri: store?.image }}
                     className="w-full"
                     style={{ height: height * 0.5 }}
                 />
