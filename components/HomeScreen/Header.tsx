@@ -16,15 +16,15 @@ export default function Header() {
     };
 
     return (
-        <ThemedView className={"p-5 pt-10"}>
-            <ThemedView className={"flex flex-row items-center"}>
+        <View className={"p-5 pt-10"}>
+            <View className={"flex flex-row items-center"}>
                 <Image source={require('@/assets/images/peach_tea.png')} />
-                <ThemedText className={"font-bold text-xs"}>{user.name} ơi, Hi-Tea đi!</ThemedText>
+                <Text className={"font-semibold "}>{user.name} ơi, Hi-Tea đi!</Text>
                 <View className={"ml-auto flex flex-row"}>
                     <BadgeButton className='mr-2' icon={<Ticket size={24} color={Colors.PRIMARY} />} text={11} />
                     <NotificationButton icon={<Bell size={24} color="black" />} count={1} />
                 </View>
-            </ThemedView>
-        </ThemedView>
+            </View>
+        </View>
     )
 }
