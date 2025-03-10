@@ -14,7 +14,7 @@ export default function Category() {
             id: 2,
             image: require('@/assets/images/Category/item_2.png'),
             name: "Mang đi",
-            path: ''
+            path: '/profile/add-address'
         },
         {
             id: 3,

@@ -6,7 +6,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigation } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import GenderDropdown from '@/components/OtherScreen/GenderDropdown';
+import CustomDropdown from '@/components/OtherScreen/CustomDropDown';
+
 
 export default function UpdateInfo() {
     const navigation = useNavigation();
@@ -17,6 +18,12 @@ export default function UpdateInfo() {
     const [dateOfBirth, setDateOfBirth] = useState("");
     const [date, setDate] = useState<Date>(new Date());
     const [showPicker, setShowPicker] = useState(false);
+
+    const genderList = [
+        { label: "Nam", value: "male" },
+        { label: "Nữ", value: "female" },
+        { label: "Khác", value: "other" },
+    ];
 
     const toggleDatePicker = () => {
         setShowPicker(!showPicker);
@@ -176,7 +183,7 @@ export default function UpdateInfo() {
                             </View>
                             <View style={{ zIndex: 1000 }}>
                                 <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Giới tính</Text>
-                                <GenderDropdown />
+                                <CustomDropdown items={genderList} placeholder="Chọn giới tính" />
                             </View>
                             <TouchableOpacity className='bg-gray-200 py-4 px-5 rounded-[10px] items-center mt-[15px]'>
                                 <Text className='text-white text-[16px] font-bold'>Cập nhật tài khoản</Text>
