@@ -3,10 +3,13 @@ import {ThemedView} from '@/components/ThemedView';
 import {SafeAreaView, StyleSheet, StatusBar, View, Text, TouchableOpacity, Image} from "react-native";
 import {Colors} from "@/constants/Colors";
 import {Ticket} from "lucide-react-native";
-import React from "react";
+import React, {useState} from "react";
+import VoucherDetailModal from "@/components/VoucherScreen/VoucherDetailModal";
 
 export default function CouponScreen() {
-    const imgUri = "https://firebasestorage.googleapis.com/v0/b/thehachikocoffee-aed51.appspot.com/o/Store%2FT%E1%BA%A7ng%201%20D%E1%BB%B1%20%C3%A1n%20Chung%20c%C6%B0%20cao%20c%E1%BA%A5p%20Homyland%20Riverside%2C%20%C4%90.%20Nguy%E1%BB%85n%20Duy%20Trinh%2C%20P.%20B%C3%ACnh%20Tr%C6%B0ng%20T%C3%A2y%2C%20Qu%E1%BA%ADn%202%2C%20H%E1%BB%93%20Ch%C3%AD%20Minh.png?alt=media&token=94f584d3-53b7-44ac-bc1e-b4c6e9f5ad9d";
+    const [modalVisible, setModalVisible] = useState(false);
+
+    const imgUri = "https://firebasestorage.googleapis.com/v0/b/thehachikocoffee-aed51.appspot.com/o/Voucher%2FGi%E1%BA%A3m%2030%25%20%2B%20Freeship%20%C4%90%C6%A1n%20T%E1%BB%AB%203%20Ly.jpg?alt=media&token=72f401b9-4334-48eb-aea8-cdf05a815c77";
     const safeHeight = StatusBar.currentHeight || 0;
     return (
         <SafeAreaView style={{flex: 1, marginTop: safeHeight}}>
@@ -41,7 +44,7 @@ export default function CouponScreen() {
                 </TouchableOpacity>
             </View>
             <View className={"flex-1 bg-gray-100 px-4 gap-3"}>
-                <TouchableOpacity >
+                <TouchableOpacity onPress={() => setModalVisible(true)}>
                     <View className="flex-row items-center bg-white rounded-xl px-4 shadow-md">
                         {/* Hình ảnh bên trái */}
                         <Image source={{uri: imgUri}} className="w-[85px] h-[85px] rounded-lg mr-4"/>
@@ -56,7 +59,7 @@ export default function CouponScreen() {
                         </View>
                     </View>
                 </TouchableOpacity>
-                <TouchableOpacity >
+                <TouchableOpacity onPress={() => setModalVisible(true)}>
                     <ThemedView className="flex-row items-center bg-white rounded-xl px-4 shadow-md">
                         {/* Hình ảnh bên trái */}
                         <Image source={{uri: imgUri}} className="w-[85px] h-[85px] rounded-lg mr-4"/>
@@ -73,6 +76,10 @@ export default function CouponScreen() {
                 </TouchableOpacity>
 
             </View>
+            <VoucherDetailModal visible={modalVisible} onClose={() => {
+                setModalVisible(false)
+                console.log("Close")
+            }} />
 
         </SafeAreaView>
 
