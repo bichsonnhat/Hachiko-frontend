@@ -20,7 +20,7 @@ export default function Category() {
             id: 3,
             image: require('@/assets/images/Category/item_3.png'),
             name: "Tại bàn",
-            path: ''
+            path: '/profile/contact-feedback'
         },
         {
             id: 4,
