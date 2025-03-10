@@ -8,7 +8,6 @@ import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import CustomDropdown from '@/components/OtherScreen/CustomDropDown';
 
-
 export default function UpdateInfo() {
     const navigation = useNavigation();
     const [image, setImage] = useState<string | null>(null);
