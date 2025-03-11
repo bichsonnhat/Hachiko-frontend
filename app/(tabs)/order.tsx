@@ -78,7 +78,7 @@ export default function OrderScreen() {
   };
 
   const handleToPayment = () => {
-    router.push("/(tabs)/other");
+    router.push("/other/order-history");
   };
 
   return (
