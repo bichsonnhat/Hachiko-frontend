@@ -10,11 +10,11 @@ type DrinksProps = {
 
 export const Drinks: React.FC<DrinksProps> = ({ title, drinks }) => {
   return (
-    <View className="flex-col gap-4 pb-4">
+    <View className="flex-col pb-6">
       <Text className="font-bold text-xl pl-4">{title}</Text>
-      <View className="flex-col gap-2">
+      <View>
         {drinks.map((drink, index) => (
-          <View key={index} className="bg-white p-4 rounded-lg">
+          <View key={index} className="p-2 rounded-lg">
             <DrinkSlotHorizontal drink={drink} />
           </View>
         ))}

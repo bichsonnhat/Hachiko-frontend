@@ -1,6 +1,5 @@
 import { ThemedText } from "../ThemedText";
 import { TouchableOpacity, Image, View } from "react-native";
-import { Search as SearchIcon, Heart as HeartIcon } from "lucide-react-native";
 
 export const Header = () => {
   return (
@@ -13,10 +12,14 @@ export const Header = () => {
       </View>
       <View className="flex-row items-center gap-2">
         <TouchableOpacity>
-          <SearchIcon color={"black"} size={30} />
+          <Image
+            source={require("@/assets/images/OrderScreen/search-icon.png")}
+          />
         </TouchableOpacity>
         <TouchableOpacity>
-          <HeartIcon color={"black"} size={30} />
+          <Image
+            source={require("@/assets/images/OrderScreen/heart-icon.png")}
+          />
         </TouchableOpacity>
       </View>
     </View>

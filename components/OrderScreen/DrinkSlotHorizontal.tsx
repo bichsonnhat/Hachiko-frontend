@@ -8,7 +8,7 @@ import {
   ScrollView,
   TextInput,
 } from "react-native";
-import { Plus, MinusIcon, Heart } from "lucide-react-native";
+import { Plus, MinusIcon, Heart, Check } from "lucide-react-native";
 import { ExpandableText } from "@/components/ui";
 import { RadioGroup } from "react-native-radio-buttons-group";
 import Checkbox from "expo-checkbox";
@@ -91,19 +91,12 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
 
   return (
     <>
-      <TouchableOpacity
-        onPress={() => setModalVisible(true)}
-        className={`${
-          drinks.findIndex((d) => d.drink_name === drink.drink_name) !== -1
-            ? "bg-orange-300"
-            : ""
-        } rounded-md`}
-      >
-        <View className="flex-row items-center gap-4">
+      <TouchableOpacity onPress={() => setModalVisible(true)}>
+        <View className="relative rounded-2xl p-3 shadow-lg bg-white flex-row items-center gap-4">
           <View className="w-1/3 h-32 rounded-lg">
             <Image
               source={drink.drink_img}
-              className="w-full h-full rounded-lg"
+              className="w-full h-full rounded-2xl"
               resizeMode="contain"
             />
           </View>
@@ -113,10 +106,20 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
               <Text>{drink.drink_price.toLocaleString("vi-VN")}đ</Text>
             </View>
             <TouchableOpacity
-              className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center"
+              className={`w-8 h-8 p-[2px] rounded-full flex items-center justify-center ${
+                drinks.findIndex((d) => d.drink_name === drink.drink_name) ===
+                -1
+                  ? "bg-orange-300"
+                  : "bg-green-500"
+              }`}
               onPress={addToCart}
             >
-              <Plus size={24} color={"white"} />
+              {drinks.findIndex((d) => d.drink_name === drink.drink_name) ===
+              -1 ? (
+                <Plus size={22} color={"white"} />
+              ) : (
+                <Check size={22} color={"white"} />
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -137,10 +140,10 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
                   resizeMode="cover"
                 />
                 <TouchableOpacity
-                  className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center"
+                  className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center"
                   onPress={handleCloseModal}
                 >
-                  <MinusIcon size={20} color="black" />
+                  <MinusIcon size={24} color="black" />
                 </TouchableOpacity>
               </View>
               <View className="p-4 pb-24">
