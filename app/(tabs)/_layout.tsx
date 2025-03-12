@@ -1,4 +1,4 @@
-import { Tabs, useSegments } from "expo-router";
+import { Redirect, Tabs, useSegments } from "expo-router";
 import React from "react";
 import { Platform } from "react-native";
 
@@ -11,11 +11,17 @@ import Feather from "@expo/vector-icons/Feather";
 import Entypo from "@expo/vector-icons/Entypo";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { useAuth } from "@clerk/clerk-expo";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const segment = useSegments();
   const page = segment[segment.length - 1];
+  const { isSignedIn } = useAuth();
+
+  if (!isSignedIn) {
+    return <Redirect href="/auth" />;
+  }
 
   const pageToHideTabBar = [
     "order-feedback",
