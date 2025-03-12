@@ -14,25 +14,25 @@ export default function Category() {
             id: 2,
             image: require('@/assets/images/Category/item_2.png'),
             name: "Mang đi",
-            path: ''
+            path: '/profile/add-address'
         },
         {
             id: 3,
             image: require('@/assets/images/Category/item_3.png'),
             name: "Tại bàn",
-            path: ''
+            path: '/profile/contact-feedback'
         },
         {
             id: 4,
             image: require('@/assets/images/Category/item_4.png'),
             name: "Cà phê hạt rang",
-            path: ''
+            path: '/profile/sent-feedback'
         },
         {
             id: 5,
             image: require('@/assets/images/Category/item_5.png'),
             name: "Đổi bean",
-            path: ''
+            path: '/profile/saved-address'
         },
         // {
         //     id: 6,
