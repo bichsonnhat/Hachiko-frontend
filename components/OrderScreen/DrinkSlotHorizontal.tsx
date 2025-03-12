@@ -22,10 +22,10 @@ type DrinkSlotHorizontalProps = {
 export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
   drink,
 }) => {
-  const [modalVisible, setModalVisible] = useState(false);
-  const [quantity, setQuantity] = useState(1);
-  const [note, setNote] = useState("");
-  const [selectedSize, setSelectedSize] = useState("small");
+  const [modalVisible, setModalVisible] = useState<boolean>(false);
+  const [quantity, setQuantity] = useState<number>(1);
+  const [note, setNote] = useState<string>("");
+  const [selectedSize, setSelectedSize] = useState<string>("small");
   const [selectedToppings, setSelectedToppings] = useState<string[]>([]);
   const radioButtons = [
     {

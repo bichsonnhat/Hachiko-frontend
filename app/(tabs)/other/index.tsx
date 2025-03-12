@@ -29,7 +29,7 @@ export default function OtherScreen() {
           >
             <View className="flex-row items-center gap-2">
               <FileText size={20} color="orange" />
-              <Text className="text-gray-700">Lịch sử đơn hàng</Text>
+              <Text className="text-gray-700">Lịch sử đặt hàng</Text>
             </View>
             <ChevronRight size={15} color="black" />
           </TouchableOpacity>

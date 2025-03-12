@@ -17,7 +17,12 @@ export default function TabLayout() {
   const segment = useSegments();
   const page = segment[segment.length - 1];
 
-  const pageToHideTabBar = ["order-feedback", "shop-feedback", "order-history"];
+  const pageToHideTabBar = [
+    "order-feedback",
+    "shop-feedback",
+    "order-history",
+    "[id]",
+  ];
 
   return (
     <Tabs

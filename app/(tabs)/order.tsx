@@ -2,7 +2,7 @@ import { Category, Collection, Drinks, Header } from "@/components/OrderScreen";
 import { OrderStore } from "@/constants";
 import { useOrderStore } from "@/stores";
 import { useRef } from "react";
-import { ScrollView, View, Text, TouchableOpacity } from "react-native";
+import { ScrollView, View, TouchableOpacity } from "react-native";
 import { CircleDollarSign } from "lucide-react-native";
 import { router } from "expo-router";
 
