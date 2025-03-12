@@ -26,7 +26,7 @@ export default function Category() {
             id: 4,
             image: require('@/assets/images/Category/item_4.png'),
             name: "Cà phê hạt rang",
-            path: ''
+            path: '/profile/sent-feedback'
         },
         {
             id: 5,

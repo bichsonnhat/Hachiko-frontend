@@ -1,8 +1,11 @@
+import { useNavigation } from "expo-router";
 import { Phone, Mail, Globe, Facebook, MessageSquare, ChevronRight } from "lucide-react-native";
-import React from "react";
+import React, { useEffect } from "react";
 import { View, Text, TouchableOpacity, FlatList, Linking } from "react-native";
 
 export default function ContactFeedback() {
+
+  const navigation = useNavigation();
   const data = [
     {
       id: "1",
@@ -40,6 +43,19 @@ export default function ContactFeedback() {
       // onPress: () => 
     },
   ];
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerTitle: "Liên hệ và góp ý",
+      headerShown: true,
+      headerTitleAlign: 'center',
+      headerStyle: {
+        borderBottomWidth: 10,
+        borderBottomColor: '#000000',
+        backgroundColor: 'white',
+      },
+    });
+  }, [navigation]);
 
   const renderItem = ({ item }: { item: any }) => (
     <TouchableOpacity
