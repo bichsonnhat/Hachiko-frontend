@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import {
   ImageSourcePropType,
   View,
@@ -6,6 +6,7 @@ import {
   Text,
   FlatList,
   TouchableOpacity,
+  Animated,
 } from "react-native";
 
 type CategoryPropertie = {
@@ -73,19 +74,23 @@ export const Category: React.FC<CategoryProps> = ({ handleScroll }) => {
     groupedCategories.push(categories.slice(i, i + 2));
   }
 
+  const scrollX = useRef(new Animated.Value(0)).current;
+  const ITEM_WIDTH = 140;
+  const SCROLLBAR_WIDTH = 20;
+
   return (
-    <View className="p-4">
+    <View className="p-4 relative">
       <FlatList
         data={groupedCategories}
         keyExtractor={(_item, index) => `group-${index}`}
         horizontal
-        showsHorizontalScrollIndicator={true}
+        showsHorizontalScrollIndicator={false}
         renderItem={({ item }) => (
           <View className="mx-2">
             {item.map((category) => (
               <TouchableOpacity
                 key={category.category_name}
-                className="items-center mb-4 h-28"
+                className="items-center mb-4 h-32"
                 onPress={() => handleScroll(category.category_name)}
               >
                 <View className="w-20 h-20 rounded-full flex items-center justify-center">
@@ -95,14 +100,39 @@ export const Category: React.FC<CategoryProps> = ({ handleScroll }) => {
                     resizeMode="contain"
                   />
                 </View>
-                <Text className="text-xs text-center mt-2 w-20">
+                <Text className="text-md text-center mt-2 w-20 font-medium">
                   {category.category_name}
                 </Text>
               </TouchableOpacity>
             ))}
           </View>
         )}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+          { useNativeDriver: false }
+        )}
       />
+      <View className="absolute bottom-0 left-0 right-0 flex items-center">
+        <View className="w-10 h-2 bg-gray-300 rounded-full overflow-hidden">
+          <Animated.View
+            style={{
+              width: SCROLLBAR_WIDTH,
+              height: "100%",
+              backgroundColor: "#FF8C00",
+              borderRadius: 999,
+              transform: [
+                {
+                  translateX: scrollX.interpolate({
+                    inputRange: [0, ITEM_WIDTH * groupedCategories.length],
+                    outputRange: [0, 70],
+                    extrapolate: "clamp",
+                  }),
+                },
+              ],
+            }}
+          />
+        </View>
+      </View>
     </View>
   );
 };
