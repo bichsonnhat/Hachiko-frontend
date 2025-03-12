@@ -2,6 +2,7 @@ import { RatingOrder } from "@/components/OtherScreen";
 import { useNavigation } from "expo-router";
 import { useEffect, useState } from "react";
 import { View, Text, TextInput, TouchableOpacity } from "react-native";
+
 import DropDownPicker from "react-native-dropdown-picker";
 
 export default function OrderFeedback() {
@@ -106,6 +107,7 @@ export default function OrderFeedback() {
       <View className="flex items-center justify-center m-4">
         <RatingOrder rating={rating} setRating={setRating} />
       </View>
+
       <TextInput
         className="border border-gray-300 rounded-md p-3 mt-4"
         placeholder="Nhập phản hồi của bạn..."
