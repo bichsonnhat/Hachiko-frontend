@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { View, Text, Image, TextInput, Button, TouchableOpacity,  } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import * as WebBrowser from 'expo-web-browser'
 import SocialLoginButton from "@/components/SocialLoginButton";
-import { useRouter } from "expo-router";
+import { Redirect, useRouter } from "expo-router";
+import { useAuth } from "@clerk/clerk-expo";
 
 export const useWarmUpBrowser = () => {
   useEffect(() => {
@@ -24,6 +24,11 @@ export default function SignIn() {
   const router = useRouter();
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isValidPhone, setIsValidPhone] = useState(false);
+  const { isSignedIn } = useAuth();
+
+  if (isSignedIn) {
+    return <Redirect href="/" />;
+  }
 
   const validateVietnamesePhone = (phone: string) => {
     // Remove any non-digit characters

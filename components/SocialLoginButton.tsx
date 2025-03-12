@@ -1,13 +1,13 @@
-import { useSSO, useUser } from "@clerk/clerk-expo";
+import { useOAuth, useUser } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
 import { Image } from "react-native";
 import { twMerge } from 'tailwind-merge'
 import {
-  StyleSheet,
   Text,
   TouchableOpacity,
 } from "react-native";
 import React, { useState } from "react";
+import * as Linking from "expo-linking";
 
 const SocialLoginButton = ({
   strategy,
@@ -23,8 +23,7 @@ const SocialLoginButton = ({
     return "oauth_apple";
   };
 
-  const { startSSOFlow } = useSSO()
-
+  const { startOAuthFlow } = useOAuth({ strategy: getStrategy() });
   const { user } = useUser();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -56,8 +55,8 @@ const SocialLoginButton = ({
   const onSocialLoginPress = React.useCallback(async () => {
     try {
       setIsLoading(true);
-      const { createdSessionId, setActive } = await startSSOFlow({
-        strategy: getStrategy(),
+      const { createdSessionId, setActive } = await startOAuthFlow({
+        redirectUrl: Linking.createURL("/", { scheme: "myapp" }),
       });
 
       // If sign in was successful, set the active session
@@ -92,7 +91,7 @@ const SocialLoginButton = ({
     >
         {buttonIcon()}
         <Text className={twMerge(
-            strategy == "facebook" ? "text-white" : strategy == "google" ? "text-[#4285F4]" : "text-white",
+            strategy == "facebook" ? "text-white" : strategy == "google" ? "text-black" : "text-white",
             "text-center font-medium text-base"
         )}>
             {buttonText()}
