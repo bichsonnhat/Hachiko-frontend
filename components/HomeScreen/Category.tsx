@@ -7,27 +7,32 @@ export default function Category() {
         {
             id: 1,
             image: require('@/assets/images/Category/item_1.png'),
-            name: "Giao hàng"
+            name: "Giao hàng",
+            path: '/profile/update-info'
         },
         {
             id: 2,
             image: require('@/assets/images/Category/item_2.png'),
-            name: "Mang đi"
+            name: "Mang đi",
+            path: '/profile/add-address'
         },
         {
             id: 3,
             image: require('@/assets/images/Category/item_3.png'),
-            name: "Tại bàn"
+            name: "Tại bàn",
+            path: '/profile/contact-feedback'
         },
         {
             id: 4,
             image: require('@/assets/images/Category/item_4.png'),
-            name: "Cà phê hạt rang"
+            name: "Cà phê hạt rang",
+            path: '/profile/sent-feedback'
         },
         {
             id: 5,
             image: require('@/assets/images/Category/item_5.png'),
-            name: "Đổi bean"
+            name: "Đổi bean",
+            path: '/profile/saved-address'
         },
         // {
         //     id: 6,
@@ -40,7 +45,8 @@ export default function Category() {
         {
             id: 8,
             image: require('@/assets/images/Category/item_8.png'),
-            name: "Hạng thành viên"
+            name: "Hạng thành viên",
+            path: ''
         },
     ]
 
@@ -48,7 +54,7 @@ export default function Category() {
         <View className='mt-4 px-5 '>
             {/* <Text>Category</Text> */}
             <FlatList
-                className='rounded-xl border-2 border-gray-300'
+                className='rounded-xl border-[1.5px] border-gray-300'
                 data={list}
                 horizontal
                 showsHorizontalScrollIndicator={false}

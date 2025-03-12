@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text } from "react-native";
-import Slider from "@/components/Home/Slider";
+import Slider from "@/components/HomeScreen/Slider";
 
 export const Collection = () => {
   return (

@@ -1,11 +1,11 @@
-import {View, Text, TextInput, TouchableOpacity} from 'react-native'
+import { View, Text, TextInput, TouchableOpacity } from 'react-native'
 import React from 'react'
 import { ThemedView } from '../ThemedView'
 import { ThemedText } from '../ThemedText'
-import {Ticket, Bell, Search,  Map} from 'lucide-react-native';
+import { Ticket, Bell, Search, Map } from 'lucide-react-native';
 import { Colors } from '@/constants/Colors';
-import BadgeButton from "@/components/Home/BadgeButton";
-import NotificationButton from "@/components/Home/NotificationButton";
+import BadgeButton from "@/components/HomeScreen/BadgeButton";
+import NotificationButton from "@/components/HomeScreen/NotificationButton";
 
 export default function ShopHeader() {
     return (
