@@ -10,15 +10,17 @@ export const Header = () => {
         />
         <ThemedText className="font-bold">Danh mục</ThemedText>
       </View>
-      <View className="flex-row items-center gap-2">
+      <View className="flex-row items-center gap-3">
         <TouchableOpacity>
           <Image
             source={require("@/assets/images/OrderScreen/search-icon.png")}
+            className="scale-125"
           />
         </TouchableOpacity>
         <TouchableOpacity>
           <Image
             source={require("@/assets/images/OrderScreen/heart-icon.png")}
+            className="scale-125"
           />
         </TouchableOpacity>
       </View>
