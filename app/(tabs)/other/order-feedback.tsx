@@ -1,7 +1,8 @@
+import { RatingOrder } from "@/components/OtherScreen";
 import { useNavigation } from "expo-router";
 import { useEffect, useState } from "react";
 import { View, Text, TextInput, TouchableOpacity } from "react-native";
-import { AirbnbRating } from "react-native-ratings";
+
 import DropDownPicker from "react-native-dropdown-picker";
 
 export default function OrderFeedback() {
@@ -90,14 +91,23 @@ export default function OrderFeedback() {
         setItems={setItems}
         placeholder="Chọn đơn hàng"
         containerStyle={{ marginBottom: 10 }}
+        dropDownContainerStyle={{
+          borderColor: "#d1d5db",
+        }}
+        listMode="SCROLLVIEW"
+        scrollViewProps={{
+          nestedScrollEnabled: true,
+        }}
+        style={{
+          borderColor: "#d1d5db",
+          borderWidth: 1,
+          borderRadius: 10,
+        }}
       />
-      <AirbnbRating
-        count={5}
-        defaultRating={rating}
-        size={30}
-        showRating={false}
-        onFinishRating={(value) => setRating(value || 3)}
-      />
+      <View className="flex items-center justify-center m-4">
+        <RatingOrder rating={rating} setRating={setRating} />
+      </View>
+
       <TextInput
         className="border border-gray-300 rounded-md p-3 mt-4"
         placeholder="Nhập phản hồi của bạn..."
