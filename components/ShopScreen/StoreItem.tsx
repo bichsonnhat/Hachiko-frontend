@@ -12,8 +12,7 @@ const StoreItem = ({store}: { store?: Store }) => {
     return (
         <>
             <TouchableOpacity onPress={() => setModalVisible(true)}>
-
-            <View className="bg-white rounded-xl p-4 flex-row items-center shadow-md mb-4">
+                <View className="bg-white rounded-xl p-4 flex-row items-center shadow-md mb-4">
                     <Image source={{uri: store.image || ''}} className="w-[85px] h-[85px] rounded-lg mr-4"/>
                     <View>
                         <Text className="text-gray-700 font-semibold text-xs">THE HACHIKO COFFEE</Text>

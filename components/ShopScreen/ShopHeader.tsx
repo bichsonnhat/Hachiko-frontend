@@ -17,7 +17,7 @@ export default function ShopHeader() {
                     <NotificationButton icon={<Bell size={24} color="black" />} count={1} />
                 </View>
             </ThemedView>
-            <ThemedView className={`flex-row items-center justify-between py-2`}>
+            <ThemedView className={`flex-row mt-2 items-center justify-between py-2`}>
                 <View className={`flex-row items-center bg-gray-200 rounded-lg px-3 py-2 flex-1`}>
                     <Search size={20} color={Colors.light.icon}></Search>
                     <TextInput
