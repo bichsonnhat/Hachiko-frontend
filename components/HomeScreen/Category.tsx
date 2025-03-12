@@ -32,7 +32,7 @@ export default function Category() {
             id: 5,
             image: require('@/assets/images/Category/item_5.png'),
             name: "Đổi bean",
-            path: ''
+            path: '/profile/saved-address'
         },
         // {
         //     id: 6,
