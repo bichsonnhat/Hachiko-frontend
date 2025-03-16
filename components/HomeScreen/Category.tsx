@@ -8,25 +8,25 @@ export default function Category() {
             id: 1,
             image: require('@/assets/images/Category/item_1.png'),
             name: "Giao hàng",
-            path: ''
+            path: '/profile/update-notification'
         },
         {
             id: 2,
             image: require('@/assets/images/Category/item_2.png'),
             name: "Mang đi",
-            path: ''
+            path: '/profile/add-notification'
         },
         {
             id: 3,
             image: require('@/assets/images/Category/item_3.png'),
             name: "Tại bàn",
-            path: ''
+            path: '/profile/update-user'
         },
         {
             id: 4,
             image: require('@/assets/images/Category/item_4.png'),
             name: "Cà phê hạt rang",
-            path: ''
+            path: '/profile/add-voucher'
         },
         {
             id: 5,

@@ -50,7 +50,7 @@ export default function SavedAddress() {
                 data={addresses}
                 keyExtractor={(item) => item.id}
                 ListHeaderComponent={
-                    <TouchableOpacity className="flex-row items-center" onPress={() => router.push("/profile/add-address")}>
+                    <TouchableOpacity className="flex-row items-center" onPress={() => router.push("/other/add-address")}>
                         <Icon style={{ paddingHorizontal: 10 }} name="plus" size={28} color="#000" />
                         <View className="w-full border-b border-[#ddd] py-8">
                             <Text className="text-[16px] font-bold ">Thêm địa chỉ mới</Text>
