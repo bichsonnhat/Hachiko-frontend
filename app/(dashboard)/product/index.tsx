@@ -32,7 +32,6 @@ export default function ProductsScreen() {
     return (
         <View className="flex-1 bg-white ">
 
-            {/* Nút Thêm danh mục */}
             <TouchableOpacity
                 className="flex-row items-center px-4 py-3 border-b border-gray-300"
                 onPress={() => router.push("/(dashboard)/product/create")}
@@ -41,7 +40,6 @@ export default function ProductsScreen() {
                 <Text className="ml-2 text-lg font-medium">Thêm cửa hàng mới</Text>
             </TouchableOpacity>
 
-            {/* Danh sách danh mục */}
             <FlatList
                 data={data}
                 keyExtractor={(item) => item.id}

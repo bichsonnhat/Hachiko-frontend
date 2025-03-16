@@ -4,23 +4,23 @@ import { Plus, Edit, ChevronLeft } from "lucide-react-native";
 import {router, useNavigation} from "expo-router";
 import {useEffect, useState} from "react";
 
-const categories = [
-    { id: "1", name: "Danh mục 1" },
-    { id: "2", name: "Danh mục 2" },
-    { id: "3", name: "Danh mục 3" },
-    { id: "4", name: "Danh mục 4" },
-    { id: "5", name: "Danh mục 5" },
-    { id: "6", name: "Danh mục 6" },
-    { id: "7", name: "Danh mục 7" },
-    { id: "8", name: "Danh mục 8" },
+const vouchers = [
+    { id: "1", name: "Voucher 1" },
+    { id: "2", name: "Voucher 2" },
+    { id: "3", name: "Voucher 3" },
+    { id: "4", name: "Voucher 4" },
+    { id: "5", name: "Voucher 5" },
+    { id: "6", name: "Voucher 6" },
+    { id: "7", name: "Voucher 7" },
+    { id: "8", name: "Voucher 8" },
 ];
 
-export default function CategoryScreen() {
+export default function VouchersScreen() {
     const navigation = useNavigation();
-    const [data, setData] = useState(categories);
+    const [data, setData] = useState(vouchers);
     useEffect(() => {
         navigation.setOptions({
-            headerTitle: "Quản lý danh mục",
+            headerTitle: "Quản lý voucher",
             headerShown: true,
             headerTitleAlign: 'center',
             headerStyle: {
@@ -34,10 +34,10 @@ export default function CategoryScreen() {
 
             <TouchableOpacity
                 className="flex-row items-center px-4 py-3 border-b border-gray-300"
-                onPress={() => router.push("/(dashboard)/category/create")}
+                onPress={() => router.push("/(dashboard)/voucher/create")}
             >
                 <Plus size={24} color="black" />
-                <Text className="ml-2 text-lg font-medium">Thêm danh mục mới</Text>
+                <Text className="ml-2 text-lg font-medium">Thêm cửa hàng mới</Text>
             </TouchableOpacity>
 
             <FlatList
@@ -52,10 +52,10 @@ export default function CategoryScreen() {
                             />
                             <View className="ml-3">
                                 <Text className="text-lg font-semibold">{item.name}</Text>
-                                <Text className="text-gray-500 text-sm">ID danh mục {item.id}</Text>
+                                <Text className="text-gray-500 text-sm">ID voucher {item.id}</Text>
                             </View>
                         </View>
-                        <TouchableOpacity onPress={() => router.push(`/(dashboard)/category/edit/${item.id}`)}>
+                        <TouchableOpacity onPress={() => router.push(`/(dashboard)/voucher/edit/${item.id}`)}>
                             <Edit size={24} color="black" />
                         </TouchableOpacity>
                     </View>
