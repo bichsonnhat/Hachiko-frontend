@@ -10,7 +10,7 @@ export default function SavedAddress() {
 
     useEffect(() => {
         navigation.setOptions({
-            headerTitle: "Gửi góp ý về ứng dụng",
+            headerTitle: "Địa chỉ đã lưu",
             headerShown: true,
             headerTitleAlign: 'center',
             headerStyle: {
@@ -51,7 +51,7 @@ export default function SavedAddress() {
                 keyExtractor={(item) => item.id}
                 ListHeaderComponent={
                     <TouchableOpacity className="flex-row items-center" onPress={() => router.push("/profile/add-address")}>
-                        <Icon className="px-5 " name="plus" size={28} color="#000" />
+                        <Icon style={{ paddingHorizontal: 10 }} name="plus" size={28} color="#000" />
                         <View className="w-full border-b border-[#ddd] py-8">
                             <Text className="text-[16px] font-bold ">Thêm địa chỉ mới</Text>
                         </View>
@@ -59,7 +59,7 @@ export default function SavedAddress() {
                 }
                 renderItem={({ item }) => (
                     <View className="flex-row items-center">
-                        <Icon name={item.icon} size={28} color="#000" className="px-5" />
+                        <Icon name={item.icon} size={28} color="#000" style={{ paddingHorizontal: 10 }} />
                         <View className="border-b border-[#ddd] flex-row py-4 flex-1 items-center justify-between">
                             <View>
                                 <Text className="text-[16px] font-bold">{item.type}</Text>
