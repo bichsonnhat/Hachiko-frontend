@@ -8,7 +8,7 @@ export default function DashboardLayout() {
           headerShown: false,
         }}
       >
-        <Stack.Screen name="index" />
+        <Stack.Screen name="dashboard" />
         <Stack.Screen name="feedback" options={{ headerShown: true }} />
         <Stack.Screen name="order" />
       </Stack>
