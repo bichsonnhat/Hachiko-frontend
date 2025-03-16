@@ -4,23 +4,23 @@ import { Plus, Edit, ChevronLeft } from "lucide-react-native";
 import {router, useNavigation} from "expo-router";
 import {useEffect, useState} from "react";
 
-const vouchers = [
-    { id: "1", name: "Voucher 1" },
-    { id: "2", name: "Voucher 2" },
-    { id: "3", name: "Voucher 3" },
-    { id: "4", name: "Voucher 4" },
-    { id: "5", name: "Voucher 5" },
-    { id: "6", name: "Voucher 6" },
-    { id: "7", name: "Voucher 7" },
-    { id: "8", name: "Voucher 8" },
+const notifications = [
+    { id: "1", name: "Thông báo 1" },
+    { id: "2", name: "Thông báo 2" },
+    { id: "3", name: "Thông báo 3" },
+    { id: "4", name: "Thông báo 4" },
+    { id: "5", name: "Thông báo 5" },
+    { id: "6", name: "Thông báo 6" },
+    { id: "7", name: "Thông báo 7" },
+    { id: "8", name: "Thông báo 8" },
 ];
 
-export default function VouchersScreen() {
+export default function NotificationsScreen() {
     const navigation = useNavigation();
-    const [data, setData] = useState(vouchers);
+    const [data, setData] = useState(notifications);
     useEffect(() => {
         navigation.setOptions({
-            headerTitle: "Quản lý voucher",
+            headerTitle: "Quản lý thông báo",
             headerShown: true,
             headerTitleAlign: 'center',
             headerStyle: {
@@ -34,10 +34,10 @@ export default function VouchersScreen() {
 
             <TouchableOpacity
                 className="flex-row items-center px-4 py-3 border-b border-gray-300"
-                onPress={() => router.push("/(dashboard)/voucher/create")}
+                onPress={() => router.push("/(dashboard)/notification/create")}
             >
                 <Plus size={24} color="black" />
-                <Text className="ml-2 text-lg font-medium">Thêm voucher mới</Text>
+                <Text className="ml-2 text-lg font-medium">Thêm thông báo mới</Text>
             </TouchableOpacity>
 
             <FlatList
@@ -52,10 +52,10 @@ export default function VouchersScreen() {
                             />
                             <View className="ml-3">
                                 <Text className="text-lg font-semibold">{item.name}</Text>
-                                <Text className="text-gray-500 text-sm">ID voucher {item.id}</Text>
+                                <Text className="text-gray-500 text-sm">ID thông báo {item.id}</Text>
                             </View>
                         </View>
-                        <TouchableOpacity onPress={() => router.push(`/(dashboard)/voucher/edit/${item.id}`)}>
+                        <TouchableOpacity onPress={() => router.push(`/(dashboard)/notification/edit/${item.id}`)}>
                             <Edit size={24} color="black" />
                         </TouchableOpacity>
                     </View>
