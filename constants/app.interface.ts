@@ -24,3 +24,9 @@ export interface Store {
     image: string;
 
 }
+
+export interface Category {
+    id: number;
+    name: string;
+    image: string;
+}
