@@ -1,12 +1,12 @@
 import {
-    View, Image, Text, TouchableOpacity, TextInput,
+    View, Image, Text, TouchableOpacity, TextInput, Pressable,
     Platform, ScrollView, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard,
 } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { useNavigation } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import CustomDropDown from '@/components/OtherScreen/CustomDropDown';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function AddVoucher() {
     const navigation = useNavigation();
@@ -14,21 +14,26 @@ export default function AddVoucher() {
     const [price, setPrice] = useState("");
     const [description, setDescription] = useState("");
     const [dueDate, setDueDate] = useState("");
+    const [date, setDate] = useState<Date>(new Date());
     const [minODC, setMinODC] = useState("");
     const [minODP, setMinODP] = useState("");
     const [valueDB, setValueDB] = useState("");
     const [valueI, setValueI] = useState("");
     const [image, setImage] = useState<string | null>(null);
+    const [showPicker, setShowPicker] = useState(false);
 
     const typeList = [
-        { label: "Trà", value: "tea" },
-        { label: "Cafe", value: "cafe" },
-        { label: "Nước trái cây", value: "fruit" },
+        { label: "Tại chỗ", value: "sit" },
+        { label: "Mang đi", value: "takeaway" },
     ];
     const freeShipping = [
         { label: "0", value: "false" },
         { label: "1", value: "true" },
     ];
+    const listUser = [
+        { label: "Nhat", value: "1" },
+        { label: "Hieu", value: "2" }
+    ]
 
     useEffect(() => {
         navigation.setOptions({
@@ -42,6 +47,35 @@ export default function AddVoucher() {
             },
         });
     }, [navigation]);
+
+    const toggleDatePicker = () => {
+        setShowPicker(!showPicker);
+    };
+
+    const onChange = ({ type }: { type: string }, selectedDate?: Date) => {
+        if (type === "set" && selectedDate) {
+            setDate(selectedDate);
+            if (Platform.OS === "android") {
+                toggleDatePicker();
+                setDueDate(formatDate(selectedDate));
+            }
+        } else {
+            toggleDatePicker();
+        }
+    };
+
+    const confirmIOSDate = () => {
+        setDueDate(formatDate(date));
+        toggleDatePicker();
+    };
+
+    const formatDate = (rawDate: Date) => {
+        let date = new Date(rawDate);
+        let year = date.getFullYear();
+        let month = (date.getMonth() + 1).toString().padStart(2, "0");
+        let day = date.getDate().toString().padStart(2, "0");
+        return `${day}-${month}-${year}`;
+    };
 
     const onImagePick = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
@@ -85,17 +119,49 @@ export default function AddVoucher() {
                             </View>
                             <View style={{ zIndex: 500 }}>
                                 <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]" >FreeShipping*</Text>
-                                <CustomDropDown items={typeList} placeholder="0 / 1" />
+                                <CustomDropDown items={freeShipping} placeholder="0 / 1" />
                             </View>
                             <View>
-                                <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Ngày hết hạn*</Text>
-                                <TextInput
-                                    placeholder="Nhập ngày hết hạn"
-                                    className="p-[10px] border border-gray-300 rounded-[10px] text-[16px] bg-white mt-[10px]"
-                                    value={dueDate}
-                                    placeholderTextColor="#9ca3af"
-                                    onChangeText={setDueDate}
-                                />
+                                <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Ngày thông báo*</Text>
+                                {showPicker && (
+                                    <DateTimePicker
+                                        mode="date"
+                                        display="spinner"
+                                        value={date}
+                                        onChange={onChange}
+                                        className="h-[120px] mt-[-10px]"
+                                    />
+                                )}
+
+                                {showPicker && Platform.OS === "ios" && (
+                                    <View className="flex-row justify-around">
+                                        <TouchableOpacity
+                                            className="bg-[#11182711] h-[50px] justify-center items-center rounded-[50px] mt-[10px] mb-[15px] px-[20px]"
+                                            onPress={toggleDatePicker}
+                                        >
+                                            <Text className="text-[#E47905] text-[14px] font-medium">Cancel</Text>
+                                        </TouchableOpacity>
+
+                                        <TouchableOpacity
+                                            className="h-[50px] justify-center items-center rounded-[50px] mt-[10px] mb-[15px] px-[20px]"
+                                            onPress={confirmIOSDate}
+                                        >
+                                            <Text className="text-[#fff] text-[14px] font-medium">Confirm</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                )}
+
+                                {!showPicker && (
+                                    <Pressable onPress={toggleDatePicker}>
+                                        <TextInput
+                                            placeholder="08-06-2004"
+                                            className="p-[10px] border border-gray-300 rounded-[10px] text-[16px] bg-white mt-[10px]"
+                                            editable={false}
+                                            value={dueDate}
+                                            onPressIn={toggleDatePicker}
+                                        />
+                                    </Pressable>
+                                )}
                             </View>
                             <View>
                                 <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Mô tả</Text>
@@ -146,6 +212,10 @@ export default function AddVoucher() {
                                     placeholderTextColor="#9ca3af"
                                     onChangeText={setValueI}
                                 />
+                            </View>
+                            <View style={{ zIndex: 500 }}>
+                                <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]" >Áp dụng</Text>
+                                <CustomDropDown items={listUser} placeholder="Chọn người dùng" />
                             </View>
                             <View>
                                 <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Hình ảnh*</Text>
