@@ -19,9 +19,9 @@ export default function TabLayout() {
   const page = segment[segment.length - 1];
   const { isSignedIn } = useAuth();
 
-  if (!isSignedIn) {
+ /* if (!isSignedIn) {
     return <Redirect href="/auth" />;
-  }
+  }*/
 
   // return <Redirect href="/(dashboard)/dashboard" />
 

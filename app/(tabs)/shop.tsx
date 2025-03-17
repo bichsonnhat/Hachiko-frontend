@@ -3,7 +3,8 @@ import {View, Text, TextInput, ScrollView, TouchableOpacity} from "react-native"
 import StoreItem from "@/components/ShopScreen/StoreItem";
 import ShopHeader from "@/components/ShopScreen/ShopHeader";
 import {Store} from "@/constants";
-
+import {GestureHandlerRootView} from "react-native-gesture-handler";
+import {KeyboardAvoidingView, Platform, SafeAreaView} from "react-native";
 
 
 const storesNearby: Store[] = [
@@ -99,29 +100,35 @@ const otherStores: Store[] = [
         close_time: new Date(),
         distance: 1154.57,
         image: "https://firebasestorage.googleapis.com/v0/b/thehachikocoffee-aed51.appspot.com/o/Store%2FT%E1%BA%A7ng%201%20D%E1%BB%B1%20%C3%A1n%20Chung%20c%C6%B0%20cao%20c%E1%BA%A5p%20Homyland%20Riverside%2C%20%C4%90.%20Nguy%E1%BB%85n%20Duy%20Trinh%2C%20P.%20B%C3%ACnh%20Tr%C6%B0ng%20T%C3%A2y%2C%20Qu%E1%BA%ADn%202%2C%20H%E1%BB%93%20Ch%C3%AD%20Minh.png?alt=media&token=94f584d3-53b7-44ac-bc1e-b4c6e9f5ad9d",
+    }, {
+        id: 11,
+        name: "HN Bà Triệu 2",
+        address: "HN Bà Triệu, Hà Nội",
+        open_time: new Date(),
+        close_time: new Date(),
+        distance: 1154.57,
+        image: "https://firebasestorage.googleapis.com/v0/b/thehachikocoffee-aed51.appspot.com/o/Store%2FT%E1%BA%A7ng%201%20D%E1%BB%B1%20%C3%A1n%20Chung%20c%C6%B0%20cao%20c%E1%BA%A5p%20Homyland%20Riverside%2C%20%C4%90.%20Nguy%E1%BB%85n%20Duy%20Trinh%2C%20P.%20B%C3%ACnh%20Tr%C6%B0ng%20T%C3%A2y%2C%20Qu%E1%BA%ADn%202%2C%20H%E1%BB%93%20Ch%C3%AD%20Minh.png?alt=media&token=94f584d3-53b7-44ac-bc1e-b4c6e9f5ad9d",
     },
 ];
 
 
-
 export default function StoreScreen() {
     return (
-            <View>
-                <ShopHeader/>
-                <View className="p-4">
-                    <ScrollView className={"bg-gray-100"} showsVerticalScrollIndicator={false}>
-                        <Text className="text-lg font-bold mb-2">Cửa hàng gần bạn</Text>
-                        {storesNearby.map((store) => (
-                            <StoreItem key={store.id} store={store}/>
-                        ))}
-                        <Text className="text-lg font-bold mt-4 mb-2">Các cửa hàng khác</Text>
-                        {otherStores.map((store) => (
-                            <StoreItem key={store.id} store={store}/>
-                        ))}
-                    </ScrollView>
-                </View>
+        <View className={"bg-gray-600 flex-1"}>
+            <ShopHeader/>
+            <View className="p-4 flex-1 ">
+                <ScrollView showsVerticalScrollIndicator={false}>
+                    <Text className="text-lg font-bold mb-2">Cửa hàng gần bạn</Text>
+                    {storesNearby.map((store) => (
+                        <StoreItem key={store.id} store={store}/>
+                    ))}
+                    <Text className="text-lg font-bold mt-4 mb-2">Các cửa hàng khác</Text>
+                    {otherStores.map((store) => (
+                        <StoreItem key={store.id} store={store}/>
+                    ))}
+                </ScrollView>
             </View>
 
-
+        </View>
     );
 }
