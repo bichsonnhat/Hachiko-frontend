@@ -114,7 +114,7 @@ const otherStores: Store[] = [
 
 export default function StoreScreen() {
     return (
-        <View className={"bg-gray-600 flex-1"}>
+        <View className={"bg-gray-100 flex-1"}>
             <ShopHeader/>
             <View className="p-4 flex-1 ">
                 <ScrollView showsVerticalScrollIndicator={false}>
