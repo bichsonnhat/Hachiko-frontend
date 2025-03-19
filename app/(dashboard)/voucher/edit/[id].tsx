@@ -8,6 +8,7 @@ import * as ImagePicker from 'expo-image-picker';
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import CustomDropDown from '@/components/OtherScreen/CustomDropDown';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import CustomMultiSelectDropDown from "@/components/OtherScreen/CustomMultiSelectDropDown";
 
 export default function UpdateVoucher() {
     const { id } = useLocalSearchParams();
@@ -23,6 +24,7 @@ export default function UpdateVoucher() {
     const [valueI, setValueI] = useState("");
     const [image, setImage] = useState<string | null>(null);
     const [showPicker, setShowPicker] = useState(false);
+    const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
 
     const typeList = [
         { label: "Tại chỗ", value: "sit" },
@@ -34,8 +36,14 @@ export default function UpdateVoucher() {
     ];
     const listUser = [
         { label: "Nhat", value: "1" },
-        { label: "Hieu", value: "2" }
+        { label: "Hieu", value: "2" },
+        { label: "Huy", value: "3" },
+        { label: "Hoa", value: "4" },
+        { label: "Hanh", value: "5" },
     ]
+    const handleUserSelect = (values: string[] | null) => {
+        setSelectedUsers(values || []);
+    };
     useEffect(() => {
         navigation.setOptions({
             headerTitle: `Sửa thông tin Voucher ${id}`,
@@ -216,7 +224,13 @@ export default function UpdateVoucher() {
                             </View>
                             <View style={{ zIndex: 500 }}>
                                 <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]" >Áp dụng</Text>
-                                <CustomDropDown items={listUser} placeholder="Chọn người dùng" />
+                                <CustomMultiSelectDropDown
+                                    items={listUser}
+                                    placeholder="Chọn người dùng"
+                                    onSelect={handleUserSelect}
+                                    defaultValues={[]}
+                                    zIndex={500}
+                                />
                             </View>
                             <View>
                                 <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Hình ảnh*</Text>
