@@ -67,14 +67,16 @@ export default function OtherScreen() {
           Tài khoản
         </Text>
         <View className="bg-white rounded-lg shadow-sm">
-          <TouchableOpacity className="p-4 flex-row items-center border-b border-gray-200 justify-between">
+          <TouchableOpacity className="p-4 flex-row items-center border-b border-gray-200 justify-between"
+            onPress={() => router.push("/other/update-info")}>
             <View className="flex-row items-center gap-2">
               <User size={20} color="black" />
               <Text className="ml-2 text-gray-700">Thông tin cá nhân</Text>
             </View>
             <ChevronRight size={15} color="black" />
           </TouchableOpacity>
-          <TouchableOpacity className="p-4 flex-row items-center border-b border-gray-200 justify-between">
+          <TouchableOpacity className="p-4 flex-row items-center border-b border-gray-200 justify-between"
+            onPress={() => router.push("/other/saved-address")}>
             <View className="flex-row items-center gap-2">
               <MapPinHouseIcon size={20} color="black" />
               <Text className="ml-2 text-gray-700">Địa chỉ đã lưu</Text>
