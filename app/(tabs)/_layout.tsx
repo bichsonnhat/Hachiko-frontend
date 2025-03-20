@@ -23,12 +23,15 @@ export default function TabLayout() {
     return <Redirect href="/auth" />;
   }*/
 
-  // return <Redirect href="/(dashboard)/dashboard" />
+  return <Redirect href="/(dashboard)/dashboard" />
 
   const pageToHideTabBar = [
     "order-feedback",
     "shop-feedback",
     "order-history",
+    "update-info",
+    "add-address",
+    "saved-address",
     "[id]",
   ];
 

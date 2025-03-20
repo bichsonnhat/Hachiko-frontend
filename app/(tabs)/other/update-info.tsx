@@ -98,7 +98,7 @@ export default function UpdateInfo() {
                         <TouchableOpacity className="mt-3" onPress={onImagePick}>
                             {!image ? (
                                 <Image
-                                    source={require('./../../assets/images/Profile/camera.png')}
+                                    source={require('./../../../assets/images/Profile/camera.png')}
                                     className="w-[150px] h-[150px]"
                                 />
                             ) : (
