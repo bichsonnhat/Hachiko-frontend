@@ -1,7 +1,7 @@
 import React from "react";
 import { Stack } from "expo-router";
 
-const OrderLayout = () => {
+const OtherLayout = () => {
   return (
     <Stack>
       <Stack.Screen name="index" options={{ headerShown: false }} />
@@ -15,4 +15,4 @@ const OrderLayout = () => {
   );
 };
 
-export default OrderLayout;
+export default OtherLayout;
