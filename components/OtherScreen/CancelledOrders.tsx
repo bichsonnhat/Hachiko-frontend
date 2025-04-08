@@ -1,7 +1,9 @@
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import React from "react";
+import { useRouter } from "expo-router";
 
 export const CancelledOrders = () => {
+  const router = useRouter();
   const orders = [
     {
       id: 1,
@@ -39,10 +41,15 @@ export const CancelledOrders = () => {
       status: "Đã hủy",
     },
   ];
+
   return (
     <ScrollView>
       {orders.map((order) => (
-        <View className="flex-1 bg-white p-4" key={order.id}>
+        <TouchableOpacity
+          className="flex-1 bg-white p-4"
+          key={order.id}
+          onPress={() => router.push(`/other/order-history/${order.id}`)}
+        >
           <View className="bg-white p-4 rounded-lg shadow-md mb-3">
             <Text className="text-lg font-semibold text-gray-800">
               Mã đơn: <Text className="text-gray-600">{order.id}</Text>
@@ -62,12 +69,12 @@ export const CancelledOrders = () => {
 
             <View className="flex-row items-center mt-4">
               <Text className="text-red-500 font-semibold">{order.status}</Text>
-              <TouchableOpacity className="ml-auto bg-red-500 px-4 py-2 rounded-md">
+              <TouchableOpacity className="bg-red-500 px-4 py-2 rounded-md ml-auto">
                 <Text className="text-white font-semibold">Xóa đơn</Text>
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </TouchableOpacity>
       ))}
     </ScrollView>
   );

@@ -12,8 +12,8 @@ import { Plus, MinusIcon, Heart, Check } from "lucide-react-native";
 import { ExpandableText } from "@/components/ui";
 import { RadioGroup } from "react-native-radio-buttons-group";
 import Checkbox from "expo-checkbox";
-import { useOrderStore } from "@/stores";
-import { DrinkPropertie, OrderStore } from "@/constants";
+import { useCartStore } from "@/stores";
+import { DrinkPropertie } from "@/constants";
 
 type DrinkSlotHorizontalProps = {
   drink: DrinkPropertie;
@@ -77,10 +77,10 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
     setSelectedSize("small");
   };
 
-  const drinks = useOrderStore((state) => (state as OrderStore).drinks);
-  const addDrink = useOrderStore((state) => (state as OrderStore).addDrink);
-  const addToCart = () => {
-    addDrink({
+  const { cart, addToCart } = useCartStore();
+
+  const addMoreDrink = () => {
+    addToCart({
       drink_name: drink.drink_name,
       drink_note: note,
       drink_price: handleCalculatePrice(),
@@ -107,14 +107,13 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
             </View>
             <TouchableOpacity
               className={`w-8 h-8 p-[2px] rounded-full flex items-center justify-center ${
-                drinks.findIndex((d) => d.drink_name === drink.drink_name) ===
-                -1
+                cart.findIndex((d) => d.drink_name === drink.drink_name) === -1
                   ? "bg-orange-300"
                   : "bg-green-500"
               }`}
-              onPress={addToCart}
+              onPress={addMoreDrink}
             >
-              {drinks.findIndex((d) => d.drink_name === drink.drink_name) ===
+              {cart.findIndex((d) => d.drink_name === drink.drink_name) ===
               -1 ? (
                 <Plus size={22} color={"white"} />
               ) : (
@@ -148,7 +147,9 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
               </View>
               <View className="p-4 pb-24">
                 <View className="flex-row justify-between items-center">
-                  <Text className="text-xl font-bold">{drink.drink_name}</Text>
+                  <Text className="text-xl font-bold w-[80%]">
+                    {drink.drink_name}
+                  </Text>
                   <TouchableOpacity>
                     <Heart size={24} color="orange" />
                   </TouchableOpacity>
@@ -246,7 +247,7 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
                 </View>
                 <TouchableOpacity
                   className="bg-orange-500 px-6 py-3 rounded-full flex-row items-center justify-center"
-                  onPress={addToCart}
+                  onPress={addMoreDrink}
                 >
                   <Text className="text-white font-bold text-lg">
                     {`${handleCalculatePrice().toLocaleString("vi-VN")}đ`}
