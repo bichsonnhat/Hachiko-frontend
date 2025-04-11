@@ -7,6 +7,21 @@ export interface DrinkOrder {
     drink_quantity: number;
 };
 
+export interface ProductFromAPI {
+    id: {
+      timestamp: number;
+      date: string;
+    };
+    description: string;
+    imageUrl: string;
+    price: number;
+    title: string;
+    categoryID: {
+      timestamp: number;
+      date: string;
+    };
+}
+
 export interface DrinkPropertie {
     drink_img: ImageSourcePropType;
     drink_name: string;
@@ -30,3 +45,4 @@ export interface Category {
     name: string;
     image: string;
 }
+

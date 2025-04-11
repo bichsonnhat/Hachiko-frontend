@@ -5,7 +5,9 @@ import {
   Drinks,
   Header,
 } from "@/components/OrderScreen";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import axios from 'axios';
+
 import {
   ScrollView,
   View,
@@ -14,34 +16,36 @@ import {
   Text,
   SafeAreaView,
 } from "react-native";
+import { DrinkPropertie, ProductFromAPI } from "@/constants/app.interface";
 
 export default function OrderScreen() {
-  const drinkProps = [
-    {
-      drink_img: require("@/assets/images/Products/tra-sua-o-long.png"),
-      drink_name: "Trà sữa trân châu trắng - Truyền thống - Đá xay nhuyễn",
-      drink_price: 25000,
-      drink_description: "Mua đi bạn, ngon vc, xem miêu tả làm c gì?",
-    },
-    {
-      drink_img: require("@/assets/images/Products/ca-phe-goi.jpg"),
-      drink_name: "Cà phê gói - Đen - Đá xay nhuyễn",
-      drink_price: 15000,
-      drink_description: "Mua đi bạn, ngon vc, xem miêu tả làm c gì?",
-    },
-    {
-      drink_img: require("@/assets/images/Products/thung-ca-phe.jpg"),
-      drink_name: "Thùng cà phê - Đen - Đá xay nhuyễn",
-      drink_price: 260000,
-      drink_description: "Mua đi bạn, ngon vc, xem miêu tả làm c gì?",
-    },
-    {
-      drink_img: require("@/assets/images/Products/tra-xanh-nong.jpg"),
-      drink_name: "Trà xanh nóng - Uống phỏng lưỡi",
-      drink_price: 2000,
-      drink_description: "Mua đi bạn, ngon vc, xem miêu tả làm c gì?",
-    },
-  ];
+  const [drinkProps, setDrinkProps] = useState<DrinkPropertie[]>([]);
+  // const drinkProps = [
+  //   {
+  //     drink_img: require("@/assets/images/Products/tra-sua-o-long.png"),
+  //     drink_name: "Trà sữa trân châu trắng - Truyền thống - Đá xay nhuyễn",
+  //     drink_price: 25000,
+  //     drink_description: "Mua đi bạn, ngon vc, xem miêu tả làm c gì?",
+  //   },
+  //   {
+  //     drink_img: require("@/assets/images/Products/ca-phe-goi.jpg"),
+  //     drink_name: "Cà phê gói - Đen - Đá xay nhuyễn",
+  //     drink_price: 15000,
+  //     drink_description: "Mua đi bạn, ngon vc, xem miêu tả làm c gì?",
+  //   },
+  //   {
+  //     drink_img: require("@/assets/images/Products/thung-ca-phe.jpg"),
+  //     drink_name: "Thùng cà phê - Đen - Đá xay nhuyễn",
+  //     drink_price: 260000,
+  //     drink_description: "Mua đi bạn, ngon vc, xem miêu tả làm c gì?",
+  //   },
+  //   {
+  //     drink_img: require("@/assets/images/Products/tra-xanh-nong.jpg"),
+  //     drink_name: "Trà xanh nóng - Uống phỏng lưỡi",
+  //     drink_price: 2000,
+  //     drink_description: "Mua đi bạn, ngon vc, xem miêu tả làm c gì?",
+  //   },
+  // ];
 
   const categories = [
     "Món mới",
@@ -83,6 +87,28 @@ export default function OrderScreen() {
       });
     }
   };
+
+  const getProducts = async () => {
+    try {
+      const response = await axios.get<ProductFromAPI[]>("http://192.168.1.36:8081/api/products"); // doi lai IpV4 cua may va port
+
+      const mappedData: DrinkPropertie[] = response.data.map((item) => ({
+        drink_img: { uri: item.imageUrl },
+        drink_name: item.title,
+        drink_price: item.price,
+        drink_description: item.description,
+      }));
+
+      setDrinkProps(mappedData);
+      console.log("📦 Dữ liệu đã map:", mappedData);
+    } catch (error) {
+      console.error("❌ Lỗi khi lấy danh sách sản phẩm:", error);
+    }
+  };
+
+  useEffect(() => {
+    getProducts();
+  }, []);
 
   return (
     <SafeAreaView className="flex-1 bg-white">
