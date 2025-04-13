@@ -1,20 +1,23 @@
-import { View, Text, TextInput, TouchableOpacity } from 'react-native'
-import React from 'react'
-import { ThemedView } from '../ThemedView'
-import { ThemedText } from '../ThemedText'
-import { Ticket, Bell, Search, Map } from 'lucide-react-native';
-import { Colors } from '@/constants/Colors';
+import {View, Text, TextInput, TouchableOpacity} from 'react-native'
+import React, {useState} from 'react'
+import {ThemedView} from '../ThemedView'
+import {ThemedText} from '../ThemedText'
+import {Ticket, Bell, Search, Map} from 'lucide-react-native';
+import {Colors} from '@/constants/Colors';
 import BadgeButton from "@/components/HomeScreen/BadgeButton";
 import NotificationButton from "@/components/HomeScreen/NotificationButton";
+import {router, useNavigation} from "expo-router";
+import {MapScreen} from "@/components/ShopScreen/MapScreen";
 
 export default function ShopHeader() {
+    const [isOpen, setIsOpen] = useState(false)
     return (
         <ThemedView className={"p-5 pt-10"}>
             <ThemedView className={"flex flex-row items-center"}>
                 <ThemedText className={"font-bold text-xs"}>Cửa hàng</ThemedText>
                 <View className={"ml-auto flex flex-row"}>
-                    <BadgeButton className='mr-2' icon={<Ticket size={24} color={Colors.PRIMARY} />} text={11} />
-                    <NotificationButton icon={<Bell size={24} color="black" />} count={1} />
+                    <BadgeButton className='mr-2' icon={<Ticket size={24} color={Colors.PRIMARY}/>} text={11}/>
+                    <NotificationButton icon={<Bell size={24} color="black"/>} count={1}/>
                 </View>
             </ThemedView>
             <ThemedView className={`flex-row mt-2 items-center justify-between py-2`}>
@@ -26,11 +29,20 @@ export default function ShopHeader() {
                         className={`ml-2 text-gray-500 flex-1`}
                     />
                 </View>
-                <TouchableOpacity className={`ml-3 flex-row items-center`}>
+                <TouchableOpacity
+                    className={`ml-3 flex-row items-center`}
+                    onPress={() => {
+                        setIsOpen(true)
+
+                    }}
+                >
                     <Map size={20} color={Colors.light.icon}></Map>
                     <Text className={`ml-1 font-semibold`}>Bản đồ</Text>
                 </TouchableOpacity>
             </ThemedView>
+            <MapScreen visible={isOpen} onClose={() => {
+                setIsOpen(false)
+            }}/>
         </ThemedView>
     )
 }
