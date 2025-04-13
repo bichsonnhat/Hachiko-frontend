@@ -1,9 +1,20 @@
 import { ThemedText } from "../ThemedText";
-import { TouchableOpacity, Image, View } from "react-native";
+import {
+  TouchableOpacity,
+  Image,
+  View,
+  SafeAreaView,
+  StatusBar,
+} from "react-native";
 
 export const Header = () => {
+  const safeHeight = StatusBar.currentHeight || 0;
+
   return (
-    <View className="p-4 pt-10 flex-row justify-between">
+    <SafeAreaView
+      style={{ marginTop: safeHeight }}
+      className="flex-row justify-between px-4"
+    >
       <View className="flex-row items-center gap-2">
         <Image
           source={require("@/assets/images/OrderScreen/category-icon.png")}
@@ -24,6 +35,6 @@ export const Header = () => {
           />
         </TouchableOpacity>
       </View>
-    </View>
+    </SafeAreaView>
   );
 };

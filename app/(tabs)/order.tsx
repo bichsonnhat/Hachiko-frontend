@@ -1,10 +1,19 @@
-import { Category, Collection, Drinks, Header } from "@/components/OrderScreen";
-import { OrderStore } from "@/constants";
-import { useOrderStore } from "@/stores";
+import {
+  Category,
+  CheckoutBtn,
+  Collection,
+  Drinks,
+  Header,
+} from "@/components/OrderScreen";
 import { useRef } from "react";
-import { ScrollView, View, TouchableOpacity } from "react-native";
-import { CircleDollarSign } from "lucide-react-native";
-import { router } from "expo-router";
+import {
+  ScrollView,
+  View,
+  TouchableOpacity,
+  Modal,
+  Text,
+  SafeAreaView,
+} from "react-native";
 
 export default function OrderScreen() {
   const drinkProps = [
@@ -49,8 +58,6 @@ export default function OrderScreen() {
     // "Topping",
   ];
 
-  const drinks = useOrderStore((state) => (state as OrderStore).drinks);
-
   const scrollViewRef = useRef<ScrollView>(null);
   const sectionsRef: { [key: string]: React.RefObject<View> } = {
     "Món mới": useRef<View>(null),
@@ -77,34 +84,25 @@ export default function OrderScreen() {
     }
   };
 
-  const handleToPayment = () => {
-    router.push("/other/order-history");
-  };
-
   return (
-    <View className="flex-1 bg-white">
-      <View className="absolute top-0 left-0 right-0 z-10 bg-white">
-        <Header />
-      </View>
-      <ScrollView className="mt-16" ref={scrollViewRef}>
-        <View className="mt-4">
-          <Category handleScroll={handleScroll} />
+    <SafeAreaView className="flex-1 bg-white">
+      <View className="flex-1 bg-white">
+        <View className="absolute top-0 left-0 right-0 z-10 bg-white">
+          <Header />
         </View>
-        <Collection />
-        {categories.map((category) => (
-          <View key={category} ref={sectionsRef[category]}>
-            <Drinks title={category} drinks={drinkProps} />
+        <ScrollView className="mt-16" ref={scrollViewRef}>
+          <View className="mt-4">
+            <Category handleScroll={handleScroll} />
           </View>
-        ))}
-      </ScrollView>
-      {drinks.length > 0 && (
-        <TouchableOpacity
-          onPress={handleToPayment}
-          className="absolute bottom-6 right-6 w-12 h-12 rounded-full bg-amber-300 shadow-lg flex items-center justify-center"
-        >
-          <CircleDollarSign size={28} color="white" />
-        </TouchableOpacity>
-      )}
-    </View>
+          <Collection />
+          {categories.map((category) => (
+            <View key={category} ref={sectionsRef[category]}>
+              <Drinks title={category} drinks={drinkProps} />
+            </View>
+          ))}
+        </ScrollView>
+      </View>
+      <CheckoutBtn />
+    </SafeAreaView>
   );
 }

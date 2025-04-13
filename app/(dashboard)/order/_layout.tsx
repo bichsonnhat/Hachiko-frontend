@@ -8,6 +8,7 @@ const OrderLayout = () => {
       <Stack.Screen name="pending-order" />
       <Stack.Screen name="cancelled-order" />
       <Stack.Screen name="successful-order" />
+      <Stack.Screen name="[id]" />
     </Stack>
   );
 };

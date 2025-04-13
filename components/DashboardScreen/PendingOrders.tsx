@@ -48,7 +48,7 @@ export const PendingOrders = () => {
         <TouchableOpacity
           className="flex-1 bg-white p-4"
           key={order.id}
-          onPress={() => router.push(`/other/order-history/${order.id}`)}
+          onPress={() => router.push(`/(dashboard)/order/${order.id}`)}
         >
           <View className="bg-white p-4 rounded-lg shadow-md mb-3">
             <Text className="text-lg font-semibold text-gray-800">
