@@ -7,7 +7,6 @@ import {
 } from "@/components/OrderScreen";
 import { useEffect, useRef, useState } from "react";
 import axios from 'axios';
-
 import {
   ScrollView,
   View,
@@ -16,99 +15,120 @@ import {
   Text,
   SafeAreaView,
 } from "react-native";
-import { DrinkPropertie, ProductFromAPI } from "@/constants/app.interface";
+import { CategoryFromAPI, CategoryGroup, DrinkPropertie, MongoID, ProductFromAPI } from "@/constants/app.interface";
+import apiService from "@/constants/config/axiosConfig";
+import React from "react";
 
 export default function OrderScreen() {
-  const [drinkProps, setDrinkProps] = useState<DrinkPropertie[]>([]);
-  // const drinkProps = [
-  //   {
-  //     drink_img: require("@/assets/images/Products/tra-sua-o-long.png"),
-  //     drink_name: "Trà sữa trân châu trắng - Truyền thống - Đá xay nhuyễn",
-  //     drink_price: 25000,
-  //     drink_description: "Mua đi bạn, ngon vc, xem miêu tả làm c gì?",
-  //   },
-  //   {
-  //     drink_img: require("@/assets/images/Products/ca-phe-goi.jpg"),
-  //     drink_name: "Cà phê gói - Đen - Đá xay nhuyễn",
-  //     drink_price: 15000,
-  //     drink_description: "Mua đi bạn, ngon vc, xem miêu tả làm c gì?",
-  //   },
-  //   {
-  //     drink_img: require("@/assets/images/Products/thung-ca-phe.jpg"),
-  //     drink_name: "Thùng cà phê - Đen - Đá xay nhuyễn",
-  //     drink_price: 260000,
-  //     drink_description: "Mua đi bạn, ngon vc, xem miêu tả làm c gì?",
-  //   },
-  //   {
-  //     drink_img: require("@/assets/images/Products/tra-xanh-nong.jpg"),
-  //     drink_name: "Trà xanh nóng - Uống phỏng lưỡi",
-  //     drink_price: 2000,
-  //     drink_description: "Mua đi bạn, ngon vc, xem miêu tả làm c gì?",
-  //   },
-  // ];
-
-  const categories = [
-    "Món mới",
-    // "Trà trái cây",
-    // "Trà sữa",
-    // "Trà xanh",
-    // "Đá xay",
-    // "Cà phê",
-    // "Bánh ngọt",
-    // "Bánh mặn",
-    // "Cơm nhà",
-    // "Đồ uống nóng",
-    // "Đồ uống đóng gói",
-    // "Topping",
-  ];
+  const [categoryGroups, setCategoryGroups] = useState<CategoryGroup[]>([]);
+  const [categories, setCategories] = useState<CategoryFromAPI[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const scrollViewRef = useRef<ScrollView>(null);
-  const sectionsRef: { [key: string]: React.RefObject<View> } = {
-    "Món mới": useRef<View>(null),
-    "Trà trái cây": useRef<View>(null),
-    "Trà sữa": useRef<View>(null),
-    "Trà xanh": useRef<View>(null),
-    "Đá xay": useRef<View>(null),
-    "Cà phê": useRef<View>(null),
-    "Bánh ngọt": useRef<View>(null),
-    "Bánh mặn": useRef<View>(null),
-    "Cơm nhà": useRef<View>(null),
-    "Đồ uống nóng": useRef<View>(null),
-    "Đồ uống đóng gói": useRef<View>(null),
-    Topping: useRef<View>(null),
-  };
+  const sectionsRef: { [key: string]: React.RefObject<View> } = {};
 
-  const handleScroll = (category: string) => {
-    const section = sectionsRef[category]?.current;
+  const categoryOrder = [
+    "Món mới phải thử",
+    "Cà phê",
+    "Trà Trái Cây",
+    "Trà Sữa Macchiato",
+    "Trà Xanh Tây Bắc",
+    "Đá Xay Frosty",
+    "CloudFee",
+    "Bánh Ngọt",
+    "Bánh Mặn",
+    "Cafe Tại Nhà",
+    "Chai Fresh Không Đá",
+    "Các Loại Đồ Ăn Khác",
+    "Topping",
+  ];
+
+  const handleScroll = (categoryId: string) => {
+    const section = sectionsRef[categoryId]?.current;
     const scrollView = scrollViewRef.current;
     if (section && scrollView) {
-      section.measure((pageX: number, pageY: number) => {
-        scrollView.scrollTo({ x: pageX, y: pageY - 32, animated: true });
+      section.measure((x, y, width, height, pageX, pageY) => {
+        scrollView.scrollTo({ y: pageY - 32, animated: true });
       });
     }
   };
 
-  const getProducts = async () => {
+  // const getProductsGroupedByCategory = async () => {
+  //   try {
+  //     setIsLoading(true);
+  //     const response = await apiService.get<CategoryGroup[]>('/products/grouped-by-category');
+
+  //     const sortedGroups = response.data.sort((a, b) => {
+  //       const aName = getCategoryName(a._id);
+  //       const bName = getCategoryName(b._id);
+  //       return categoryOrder.indexOf(aName) - categoryOrder.indexOf(bName);
+  //     });
+  //     setCategoryGroups(sortedGroups);
+  //   } catch (error) {
+  //     console.error("❌ Lỗi khi lấy danh sách sản phẩm theo danh mục:", error);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
+  // const getCategories = async () => {
+  //   try {
+  //     setIsLoading(true);
+  //     const response = await apiService.get<CategoryFromAPI[]>('/categories');
+  //     setCategories(response.data);
+
+  //     response.data.forEach(category => {
+  //       const categoryId = category.id.timestamp.toString();
+  //       sectionsRef[categoryId] = sectionsRef[categoryId] || React.createRef<View>();
+  //     });
+  //   } catch (error) {
+  //     console.error("❌ Lỗi khi lấy danh sách danh mục:", error);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
+  const loadAllData = async () => {
     try {
-      const response = await axios.get<ProductFromAPI[]>("http://192.168.1.36:8081/api/products"); // doi lai IpV4 cua may va port
+      setIsLoading(true);
+      const [categoriesResponse, productsResponse] = await Promise.all([
+        apiService.get<CategoryFromAPI[]>('/categories'),
+        apiService.get<CategoryGroup[]>('/products/grouped-by-category')
+      ]);
 
-      const mappedData: DrinkPropertie[] = response.data.map((item) => ({
-        drink_img: { uri: item.imageUrl },
-        drink_name: item.title,
-        drink_price: item.price,
-        drink_description: item.description,
-      }));
+      setCategories(categoriesResponse.data);
 
-      setDrinkProps(mappedData);
-      console.log("📦 Dữ liệu đã map:", mappedData);
+      const sortedGroups = productsResponse.data.sort((a, b) => {
+        const aCategory = categoriesResponse.data.find(c => c.id.timestamp === a._id.timestamp);
+        const bCategory = categoriesResponse.data.find(c => c.id.timestamp === b._id.timestamp);
+        return categoryOrder.indexOf(aCategory?.name || '') - categoryOrder.indexOf(bCategory?.name || '');
+      });
+
+      setCategoryGroups(sortedGroups);
     } catch (error) {
-      console.error("❌ Lỗi khi lấy danh sách sản phẩm:", error);
+      console.error("Error loading data:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    getProducts();
+    loadAllData();
   }, []);
+
+  const getCategoryName = (categoryId: MongoID): string => {
+    const category = categories.find(cat => cat.id.timestamp === categoryId.timestamp);
+    return category ? category.name : `Danh mục ${categoryId.timestamp}`;
+  };
+
+
+  if (isLoading) {
+    return (
+      <SafeAreaView className="flex-1 bg-white justify-center items-center">
+        <Text>Đang tải dữ liệu...</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -118,14 +138,21 @@ export default function OrderScreen() {
         </View>
         <ScrollView className="mt-16" ref={scrollViewRef}>
           <View className="mt-4">
-            <Category handleScroll={handleScroll} />
+            <Category
+              handleScroll={(categoryId) => handleScroll(categoryId)}
+            />
           </View>
           <Collection />
-          {categories.map((category) => (
-            <View key={category} ref={sectionsRef[category]}>
-              <Drinks title={category} drinks={drinkProps} />
-            </View>
-          ))}
+          {categoryGroups.map((group) => {
+            const categoryId = group._id.timestamp.toString();
+            const categoryName = getCategoryName(group._id);
+
+            return (
+              <View key={categoryId} ref={sectionsRef[categoryId]}>
+                <Drinks title={categoryName} drinks={group.products} />
+              </View>
+            );
+          })}
         </ScrollView>
       </View>
       <CheckoutBtn />

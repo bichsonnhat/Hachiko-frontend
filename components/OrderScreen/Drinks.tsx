@@ -1,12 +1,12 @@
 import React from "react";
 import { View, Text } from "react-native";
 import { DrinkSlotHorizontal } from "./DrinkSlotHorizontal";
-import { DrinkPropertie } from "@/constants";
+import { DrinkPropertie, ProductFromAPI } from "@/constants";
 
-type DrinksProps = {
+interface DrinksProps {
   title: string;
-  drinks: DrinkPropertie[];
-};
+  drinks: ProductFromAPI[];
+}
 
 export const Drinks: React.FC<DrinksProps> = ({ title, drinks }) => {
   return (
