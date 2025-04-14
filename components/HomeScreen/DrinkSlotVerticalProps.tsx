@@ -15,11 +15,11 @@ import Checkbox from "expo-checkbox";
 import { useCartStore } from "@/stores";
 import { ProductFromAPI } from "@/constants";
 
-type DrinkSlotHorizontalProps = {
+type DrinkSlotVerticalProps = {
   drink: ProductFromAPI;
 };
 
-export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
+export const DrinkSlotVertical: React.FC<DrinkSlotVerticalProps> = ({
   drink,
 }) => {
   const [modalVisible, setModalVisible] = useState<boolean>(false);
@@ -91,29 +91,37 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
 
   return (
     <>
-      <TouchableOpacity onPress={() => setModalVisible(true)}>
-        <View className="relative rounded-2xl p-3 shadow-lg bg-white flex-row items-center gap-4">
-          <View className="w-1/3 h-32 rounded-lg">
+      <TouchableOpacity
+        onPress={() => setModalVisible(true)}
+        className="w-[165px] mb-4 "
+      >
+        <View className="bg-white rounded-2xl relative">
+
+          <View className="w-[165px] h-[165px] mb-3">
             <Image
               source={{ uri: drink.imageUrl }}
-              className="w-full h-full rounded-2xl"
+              className="w-[165px] h-full rounded-xl"
               resizeMode="contain"
             />
           </View>
-          <View className="flex-1 flex-row items-center justify-between">
-            <View className="flex-col gap-2 max-w-[160px]">
-              <Text className="font-semibold">{drink.title}</Text>
-              <Text>{drink.price.toLocaleString("vi-VN")}đ</Text>
-            </View>
+
+          <View className="w-full flex-row items-center justify-between">
+            <Text className="font-semibold text-lg0" numberOfLines={2} style={{ lineHeight: 20, height: 40 }}>
+              {drink.title}
+            </Text>
+          </View>
+
+          <View className="w-full mb-3 flex-row items-center justify-between">
+            <Text className="flex-1">{drink.price.toLocaleString("vi-VN")}đ</Text>
+
             <TouchableOpacity
-              className={`w-8 h-8 p-[2px] rounded-full flex items-center justify-center ${cart.findIndex((d) => d.drink_name === drink.title) === -1
-                  ? "bg-orange-300"
-                  : "bg-green-500"
+              className={`w-8 h-8 p-[2px] rounded-full items-center justify-center ml-auto ${cart.findIndex((d) => d.drink_name === drink.title) === -1
+                ? "bg-orange-300"
+                : "bg-green-500"
                 }`}
               onPress={addMoreDrink}
             >
-              {cart.findIndex((d) => d.drink_name === drink.title) ===
-                -1 ? (
+              {cart.findIndex((d) => d.drink_name === drink.title) === -1 ? (
                 <Plus size={22} color={"white"} />
               ) : (
                 <Check size={22} color={"white"} />
@@ -258,5 +266,6 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
         </View>
       </Modal>
     </>
+
   );
-};
+}
