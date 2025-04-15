@@ -7,28 +7,23 @@ export interface DrinkOrder {
     drink_quantity: number;
 };
 
-export interface MongoID {
-    timestamp: number;
-    date: string;
-}
-
 export interface CategoryFromAPI {
-    id: MongoID;
+    id: string;
     name: string;
     imgUrl: string;
 }
   
 export interface ProductFromAPI {
-    _id: MongoID;
+    _id: string;
     description: string;
     imageUrl: string;
     price: number;
     title: string;
-    categoryID: MongoID;
+    categoryID: string;
 }
   
 export interface CategoryGroup {
-    _id: MongoID; 
+    _id: string; 
     products: ProductFromAPI[];
 }
 
@@ -55,4 +50,3 @@ export interface Category {
     name: string;
     image: string;
 }
-

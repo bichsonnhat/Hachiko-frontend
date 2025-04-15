@@ -15,6 +15,7 @@ export default function HomeScreen() {
 
     const getHighlightProducts = async () => {
         try {
+            console.log("Api url: ", process.env.EXPO_PUBLIC_API_BASE_URL)
             const response = await apiService.get<ProductFromAPI[]>('/products?category_id=67fcd3d24569c746958d067f');
 
             setProducts(response.data);

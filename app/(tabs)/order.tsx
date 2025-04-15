@@ -15,7 +15,7 @@ import {
   Text,
   SafeAreaView,
 } from "react-native";
-import { CategoryFromAPI, CategoryGroup, DrinkPropertie, MongoID, ProductFromAPI } from "@/constants/app.interface";
+import { CategoryFromAPI, CategoryGroup, DrinkPropertie, ProductFromAPI } from "@/constants/app.interface";
 import apiService from "@/constants/config/axiosConfig";
 import React from "react";
 
@@ -53,41 +53,6 @@ export default function OrderScreen() {
     }
   };
 
-  // const getProductsGroupedByCategory = async () => {
-  //   try {
-  //     setIsLoading(true);
-  //     const response = await apiService.get<CategoryGroup[]>('/products/grouped-by-category');
-
-  //     const sortedGroups = response.data.sort((a, b) => {
-  //       const aName = getCategoryName(a._id);
-  //       const bName = getCategoryName(b._id);
-  //       return categoryOrder.indexOf(aName) - categoryOrder.indexOf(bName);
-  //     });
-  //     setCategoryGroups(sortedGroups);
-  //   } catch (error) {
-  //     console.error("❌ Lỗi khi lấy danh sách sản phẩm theo danh mục:", error);
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
-  // const getCategories = async () => {
-  //   try {
-  //     setIsLoading(true);
-  //     const response = await apiService.get<CategoryFromAPI[]>('/categories');
-  //     setCategories(response.data);
-
-  //     response.data.forEach(category => {
-  //       const categoryId = category.id.timestamp.toString();
-  //       sectionsRef[categoryId] = sectionsRef[categoryId] || React.createRef<View>();
-  //     });
-  //   } catch (error) {
-  //     console.error("❌ Lỗi khi lấy danh sách danh mục:", error);
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
   const loadAllData = async () => {
     try {
       setIsLoading(true);
@@ -99,8 +64,8 @@ export default function OrderScreen() {
       setCategories(categoriesResponse.data);
 
       const sortedGroups = productsResponse.data.sort((a, b) => {
-        const aCategory = categoriesResponse.data.find(c => c.id.timestamp === a._id.timestamp);
-        const bCategory = categoriesResponse.data.find(c => c.id.timestamp === b._id.timestamp);
+        const aCategory = categoriesResponse.data.find(c => c.id === a._id);
+        const bCategory = categoriesResponse.data.find(c => c.id === b._id);
         return categoryOrder.indexOf(aCategory?.name || '') - categoryOrder.indexOf(bCategory?.name || '');
       });
 
@@ -116,9 +81,9 @@ export default function OrderScreen() {
     loadAllData();
   }, []);
 
-  const getCategoryName = (categoryId: MongoID): string => {
-    const category = categories.find(cat => cat.id.timestamp === categoryId.timestamp);
-    return category ? category.name : `Danh mục ${categoryId.timestamp}`;
+  const getCategoryName = (categoryId: string): string => {
+    const category = categories.find(cat => cat.id === categoryId);
+    return category ? category.name : `Danh mục ${categoryId}`;
   };
 
 
@@ -144,7 +109,7 @@ export default function OrderScreen() {
           </View>
           <Collection />
           {categoryGroups.map((group) => {
-            const categoryId = group._id.timestamp.toString();
+            const categoryId = group._id.toString();
             const categoryName = getCategoryName(group._id);
 
             return (
