@@ -1,41 +1,55 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { DrinkOrder } from "@/constants";
+import { IOrderItem } from "@/constants";
 
 type CartState = {
-  cart: DrinkOrder[];
-  addToCart: (drink: DrinkOrder) => void;
-  removeFromCart: (drink_name: string) => void;
+  cart: IOrderItem[];
+  checkExist: (
+    productId: string,
+    size: string,
+    note: string,
+    topping: string
+  ) => boolean;
+  addNewToCart: (item: IOrderItem) => void;
+  addExistingToCart: (productId: string) => void;
+  removeFromCart: (productId: string) => void;
   clearCart: () => void;
 };
 
 export const useCartStore = create<CartState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       cart: [],
-      addToCart: (drink) =>
-        set((state) => {
-          const existing = state.cart.find(
-            (d) => d.drink_name === drink.drink_name
-          );
-          if (existing) {
-            return {
-              cart: state.cart.map((d) =>
-                d.drink_name === drink.drink_name
-                  ? {
-                      ...d,
-                      drink_quantity: d.drink_quantity + drink.drink_quantity,
-                    }
-                  : d
-              ),
-            };
-          }
-          return { cart: [...state.cart, drink] };
-        }),
-      removeFromCart: (drink_name) =>
+      checkExist: (productId, size, note, topping) => {
+        const existingItem = get().cart.find(
+          (item) =>
+            item.productId === productId &&
+            item.size === size &&
+            item.note === note &&
+            item.topping === topping
+        );
+        return !!existingItem;
+      },
+      addNewToCart: (newProduct) => {
         set((state) => ({
-          cart: state.cart.filter((d) => d.drink_name !== drink_name),
+          cart: [...state.cart, newProduct],
+        }));
+      },
+      addExistingToCart: (productId) => {
+        set((state) => ({
+          cart: state.cart.map((item) =>
+            item.productId === productId
+              ? { ...item, quantity: item.quantity + 1 }
+              : item
+          ),
+        }));
+      },
+      removeFromCart: (productId) =>
+        set((state) => ({
+          cart: state.cart.filter(
+            (cartProduct) => cartProduct.productId !== productId
+          ),
         })),
       clearCart: () => set({ cart: [] }),
     }),

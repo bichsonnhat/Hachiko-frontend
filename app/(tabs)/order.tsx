@@ -6,94 +6,98 @@ import {
   Header,
 } from "@/components/OrderScreen";
 import { useEffect, useRef, useState } from "react";
-import axios from 'axios';
 import {
   ScrollView,
   View,
-  TouchableOpacity,
-  Modal,
-  Text,
   SafeAreaView,
+  ActivityIndicator,
+  Text,
 } from "react-native";
-import { CategoryFromAPI, CategoryGroup, DrinkPropertie, ProductFromAPI } from "@/constants/app.interface";
+
 import apiService from "@/constants/config/axiosConfig";
+import { ICategory, IProductByCategory } from "@/constants/interface";
+import { useApi } from "@/hooks/useApi";
 import React from "react";
 
 export default function OrderScreen() {
-  const [categoryGroups, setCategoryGroups] = useState<CategoryGroup[]>([]);
-  const [categories, setCategories] = useState<CategoryFromAPI[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const {
+    loading: categoryLoading,
+    errorMessage: categoryErrorMessage,
+    callApi: callCategoryApi,
+  } = useApi<void>();
 
-  const scrollViewRef = useRef<ScrollView>(null);
-  const sectionsRef: { [key: string]: React.RefObject<View> } = {};
+  const {
+    loading: productLoading,
+    errorMessage: productErrorMessage,
+    callApi: callProductApi,
+  } = useApi<void>();
+  const [categoryGroups, setCategoryGroups] = useState<IProductByCategory[]>(
+    []
+  );
+  const [categories, setCategories] = useState<ICategory[]>([]);
 
-  const categoryOrder = [
-    "Món mới phải thử",
-    "Cà phê",
-    "Trà Trái Cây",
-    "Trà Sữa Macchiato",
-    "Trà Xanh Tây Bắc",
-    "Đá Xay Frosty",
-    "CloudFee",
-    "Bánh Ngọt",
-    "Bánh Mặn",
-    "Cafe Tại Nhà",
-    "Chai Fresh Không Đá",
-    "Các Loại Đồ Ăn Khác",
-    "Topping",
-  ];
-
-  const handleScroll = (categoryId: string) => {
-    const section = sectionsRef[categoryId]?.current;
-    const scrollView = scrollViewRef.current;
-    if (section && scrollView) {
-      section.measure((x, y, width, height, pageX, pageY) => {
-        scrollView.scrollTo({ y: pageY - 32, animated: true });
-      });
-    }
+  const getCategoryName = (categoryId: string): string => {
+    const category = categories.find((cat) => cat.id === categoryId);
+    return category ? category.name : `Danh mục ${categoryId}`;
   };
 
-  const loadAllData = async () => {
-    try {
-      setIsLoading(true);
-      const [categoriesResponse, productsResponse] = await Promise.all([
-        apiService.get<CategoryFromAPI[]>('/categories'),
-        apiService.get<CategoryGroup[]>('/products/grouped-by-category')
-      ]);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const sectionsRef = useRef<Record<string, React.RefObject<View>>>({});
 
-      setCategories(categoriesResponse.data);
+  const checkHasTopping = (categoryId: string) => {
+    const category = categories.find((cat) => cat.id === categoryId);
+    return category ? category.hasToppings : false;
+  };
 
-      const sortedGroups = productsResponse.data.sort((a, b) => {
-        const aCategory = categoriesResponse.data.find(c => c.id === a._id);
-        const bCategory = categoriesResponse.data.find(c => c.id === b._id);
-        return categoryOrder.indexOf(aCategory?.name || '') - categoryOrder.indexOf(bCategory?.name || '');
+  const getProductName = (productId: string): string => {
+    const product = categoryGroups
+      .flatMap((group) => group.products)
+      .find((prod) => prod.id === productId);
+    return product ? product.title : `Sản phẩm ${productId}`;
+  };
+
+  const handleScroll = (categoryId: string) => {
+    const section = sectionsRef.current[categoryId]?.current;
+    const scrollView = scrollViewRef.current;
+    if (section && scrollView) {
+      section.measure((x, y) => {
+        scrollView.scrollTo({ x: 0, y: y - 32, animated: true });
       });
-
-      setCategoryGroups(sortedGroups);
-    } catch (error) {
-      console.error("Error loading data:", error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    loadAllData();
+    const fetchCategoryData = async () => {
+      await callCategoryApi(async () => {
+        const { data } = await apiService.get("/categories");
+        setCategories(data);
+      });
+    };
+    const fetchProductData = async () => {
+      await callProductApi(async () => {
+        const { data } = await apiService.get("/products/grouped-by-category");
+        setCategoryGroups(data);
+      });
+    };
+    fetchCategoryData();
+    fetchProductData();
   }, []);
+  useEffect(() => {
+    const refObj: Record<string, React.RefObject<View>> = {};
+    categories.forEach((category) => {
+      refObj[category.id] = React.createRef<View>();
+    });
+    sectionsRef.current = refObj;
+  }, [categories]);
 
-  const getCategoryName = (categoryId: string): string => {
-    const category = categories.find(cat => cat.id === categoryId);
-    return category ? category.name : `Danh mục ${categoryId}`;
-  };
-
-
-  if (isLoading) {
-    return (
-      <SafeAreaView className="flex-1 bg-white justify-center items-center">
-        <Text>Đang tải dữ liệu...</Text>
-      </SafeAreaView>
-    );
-  }
+  useEffect(() => {
+    if (categoryErrorMessage) {
+      console.error("❌ Lỗi khi lấy danh sách danh mục:", categoryErrorMessage);
+    }
+    if (productErrorMessage) {
+      console.error("❌ Lỗi khi lấy danh sách sản phẩm:", productErrorMessage);
+    }
+  }, [categoryErrorMessage, productErrorMessage]);
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -104,23 +108,38 @@ export default function OrderScreen() {
         <ScrollView className="mt-16" ref={scrollViewRef}>
           <View className="mt-4">
             <Category
-              handleScroll={(categoryId) => handleScroll(categoryId)}
+              handleScroll={handleScroll}
+              categories={categories}
+              loading={categoryLoading}
             />
           </View>
           <Collection />
-          {categoryGroups.map((group) => {
-            const categoryId = group._id.toString();
-            const categoryName = getCategoryName(group._id);
-
-            return (
-              <View key={categoryId} ref={sectionsRef[categoryId]}>
-                <Drinks title={categoryName} drinks={group.products} />
-              </View>
-            );
-          })}
+          {productLoading ? (
+            <View className="flex-1 items-center justify-center h-full mt-5">
+              <ActivityIndicator size="large" color="#FF8C00" />
+            </View>
+          ) : categories.length === 0 ? (
+            <View className="flex-1 items-center justify-center h-full mt-5">
+              <Text className="text-lg text-gray-500">Chưa có sản phẩm</Text>
+            </View>
+          ) : (
+            categoryGroups.map((group) => {
+              const categoryId = group.categoryID;
+              const categoryName = getCategoryName(categoryId);
+              return (
+                <View key={categoryId} ref={sectionsRef.current[categoryId]}>
+                  <Drinks
+                    title={categoryName}
+                    drinks={group.products}
+                    checkHasTopping={checkHasTopping}
+                  />
+                </View>
+              );
+            })
+          )}
         </ScrollView>
       </View>
-      <CheckoutBtn />
+      <CheckoutBtn getProductName={getProductName} />
     </SafeAreaView>
   );
 }

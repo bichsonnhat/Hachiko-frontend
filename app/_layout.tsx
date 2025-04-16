@@ -1,30 +1,34 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Redirect, Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
-import 'react-native-reanimated';
-import "../global.css"
-import { useColorScheme } from '@/hooks/useColorScheme';
-import { useWindowDimensions } from 'react-native';
-import { ClerkProvider, ClerkLoaded } from '@clerk/clerk-expo'
-import { tokenCache } from '@/utils/cache';
+import {
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider,
+} from "@react-navigation/native";
+import { useFonts } from "expo-font";
+import { Redirect, Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import { StatusBar } from "expo-status-bar";
+import { useEffect } from "react";
+import "react-native-reanimated";
+import "../global.css";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { useWindowDimensions } from "react-native";
+import { ClerkProvider, ClerkLoaded } from "@clerk/clerk-expo";
+import { tokenCache } from "@/utils/cache";
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!
+  const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 
   if (!publishableKey) {
-    throw new Error('Add EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY to your .env file')
+    throw new Error("Add EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY to your .env file");
   }
 
   const colorScheme = useColorScheme();
   const { width, height } = useWindowDimensions();
   const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-    BaronNeueBlack: require('../assets/fonts/BaronNeueBlack.otf'),
+    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
+    BaronNeueBlack: require("../assets/fonts/BaronNeueBlack.otf"),
   });
 
   useEffect(() => {
@@ -40,9 +44,11 @@ export default function RootLayout() {
   return (
     <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
       <ClerkLoaded>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-            <Stack
-              screenOptions={{
+        <ThemeProvider
+          value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+        >
+          <Stack
+            screenOptions={{
               contentStyle: {
                 width: width,
                 height: height,

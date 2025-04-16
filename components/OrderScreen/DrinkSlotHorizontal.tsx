@@ -13,14 +13,17 @@ import { ExpandableText } from "@/components/ui";
 import { RadioGroup } from "react-native-radio-buttons-group";
 import Checkbox from "expo-checkbox";
 import { useCartStore } from "@/stores";
-import { ProductFromAPI } from "@/constants";
+import { IOrderItem, IProduct } from "@/constants";
+import { generateObjectId } from "@/utils/helpers/randomHexString";
 
 type DrinkSlotHorizontalProps = {
-  drink: ProductFromAPI;
+  drink: IProduct;
+  check: (categoryId: string) => boolean;
 };
 
 export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
   drink,
+  check,
 }) => {
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [quantity, setQuantity] = useState<number>(1);
@@ -30,9 +33,7 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
   const radioButtons = [
     {
       id: "medium",
-      label: `Vừa - ${(Number(drink.price) + 10000).toLocaleString(
-        "vi-VN"
-      )}đ`,
+      label: `Vừa - ${(Number(drink.price) + 10000).toLocaleString("vi-VN")}đ`,
       value: (drink.price + 10000).toString(),
     },
     {
@@ -48,6 +49,8 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
     { id: "4", name: "Trân châu trắng", price: 10000 },
     { id: "5", name: "Đào Miếng", price: 10000 },
   ];
+
+  const { cart, addNewToCart, addExistingToCart, checkExist } = useCartStore();
 
   const toggleTopping = (name: string) => {
     setSelectedToppings((prev) =>
@@ -77,15 +80,21 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
     setSelectedSize("small");
   };
 
-  const { cart, addToCart } = useCartStore();
-
   const addMoreDrink = () => {
-    addToCart({
-      drink_name: drink.title,
-      drink_note: note,
-      drink_price: handleCalculatePrice(),
-      drink_quantity: quantity,
-    });
+    if (checkExist(drink.id, selectedSize, note, selectedToppings.join(", "))) {
+      addExistingToCart(drink.id);
+    } else {
+      const newItem: IOrderItem = {
+        id: generateObjectId(),
+        productId: drink.id,
+        topping: selectedToppings.join(", "),
+        quantity,
+        price: handleCalculatePrice(),
+        note,
+        size: selectedSize,
+      };
+      addNewToCart(newItem);
+    }
     handleCloseModal();
   };
 
@@ -106,14 +115,14 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
               <Text>{drink.price.toLocaleString("vi-VN")}đ</Text>
             </View>
             <TouchableOpacity
-              className={`w-8 h-8 p-[2px] rounded-full flex items-center justify-center ${cart.findIndex((d) => d.drink_name === drink.title) === -1
+              className={`w-8 h-8 p-[2px] rounded-full flex items-center justify-center ${
+                cart.findIndex((d) => d.productId === drink.id) === -1
                   ? "bg-orange-300"
                   : "bg-green-500"
-                }`}
+              }`}
               onPress={addMoreDrink}
             >
-              {cart.findIndex((d) => d.drink_name === drink.title) ===
-                -1 ? (
+              {cart.findIndex((d) => d.productId === drink.id) === -1 ? (
                 <Plus size={22} color={"white"} />
               ) : (
                 <Check size={22} color={"white"} />
@@ -190,8 +199,9 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
                       >
                         <Checkbox
                           disabled={
-                            selectedToppings.length >= 2 &&
-                            !selectedToppings.includes(topping.name)
+                            check(drink.categoryID) ||
+                            (selectedToppings.length >= 2 &&
+                              !selectedToppings.includes(topping.name))
                           }
                           style={{ width: 20, height: 20 }}
                           value={selectedToppings.includes(topping.name)}

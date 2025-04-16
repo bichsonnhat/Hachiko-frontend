@@ -8,19 +8,23 @@ import {
   TextInput,
   Alert,
 } from "react-native";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useCartStore } from "@/stores";
 import { MinusIcon, ShoppingCart, Trash2Icon } from "lucide-react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
-export const CheckoutBtn = () => {
+type CheckoutBtnProps = {
+  getProductName: (productId: string) => string;
+};
+
+export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
   const [modalVisible, setModalVisible] = useState(false);
 
   const { cart, clearCart, removeFromCart } = useCartStore();
   const [totalQuantity, setTotalQuantity] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
-  const shippingFee = 40000;
+  const shippingFee = 15000;
 
   const [address, setAddress] = useState<{ label: string; value: string }[]>([
     { label: "Hà Nội", value: "Hà Nội" },
@@ -107,10 +111,10 @@ export const CheckoutBtn = () => {
 
   useEffect(() => {
     const total = cart.reduce((acc, item) => {
-      return acc + item.drink_price * item.drink_quantity;
+      return acc + item.price * item.quantity;
     }, 0);
     const quantity = cart.reduce((acc, item) => {
-      return acc + item.drink_quantity;
+      return acc + item.quantity;
     }, 0);
     setTotalQuantity(quantity);
     setTotalPrice(total);
@@ -360,12 +364,12 @@ export const CheckoutBtn = () => {
                       <View className="flex-1 gap-4">
                         {cart.map((item) => (
                           <View
-                            key={item.drink_name}
+                            key={item.id}
                             className="flex-row justify-between items-start px-4 py-3"
                           >
                             <View className="flex-row w-[70%] gap-1">
                               <TouchableOpacity
-                                onPress={() => removeFromCart(item.drink_name)}
+                                onPress={() => removeFromCart(item.productId)}
                                 className="flex justify-center items-center"
                               >
                                 <Trash2Icon size={25} color="red" />
@@ -373,7 +377,8 @@ export const CheckoutBtn = () => {
                               <View>
                                 <View className="flex-row gap-2">
                                   <Text className="font-semibold text-lg text-gray-800">
-                                    x{item.drink_quantity} {item.drink_name}
+                                    x{item.quantity}{" "}
+                                    {getProductName(item.productId)}
                                   </Text>
                                 </View>
                                 <Text className="text-base text-gray-600 mt-1">
@@ -383,10 +388,7 @@ export const CheckoutBtn = () => {
                             </View>
                             <View className="flex-row items-center gap-2 justify-end">
                               <Text className="font-semibold text-base text-gray-800">
-                                {(
-                                  item.drink_price * item.drink_quantity
-                                ).toLocaleString()}
-                                đ
+                                {(item.price * item.quantity).toLocaleString()}đ
                               </Text>
                             </View>
                           </View>
