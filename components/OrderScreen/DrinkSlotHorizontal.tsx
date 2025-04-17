@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Image,
@@ -7,14 +7,17 @@ import {
   Modal,
   ScrollView,
   TextInput,
+  Alert,
 } from "react-native";
-import { Plus, MinusIcon, Heart, Check } from "lucide-react-native";
+import { Plus, MinusIcon, Heart, Check, HeartOff } from "lucide-react-native";
 import { ExpandableText } from "@/components/ui";
 import { RadioGroup } from "react-native-radio-buttons-group";
 import Checkbox from "expo-checkbox";
 import { useCartStore } from "@/stores";
-import { IOrderItem, IProduct } from "@/constants";
+import { IFavouriteProduct, IOrderItem, IProduct } from "@/constants";
 import { generateObjectId } from "@/utils/helpers/randomHexString";
+import { useApi } from "@/hooks/useApi";
+import apiService from "@/constants/config/axiosConfig";
 
 type DrinkSlotHorizontalProps = {
   drink: IProduct;
@@ -25,6 +28,10 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
   drink,
   check,
 }) => {
+  //hard code userId for testing
+  const userId = "67ea8e54c54fd6723fbf8f0e";
+  const { callApi: callFavouriteApi } = useApi<void>();
+
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [quantity, setQuantity] = useState<number>(1);
   const [note, setNote] = useState<string>("");
@@ -43,14 +50,16 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
     },
   ];
   const toppings = [
-    { id: "1", name: "Trái Vải", price: 10000 },
-    { id: "2", name: "Hạt Sen", price: 10000 },
-    { id: "3", name: "Thạch Cà Phê", price: 10000 },
-    { id: "4", name: "Trân châu trắng", price: 10000 },
+    { id: "1", name: "Trái Vải", price: 8000 },
+    { id: "2", name: "Hạt Sen", price: 8000 },
+    { id: "3", name: "Thạch Cà Phê", price: 6000 },
+    { id: "4", name: "Trân châu trắng", price: 6000 },
     { id: "5", name: "Đào Miếng", price: 10000 },
   ];
 
   const { cart, addNewToCart, addExistingToCart, checkExist } = useCartStore();
+
+  const [isFavourite, setIsFavourite] = useState<boolean>(false);
 
   const toggleTopping = (name: string) => {
     setSelectedToppings((prev) =>
@@ -58,6 +67,35 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
         ? prev.filter((topping) => topping !== name)
         : [...prev, name]
     );
+  };
+
+  const checkIfProductIsInFavouriteProductList = async (productId: string) => {
+    await callFavouriteApi(async () => {
+      const { data } = await apiService.get(
+        `/favourite-products/${userId}/${productId}`
+      );
+      setIsFavourite(!!data);
+    });
+  };
+
+  const handleUnlike = async (id: string) => {
+    await callFavouriteApi(async () => {
+      await apiService.delete(`/favourite-products/${id}`);
+      Alert.alert("Xoá sản phẩm yêu thích thành công!");
+    });
+  };
+
+  const handleLike = async (id: string) => {
+    await callFavouriteApi(async () => {
+      const sendData: IFavouriteProduct = {
+        userId,
+        productId: id,
+      };
+      const { data } = await apiService.post(`/favourite-products`, sendData);
+      if (data) {
+        Alert.alert("Thêm sản phẩm yêu thích thành công!");
+      }
+    });
   };
 
   const handleCalculatePrice = () => {
@@ -81,12 +119,19 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
   };
 
   const addMoreDrink = () => {
-    if (checkExist(drink.id, selectedSize, note, selectedToppings.join(", "))) {
-      addExistingToCart(drink.id);
+    if (
+      checkExist(
+        drink.id ?? "",
+        selectedSize,
+        note,
+        selectedToppings.join(", ")
+      )
+    ) {
+      addExistingToCart(drink.id ?? "");
     } else {
       const newItem: IOrderItem = {
         id: generateObjectId(),
-        productId: drink.id,
+        productId: drink.id ?? "",
         topping: selectedToppings.join(", "),
         quantity,
         price: handleCalculatePrice(),
@@ -97,6 +142,10 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
     }
     handleCloseModal();
   };
+
+  useEffect(() => {
+    checkIfProductIsInFavouriteProductList(drink.id ?? "");
+  }, [handleLike, handleUnlike]);
 
   return (
     <>
@@ -158,8 +207,24 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
                   <Text className="text-xl font-bold w-[80%]">
                     {drink.title}
                   </Text>
-                  <TouchableOpacity>
-                    <Heart size={24} color="orange" />
+                  <TouchableOpacity
+                    className="w-8 h-8 rounded-full flex items-center justify-center"
+                    onPress={() => {
+                      if (isFavourite) {
+                        handleUnlike(drink.id ?? "");
+                        setIsFavourite(false);
+                      } else {
+                        handleLike(drink.id ?? "");
+                        setIsFavourite(true);
+                      }
+                    }}
+                  >
+                    {isFavourite ? (
+                      <HeartOff size={24} color="gray" />
+                    ) : (
+                      <Heart size={24} color="red" />
+                    )}
+                    {/* <Heart size={24} color="orange" /> */}
                   </TouchableOpacity>
                 </View>
                 <Text className="text-lg font-semibold mt-1">

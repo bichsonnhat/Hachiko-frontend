@@ -1,5 +1,5 @@
 export interface IProduct {
-    id: string,
+    id?: string,
     description: string,
     imageUrl: string,
     price: number,
@@ -8,7 +8,7 @@ export interface IProduct {
 }
 
 export interface IFavouriteProduct {
-    id: string,
+    id?: string,
     userId: string,
     productId: string
 }
@@ -16,5 +16,10 @@ export interface IFavouriteProduct {
 export interface IProductByCategory {
     _id: string,
     categoryID: string,
+    products: IProduct[]
+}
+
+export interface IFavouriteProductsResponse {
+    favouriteProducts: IFavouriteProduct[],
     products: IProduct[]
 }

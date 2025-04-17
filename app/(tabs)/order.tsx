@@ -85,7 +85,9 @@ export default function OrderScreen() {
   useEffect(() => {
     const refObj: Record<string, React.RefObject<View>> = {};
     categories.forEach((category) => {
-      refObj[category.id] = React.createRef<View>();
+      if (category.id) {
+        refObj[category.id] = React.createRef<View>();
+      }
     });
     sectionsRef.current = refObj;
   }, [categories]);

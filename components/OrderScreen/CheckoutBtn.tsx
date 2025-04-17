@@ -7,70 +7,68 @@ import {
   Platform,
   TextInput,
   Alert,
+  Image,
 } from "react-native";
 import { useEffect, useState } from "react";
 import { useCartStore } from "@/stores";
-import { MinusIcon, ShoppingCart, Trash2Icon } from "lucide-react-native";
+import { useApi } from "@/hooks/useApi";
+import {
+  MinusIcon,
+  ShoppingCart,
+  Trash2Icon,
+  MapPin,
+} from "lucide-react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import {
+  IFullOrder,
+  IStore,
+  IStoreDropdown,
+  IVoucher,
+  IVoucherDropdown,
+  OrderStatus,
+} from "@/constants";
+import apiService from "@/constants/config/axiosConfig";
+import { useRouter } from "expo-router";
 
 type CheckoutBtnProps = {
   getProductName: (productId: string) => string;
 };
 
 export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
+  //hard code for testing
+  const [shippingFee, setShippingFee] = useState<number>(15000);
+  const address = "Địa chỉ giao hàng";
+  const userId = "67fe6f866bcac94e258e3a20";
+
+  const router = useRouter();
+  const { errorMessage, callApi: callStoreApi } = useApi<void>();
+  const { errorMessage: voucherErrorMessage, callApi: callVoucherApi } =
+    useApi<void>();
+  const { errorMessage: checkoutErrorMessage, callApi: callCheckoutApi } =
+    useApi<void>();
+
   const [modalVisible, setModalVisible] = useState(false);
 
   const { cart, clearCart, removeFromCart } = useCartStore();
   const [totalQuantity, setTotalQuantity] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
-  const shippingFee = 15000;
 
-  const [address, setAddress] = useState<{ label: string; value: string }[]>([
-    { label: "Hà Nội", value: "Hà Nội" },
-    { label: "Hải Phòng", value: "Hải Phòng" },
-    { label: "Đà Nẵng", value: "Đà Nẵng" },
-    { label: "Hồ Chí Minh", value: "Hồ Chí Minh" },
-    { label: "Cần Thơ", value: "Cần Thơ" },
-    { label: "Nha Trang", value: "Nha Trang" },
-  ]);
-  const [shippingAddress, setShippingAddress] = useState("");
-  const [openAddress, setOpenAddress] = useState(false);
+  const [stores, setStores] = useState<IStoreDropdown[]>([]);
+  const [storeId, setStoreId] = useState("");
+  const [openStoreModal, setOpenStoreModal] = useState(false);
 
   const [showTimeModal, setShowTimeModal] = useState(false);
   const [shippingTime, setShippingTime] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
 
-  const onChangeTime = (event: any, selectedTime?: Date) => {
-    setShowPicker(Platform.OS === "ios");
-
-    if (selectedTime) {
-      const now = new Date();
-
-      if (selectedTime < now) {
-        Alert.alert("Thông báo", "Vui lòng chọn thời gian hợp lệ!");
-        return;
-      }
-
-      setShippingTime(selectedTime);
-    }
-  };
-
   const [showCustomerModal, setShowCustomerModal] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
 
+  const [voucher, setVoucher] = useState<IVoucher[]>([]);
   const [openCoupon, setOpenCoupon] = useState(false);
-  const [couponList, setCouponList] = useState<
-    {
-      label: string;
-      value: string;
-    }[]
-  >([
-    { label: "Giảm 10%", value: "Giảm 10%" },
-    { label: "Giảm 20%", value: "Giảm 20%" },
-    { label: "Giảm 30%", value: "Giảm 30%" },
-  ]);
+  const [couponList, setCouponList] = useState<IVoucherDropdown[]>([]);
   const [coupon, setCoupon] = useState("");
 
   const [openPaymentMethod, setOpenPaymentMethod] = useState(false);
@@ -85,8 +83,26 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
   ]);
   const [paymentMethod, setPaymentMethod] = useState("");
 
+  const onChangeTime = (event: any, selectedTime?: Date) => {
+    setShowPicker(Platform.OS === "ios");
+
+    if (selectedTime) {
+      const now = new Date();
+
+      if (selectedTime < now) {
+        Alert.alert("Thông báo", "Vui lòng chọn thời gian hợp lệ!");
+        return;
+      }
+      setShippingTime(selectedTime);
+    }
+  };
+
+  const handleGoToPayment = (checkoutUrl: string) => {
+    router.push(`/payment?checkoutUrl=${encodeURIComponent(checkoutUrl)}`);
+  };
+
   const handleClearInfo = () => {
-    setShippingAddress("");
+    setStoreId("");
     setShippingTime(new Date());
     setCustomerName("");
     setCustomerPhone("");
@@ -97,17 +113,128 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
     handleClearInfo();
     setModalVisible(!modalVisible);
   };
-  const handleOpenModal = () => {
+  const handleOpenModal = async () => {
     setModalVisible(true);
-    console.log("cart", cart);
   };
   const handleClearStorage = () => {
     handleCloseModal();
     clearCart();
   };
-  const handleCheckout = () => {
-    handleClearStorage();
+
+  const checkout = async (order: IFullOrder) => {
+    await callCheckoutApi(async () => {
+      const { data } = await apiService.post("/orders", order);
+      if (data) {
+        Alert.alert("Thông báo", "Đặt hàng thành công!");
+        handleClearStorage();
+      }
+    });
   };
+
+  const handleWithPayOS = async () => {
+    await callCheckoutApi(async () => {
+      const sendData = {
+        productName: "Đơn hàng " + userId,
+        description: "Thanh toán đơn hàng",
+        price: totalPrice + shippingFee,
+        returnUrl: "exp://192.168.1.2:8081/--/payment/success",
+        cancelUrl: "exp://192.168.1.2:8081/--/payment/failed",
+      };
+      const { data } = await apiService.post("/orders/payos", sendData);
+      if (data) {
+        const { checkoutUrl } = data.data;
+        handleGoToPayment(checkoutUrl);
+      }
+    });
+  };
+
+  const handleCheckout = async () => {
+    const sendData: IFullOrder = {
+      order: {
+        userId,
+        orderAddress: address,
+        orderTime: shippingTime,
+        orderCost: totalPrice + shippingFee,
+        paymentMethod,
+        ...(coupon.length > 0 ? { voucherId: coupon } : {}),
+        recipientName: customerName,
+        recipientPhone: customerPhone,
+        storeId,
+        orderStatus:
+          paymentMethod === "Tiền mặt"
+            ? OrderStatus.IN_PROGRESS
+            : OrderStatus.PENDING,
+        createdAt: new Date(),
+      },
+      orderItems: cart.map((item) => ({
+        id: item.id,
+        productId: item.productId,
+        quantity: item.quantity,
+        price: item.price,
+        size: item.size,
+        topping: item.topping,
+        note: item.note,
+      })),
+    };
+    checkout(sendData);
+    if (paymentMethod === "QR Code") {
+      handleWithPayOS();
+    }
+  };
+
+  useEffect(() => {
+    const fetchStores = async () => {
+      await callStoreApi(async () => {
+        const { data } = await apiService.get("/stores");
+        if (data) {
+          const storeList = data.map((store: IStore) => ({
+            label: (
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Image
+                  source={{ uri: store.imageURL }}
+                  className="w-10 h-10 rounded-lg mr-2"
+                />
+                <Text className="text-lg font-normal">{store.name}</Text>
+              </View>
+            ),
+            value: store.id,
+          }));
+          setStores(storeList);
+        }
+      });
+    };
+    const fetchUserVouchers = async () => {
+      await callVoucherApi(async () => {
+        const { data } = await apiService.get(`/vouchers/${userId}`);
+        if (data) {
+          setVoucher(data);
+          const now = new Date();
+          const voucherList = data
+            .filter((voucher: IVoucher) => new Date(voucher.expiryDate) >= now)
+            .map((voucher: IVoucher) => ({
+              label: (
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <Image
+                    source={{ uri: voucher.imgUrl }}
+                    className="w-10 h-10 rounded-lg mr-2"
+                  />
+                  <Text
+                    numberOfLines={1}
+                    className="text-lg font-normal truncate max-w-[90%]"
+                  >
+                    {voucher.description}
+                  </Text>
+                </View>
+              ),
+              value: voucher.id,
+            }));
+          setCouponList(voucherList);
+        }
+      });
+    };
+    fetchStores();
+    fetchUserVouchers();
+  }, []);
 
   useEffect(() => {
     const total = cart.reduce((acc, item) => {
@@ -119,6 +246,47 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
     setTotalQuantity(quantity);
     setTotalPrice(total);
   }, [cart, clearCart]);
+
+  useEffect(() => {
+    const voucherSelected = voucher.find((v) => v.id === coupon);
+    if (!voucherSelected) return;
+    const {
+      isFreeShip,
+      minOrderItem,
+      minOrderPrice,
+      discountPercent,
+      discountPrice,
+    } = voucherSelected;
+
+    if (isFreeShip) {
+      setShippingFee(0);
+    }
+
+    const enoughItems = cart.length >= (minOrderItem ?? 0);
+    const enoughPrice = totalPrice >= (minOrderPrice ?? 0);
+
+    if (enoughItems && enoughPrice) {
+      const discountFromPercent = totalPrice * (discountPercent ?? 0);
+      const discountFromPrice = discountPrice ?? 0;
+
+      const newPriceAfterDiscount =
+        totalPrice - discountFromPercent - discountFromPrice;
+
+      setTotalPrice(newPriceAfterDiscount);
+    }
+  }, [coupon]);
+
+  useEffect(() => {
+    if (errorMessage) {
+      console.error("❌ Lỗi khi lấy danh sách cửa hàng:", errorMessage);
+    }
+    if (voucherErrorMessage) {
+      console.error("❌ Lỗi khi lấy danh sách voucher:", voucherErrorMessage);
+    }
+    if (checkoutErrorMessage) {
+      console.error("❌ Lỗi khi đặt hàng:", checkoutErrorMessage);
+    }
+  }, [errorMessage, voucherErrorMessage, checkoutErrorMessage]);
 
   return (
     <>
@@ -136,18 +304,25 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
             }}
           >
             <View className="flex-row items-center justify-between w-full px-4">
-              <Text
-                className="text-lg font-black text-black w-[60%]"
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              >
-                Địa điểm giao hàng, test truncate
-              </Text>
-              <View className="flex-row items-center gap-2 rounded-full bg-orange-400 px-2 py-1 w-[40%] justify-evenly">
-                <Text className="font-black text-lg rounded-full bg-white text-black w-6 h-6 text-center leading-6">
-                  {totalQuantity}
+              <View className="flex-row items-center w-[55%]">
+                <MapPin size={20} color="orange" />
+                <Text
+                  className="text-base font-semibold text-black"
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  Định vị giao hàng
                 </Text>
-                <Text className="text-white font-black text-lg">{`${(
+              </View>
+
+              <View className="flex-row items-center gap-2 rounded-full bg-orange-400 px-2 py-1 w-[45%] justify-evenly">
+                <View className="flex-row flex justify-center items-center">
+                  <Text className="font-semibold text-sm rounded-full bg-white text-black w-6 h-6 text-center leading-6">
+                    {totalQuantity}
+                  </Text>
+                </View>
+
+                <Text className="text-white font-semibold text-base">{`${(
                   totalPrice + shippingFee
                 ).toLocaleString()}đ`}</Text>
               </View>
@@ -181,22 +356,28 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
 
                   <View className="flex-1">
                     <View className="flex-1 justify-start bg-white mb-4 py-4 gap-4">
-                      <Text className="font-bold text-2xl pl-4">
-                        Giao hàng tận nơi
-                      </Text>
+                      <View className="flex-row px-4">
+                        <Text className="font-bold text-2xl">
+                          Giao hàng tận nơi
+                        </Text>
+                        <View className="flex-row items-center rounded-full pl-4">
+                          <MapPin size={24} color="orange" />
+                        </View>
+                      </View>
+
                       <View className="flex-1 gap-2">
                         <View className="flex-1 gap-2 px-4">
                           <Text className="font-medium text-lg border-gray-200">
-                            Vui lòng chọn địa điểm
+                            Vui lòng chọn cửa hàng
                           </Text>
-                          <DropDownPicker
-                            open={openAddress}
-                            value={shippingAddress}
-                            items={address}
-                            setOpen={setOpenAddress}
-                            setValue={setShippingAddress}
-                            setItems={setAddress}
-                            placeholder="Vui lòng định vị"
+                          <DropDownPicker<any>
+                            open={openStoreModal}
+                            setOpen={setOpenStoreModal}
+                            items={stores}
+                            setItems={setStores}
+                            value={storeId}
+                            setValue={setStoreId}
+                            placeholder="Chọn cửa hàng mong muốn"
                             containerStyle={{ marginBottom: 10 }}
                             dropDownContainerStyle={{
                               borderColor: "#d1d5db",
@@ -382,7 +563,7 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
                                   </Text>
                                 </View>
                                 <Text className="text-base text-gray-600 mt-1">
-                                  Nhỏ
+                                  {item.size}
                                 </Text>
                               </View>
                             </View>
@@ -420,7 +601,7 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
                           <Text className="font-normal text-lg border-gray-200">
                             Chọn khuyến mãi
                           </Text>
-                          <DropDownPicker
+                          <DropDownPicker<any>
                             open={openCoupon}
                             value={coupon}
                             items={couponList}
@@ -471,7 +652,7 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
                               setValue={setPaymentMethod}
                               setItems={setPaymentMethodList}
                               placeholder="Phương thức thanh toán"
-                              containerStyle={{ marginBottom: 10 }}
+                              // containerStyle={{ marginBottom: 10 }}
                               dropDownContainerStyle={{
                                 borderColor: "#d1d5db",
                               }}
