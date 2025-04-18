@@ -1,5 +1,5 @@
 export interface IOrder {
-    id: string,
+    id?: string,
     userId: string,
     orderAddress: string,
     orderTime: Date,
@@ -10,16 +10,21 @@ export interface IOrder {
     recipientPhone: string,
     storeId: string,
     orderStatus: string,
-    orderItems: IOrderItem[],
     createdAt: Date,
 }
 
 export interface IOrderItem {
-    id: string,
+    id?: string,
+    orderId?: string,
     productId: string,
-    quantity: number,
-    size: string,
     topping: string,
-    note: string,
+    quantity: number,
     price: number,
+    note: string,
+    size: string,
+}
+
+export interface IFullOrder {
+    order: IOrder,
+    orderItems: IOrderItem[],
 }

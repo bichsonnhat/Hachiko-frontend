@@ -1,82 +1,42 @@
-import React, { useRef } from "react";
+import { ICategory } from "@/constants";
+import { useRef } from "react";
 import {
-  ImageSourcePropType,
   View,
   Image,
   Text,
   FlatList,
   TouchableOpacity,
   Animated,
+  ActivityIndicator,
 } from "react-native";
 
-type CategoryPropertie = {
-  category_img: ImageSourcePropType;
-  category_name: string;
-};
-
 type CategoryProps = {
-  handleScroll: (category: string) => void;
+  categories: ICategory[];
+  handleScroll: (categoryID: string) => void;
+  loading: boolean;
 };
 
-export const Category: React.FC<CategoryProps> = ({ handleScroll }) => {
-  const categories: CategoryPropertie[] = [
-    {
-      category_img: require("@/assets/images/OrderScreen/new-drinks.png"),
-      category_name: "Món mới",
-    },
-    {
-      category_img: require("@/assets/images/OrderScreen/fruit-tea.png"),
-      category_name: "Trà trái cây",
-    },
-    {
-      category_img: require("@/assets/images/OrderScreen/milktea.png"),
-      category_name: "Trà sữa",
-    },
-    {
-      category_img: require("@/assets/images/OrderScreen/greentea.png"),
-      category_name: "Trà xanh",
-    },
-    {
-      category_img: require("@/assets/images/OrderScreen/ice-blended.png"),
-      category_name: "Đá xay",
-    },
-    {
-      category_img: require("@/assets/images/OrderScreen/coffee.png"),
-      category_name: "Cà phê",
-    },
-    {
-      category_img: require("@/assets/images/OrderScreen/sweets.png"),
-      category_name: "Bánh ngọt",
-    },
-    {
-      category_img: require("@/assets/images/OrderScreen/not-vegetable-meal.png"),
-      category_name: "Bánh mặn",
-    },
-    {
-      category_img: require("@/assets/images/OrderScreen/home-dishes.png"),
-      category_name: "Cơm nhà",
-    },
-    {
-      category_img: require("@/assets/images/OrderScreen/hot-drinks.png"),
-      category_name: "Đồ uống nóng",
-    },
-    {
-      category_img: require("@/assets/images/OrderScreen/coffee-and-tea-bag.png"),
-      category_name: "Đồ uống đóng gói",
-    },
-    {
-      category_img: require("@/assets/images/OrderScreen/topping.png"),
-      category_name: "Topping",
-    },
-  ];
+export const Category: React.FC<CategoryProps> = ({
+  handleScroll,
+  categories,
+  loading,
+}) => {
   const groupedCategories = [];
   for (let i = 0; i < categories.length; i += 2) {
     groupedCategories.push(categories.slice(i, i + 2));
   }
 
   const scrollX = useRef(new Animated.Value(0)).current;
-  const ITEM_WIDTH = 140;
+  const ITEM_WIDTH = 100;
   const SCROLLBAR_WIDTH = 20;
+
+  if (loading) {
+    return (
+      <View className="p-4 relative h-48 justify-center">
+        <ActivityIndicator size="large" color="#FF8C00" />
+      </View>
+    );
+  }
 
   return (
     <View className="p-4 relative">
@@ -89,19 +49,23 @@ export const Category: React.FC<CategoryProps> = ({ handleScroll }) => {
           <View className="mx-2">
             {item.map((category) => (
               <TouchableOpacity
-                key={category.category_name}
+                key={category.id}
                 className="items-center mb-4 h-32"
-                onPress={() => handleScroll(category.category_name)}
+                onPress={() => handleScroll(category.id)}
               >
                 <View className="w-20 h-20 rounded-full flex items-center justify-center">
                   <Image
-                    source={category.category_img}
+                    source={{ uri: category.imgUrl }}
                     className="w-16 h-16"
                     resizeMode="contain"
                   />
                 </View>
-                <Text className="text-md text-center mt-2 w-20 font-medium">
-                  {category.category_name}
+                <Text
+                  className="text-base text-center mt-2 w-20 font-medium"
+                  numberOfLines={2}
+                  ellipsizeMode="tail"
+                >
+                  {category.name}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -124,7 +88,10 @@ export const Category: React.FC<CategoryProps> = ({ handleScroll }) => {
                 {
                   translateX: scrollX.interpolate({
                     inputRange: [0, ITEM_WIDTH * groupedCategories.length],
-                    outputRange: [0, 70],
+                    outputRange: [
+                      0,
+                      ITEM_WIDTH * groupedCategories.length - SCROLLBAR_WIDTH,
+                    ],
                     extrapolate: "clamp",
                   }),
                 },

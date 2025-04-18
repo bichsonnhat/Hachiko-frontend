@@ -1,2 +1,5 @@
 export * from './category.interface'
 export * from './order.interface'
+export * from './product.interface'
+export * from './store.interface'
+export * from './voucher.interface'

@@ -1,5 +1,3 @@
-import {ImageSourcePropType} from "react-native";
-
 export interface DrinkOrder {
     drink_price: number;
     drink_name: string;
@@ -25,13 +23,6 @@ export interface ProductFromAPI {
 export interface CategoryGroup {
     _id: string; 
     products: ProductFromAPI[];
-}
-
-export interface DrinkPropertie {
-    drink_img: ImageSourcePropType;
-    drink_name: string;
-    drink_price: number;
-    drink_description: string;
 }
 
 export interface Store {
