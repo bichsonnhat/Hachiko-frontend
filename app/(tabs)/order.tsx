@@ -13,7 +13,6 @@ import {
   ActivityIndicator,
   Text,
 } from "react-native";
-
 import apiService from "@/constants/config/axiosConfig";
 import { ICategory, IProductByCategory } from "@/constants/interface";
 import { useApi } from "@/hooks/useApi";
