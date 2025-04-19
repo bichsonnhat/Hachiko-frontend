@@ -20,13 +20,11 @@ export default function TabLayout() {
   const { isSignedIn } = useAuth();
 
 
-  /* if (!isSignedIn) {
-    return <Redirect href="/auth" />;
-  }*/
+  // if (!isSignedIn) {
+  //   return <Redirect href="/auth" />;
+  // }
 
-/*
-  return <Redirect href="/(dashboard)/dashboard" />
-*/
+  // return <Redirect href="/cloudinary-example" />
 
   const pageToHideTabBar = [
     "order-feedback",
