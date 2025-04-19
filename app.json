@@ -48,6 +48,13 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "cloudinary": {
+        "cloudName": "dwdedkup7",
+        "apiKey": "316526472187336",
+        "uploadPreset": "hachiko_uploads"
+      }
     }
   }
 }

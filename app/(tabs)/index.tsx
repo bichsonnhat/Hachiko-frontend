@@ -8,7 +8,7 @@ import ProductGridSection from "@/components/HomeScreen/ProductGridSection";
 import apiService from "@/constants/config/axiosConfig";
 import { ProductFromAPI } from "@/constants";
 import { useEffect, useState } from "react";
-
+import { router } from "expo-router";
 export default function HomeScreen() {
   const [products, setProducts] = useState<ProductFromAPI[]>([]);
 

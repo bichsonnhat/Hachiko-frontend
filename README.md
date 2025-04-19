@@ -60,3 +60,64 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+## Cloudinary Setup
+
+This application uses Cloudinary for image uploads. Follow these steps to configure your Cloudinary account:
+
+1. Create a Cloudinary account at [cloudinary.com](https://cloudinary.com/)
+2. Go to your Dashboard to get your Cloud Name, API Key, and API Secret
+3. Create an upload preset:
+   - Go to Settings > Upload
+   - Scroll down to "Upload presets" and click "Add upload preset"
+   - Set the preset name to "hachiko_uploads" (or update the code to match your preferred name)
+   - Configure your preset settings (optional):
+     - Set "Mode" to "Signed" for more security
+     - Enable auto-tagging, moderation, or other features as needed
+     - Configure transformation options as needed
+   - Save the preset
+
+4. Update your environment variables:
+   ```
+   EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME=your_cloud_name
+   EXPO_PUBLIC_CLOUDINARY_API_KEY=your_api_key
+   CLOUDINARY_API_SECRET=your_api_secret
+   ```
+
+### Using the Image Uploader
+
+The application includes a reusable `ImageUploader` component:
+
+```jsx
+import ImageUploader from '../components/ImageUploader';
+
+// In your component:
+<ImageUploader 
+  onImageUploaded={(imageData) => console.log(imageData)}
+  folder="your_folder_name"
+  width={300}
+  height={300}
+  placeholder="Tap to upload an image"
+/>
+```
+
+You can also access the Cloudinary utilities directly using the `useCloudinary` hook:
+
+```jsx
+import { useCloudinary } from '../hooks/useCloudinary';
+
+// In your component:
+const { 
+  pickAndUploadImage, 
+  takePhotoAndUpload, 
+  getImage, 
+  removeImage,
+  isUploading,
+  uploadProgress,
+  uploadError
+} = useCloudinary();
+
+// Use these functions to manage images
+```
+
+A full example is available at `/app/cloudinary-example.tsx`
