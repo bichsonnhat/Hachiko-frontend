@@ -47,17 +47,38 @@ export const MapScreen = ({visible, onClose}: ShopModalProps) => {
                     style={StyleSheet.absoluteFillObject}
                     className="w-full h-4/5"
                     initialRegion={{
-                        latitude: location?.coords.latitude || 37.78825, // Use the current latitude or default to 37.78825
+                        /*latitude: location?.coords.latitude || 37.78825, // Use the current latitude or default to 37.78825
                         longitude: location?.coords.longitude || -122.4324, // Use the current longitude or default to -122.4324
                         latitudeDelta: 0.0922,
-                        longitudeDelta: 0.0421,
+                        longitudeDelta: 0.0421,*/
+                        latitude: 10.722236, // Use the current latitude or default to 37.78825
+                        longitude: 106.619656, // Use the current longitude or default to -122.4324
+                        latitudeDelta: 0.04,
+                        longitudeDelta: 0.05,
                     }}
                 >
                     {location && (
                         <Marker
+                            onPress={()=>{
+                                console.log("Marker pressed");
+                                onClose();
+
+                            }}
                             coordinate={{
-                                latitude: location.coords.latitude,
-                                longitude: location.coords.longitude,
+                                latitude: 10.722236,
+                                longitude: 106.619656,
+                            }}
+                        />
+                    )}{location && (
+                        <Marker
+                            onPress={()=>{
+                                console.log("Marker pressed");
+                                onClose();
+
+                            }}
+                            coordinate={{
+                                latitude: 10.8644007,
+                                longitude: 106.8104089,
                             }}
                         />
                     )}
