@@ -220,11 +220,10 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
                     }}
                   >
                     {isFavourite ? (
-                      <HeartOff size={24} color="gray" />
+                      <HeartOff size={24} color="red" />
                     ) : (
                       <Heart size={24} color="red" />
                     )}
-                    {/* <Heart size={24} color="orange" /> */}
                   </TouchableOpacity>
                 </View>
                 <Text className="text-lg font-semibold mt-1">
