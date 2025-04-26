@@ -11,6 +11,7 @@ import DropDownPicker from "react-native-dropdown-picker";
 export default function OrderFeedback() {
   //hard coded data for user
   const userId = "67fe6f866bcac94e258e3a20";
+  const username = "Nguyễn Văn A";
 
   const { errorMessage, callApi: callSuccessOrderApi } = useApi<void>();
 
@@ -32,6 +33,7 @@ export default function OrderFeedback() {
     await callSuccessOrderApi(async () => {
       const payload: IOrderFeedback = {
         userId: userId,
+        username,
         orderId: selectedOrder,
         feedbackContent: feedback,
         rating: rating,

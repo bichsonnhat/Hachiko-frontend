@@ -17,6 +17,7 @@ import { IRegularFeedback } from "@/constants";
 export default function ShopFeedback() {
   //hard coded data for user
   const userId = "67fe6f866bcac94e258e3a20";
+  const username = "Nguyễn Văn A";
 
   const { loading, errorMessage, callApi: callFeedbackApi } = useApi<void>();
   const navigation = useNavigation();
@@ -50,6 +51,7 @@ export default function ShopFeedback() {
     await callFeedbackApi(async () => {
       const payload: IRegularFeedback = {
         userId: userId,
+        username,
         feedbackContent: feedback,
       };
       const { data } = await apiService.post("/feedback/regular", payload);
