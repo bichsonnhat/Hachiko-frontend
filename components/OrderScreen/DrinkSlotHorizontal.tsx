@@ -103,6 +103,8 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
       const newItem: IOrderItem = {
         id: generateObjectId(),
         productId: drink.id ?? "",
+        productImage: drink.imageUrl,
+        productName: drink.title,
         topping: selectedToppings.join(", "),
         quantity,
         price: calculatePrice(),

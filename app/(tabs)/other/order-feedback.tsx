@@ -1,5 +1,5 @@
 import { RatingOrder } from "@/components/OtherScreen";
-import { IOrderFeedback } from "@/constants";
+import { IFullOrder, IOrderFeedback, OrderStatus } from "@/constants";
 import apiService from "@/constants/config/axiosConfig";
 import { useApi } from "@/hooks/useApi";
 import { useNavigation } from "expo-router";
@@ -48,15 +48,25 @@ export default function OrderFeedback() {
   useEffect(() => {
     const fetchOrders = async () => {
       await callSuccessOrderApi(async () => {
-        const { data } = await apiService.get(
-          `/orders/success-orders/${userId}`
-        );
+        const queryString = new URLSearchParams({
+          orderStatus: OrderStatus.COMPLETED,
+        });
+        const url = `/orders/customer/${userId}?${queryString}`;
+        const { data } = await apiService.get(url);
         if (data) {
-          const orderItems = data.map((order: string) => ({
-            label: `Mã đơn hàng: ${order}`,
-            value: order,
-          }));
-          setItems(orderItems);
+          const orders = data.map((order: IFullOrder) => {
+            const totalPrice = order.orderItems.reduce(
+              (prev, current) => prev + current.price * current.quantity,
+              0
+            );
+            return {
+              label: `Đơn ${order.order.id} - ${totalPrice.toLocaleString(
+                "vi-VN"
+              )}đ`,
+              value: order.order.id,
+            };
+          });
+          setItems(orders);
         }
       });
     };

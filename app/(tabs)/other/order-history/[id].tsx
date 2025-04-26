@@ -5,27 +5,70 @@ import {
   Image,
   TouchableOpacity,
   ImageSourcePropType,
+  Alert,
 } from "react-native";
-import { useLocalSearchParams, useNavigation } from "expo-router";
-import { useEffect } from "react";
-
-type Order = {
-  id: string;
-  total: number;
-  items: {
-    id: number;
-    name: string;
-    size: string;
-    quantity: number;
-    price: number;
-    note?: string;
-    image: ImageSourcePropType;
-  }[];
-};
+import {
+  useFocusEffect,
+  useLocalSearchParams,
+  useNavigation,
+  useRouter,
+} from "expo-router";
+import { useCallback, useEffect, useState } from "react";
+import { IFullOrder, OrderRecord, OrderStatus } from "@/constants";
+import apiService from "@/constants/config/axiosConfig";
+import { useApi } from "@/hooks/useApi";
 
 export default function OrderDetail() {
   const { id } = useLocalSearchParams();
   const navigation = useNavigation();
+  const router = useRouter();
+
+  const { errorMessage, callApi: callOrderApi } = useApi<void>();
+  const [order, setOrder] = useState<IFullOrder | null>(null);
+
+  const handleCancelledOrder = async (order: IFullOrder) => {
+    await callOrderApi(async () => {
+      order.order.orderStatus = OrderStatus.CANCELLED;
+      const { data } = await apiService.put("/orders", order);
+      if (data) {
+        Alert.alert("Hủy đơn hàng thành công");
+        router.push("/(tabs)/other/order-history");
+      }
+    });
+  };
+  const handleCompletedOrder = async (order: IFullOrder) => {
+    await callOrderApi(async () => {
+      order.order.orderStatus = OrderStatus.COMPLETED;
+      const { data } = await apiService.put("/orders", order);
+      if (data) {
+        Alert.alert("Xác nhận đơn hàng thành công");
+        router.push("/(tabs)/other/order-history");
+      }
+    });
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+
+      const fetchOrderDetails = async () => {
+        await callOrderApi(async () => {
+          const url = `/orders/${id}`;
+          const { data } = await apiService.get(url);
+          if (isActive) {
+            setOrder(data);
+          }
+        });
+      };
+      fetchOrderDetails();
+
+      return () => {
+        isActive = false;
+        setOrder(null);
+      };
+    }, [id])
+  );
+
   useEffect(() => {
     navigation.setOptions({
       headerTitle: "Chi tiết đơn hàng",
@@ -39,86 +82,31 @@ export default function OrderDetail() {
     });
   }, [navigation]);
 
-  const order: Order = {
-    id: (id as string) || "",
-    total: 1029000,
-    items: [
-      {
-        id: 1,
-        name: "Phin Sữa Tươi Bánh Flan 1",
-        size: "Lớn",
-        quantity: 3,
-        price: 49000,
-        note: "Kem Thêm",
-        image: require("@/assets/images/Products/tra-xanh-nong.jpg"),
-      },
-      {
-        id: 2,
-        name: "Trà Xanh Espresso Marble 2",
-        size: "Lớn",
-        quantity: 2,
-        price: 49000,
-        note: "Ít đường",
-        image: require("@/assets/images/Products/ca-phe-goi.jpg"),
-      },
-      {
-        id: 3,
-        name: "Phin Sữa Tươi Bánh Flan 3",
-        size: "Lớn",
-        quantity: 4,
-        price: 49000,
-        note: "Cho thêm đá",
-        image: require("@/assets/images/Products/thung-ca-phe.jpg"),
-      },
-      {
-        id: 4,
-        name: "Phin Sữa Tươi Bánh Flan 4",
-        size: "Lớn",
-        quantity: 5,
-        price: 49000,
-        note: "Không đường",
-        image: require("@/assets/images/Products/tra-sua-o-long.png"),
-      },
-      {
-        id: 5,
-        name: "Phin Sữa Tươi Bánh Flan 5",
-        size: "Lớn",
-        quantity: 1,
-        price: 49000,
-        note: "Không đá",
-        image: require("@/assets/images/Products/tra-xanh-nong.jpg"),
-      },
-      {
-        id: 6,
-        name: "Phin Sữa Tươi Bánh Flan 6",
-        size: "Lớn",
-        quantity: 2,
-        price: 49000,
-        note: "Cho tôi trân châu",
-        image: require("@/assets/images/Products/thung-ca-phe.jpg"),
-      },
-      {
-        id: 7,
-        name: "Phin Sữa Tươi Bánh Flan 7",
-        size: "Lớn",
-        quantity: 7,
-        price: 49000,
-        image: require("@/assets/images/Products/tra-sua-o-long.png"),
-      },
-    ],
-  };
+  useEffect(() => {
+    if (errorMessage) {
+      console.error("❌ Lỗi khi lấy chi tiết đơn hàng:", errorMessage);
+    }
+  }, [errorMessage]);
 
   return (
     <View className="flex-1 bg-white">
       <ScrollView className="flex-1 p-4">
-        {order.items.map((item) => (
+        {order?.orderItems.map((item) => (
           <View key={item.id} className="mb-4 border-b border-gray-300 pb-2">
             <View className="flex-row">
-              <Image source={item.image} className="w-16 h-16 rounded-md" />
+              <Image
+                source={{ uri: item.productImage }}
+                className="w-16 h-16 rounded-md"
+              />
               <View className="flex-1 ml-4">
-                <Text className="text-base font-semibold">{item.name}</Text>
+                <Text className="text-base font-semibold">
+                  {item.productName}
+                </Text>
                 <Text className="text-gray-500">
-                  Kích cỡ: <Text className="font-bold">{item.size}</Text>
+                  Kích cỡ:{" "}
+                  <Text className="font-bold">
+                    {item.size === "small" ? "Nhỏ" : "Vừa"}
+                  </Text>
                 </Text>
                 <View className="flex-row justify-between">
                   <Text className="text-gray-500">
@@ -151,33 +139,58 @@ export default function OrderDetail() {
         ))}
       </ScrollView>
       <View className="bg-gray-100 p-4 shadow-md border-t border-gray-300">
-        <Text className="text-lg font-semibold text-center">Tổng cộng</Text>
+        <Text className="text-lg font-semibold text-center">
+          Thông tin khác
+        </Text>
         <View className="flex-row justify-between mt-2">
-          <Text className="text-gray-600">Thành tiền</Text>
+          <Text className="text-gray-600">Ngày đặt hàng</Text>
           <Text className="text-black font-semibold">
-            {order.total.toLocaleString()}₫
+            {order?.order.createdAt
+              ? new Date(order.order.orderTime).toLocaleDateString("vi-VN")
+              : "N/A"}
           </Text>
         </View>
         <View className="flex-row justify-between mt-1">
-          <Text className="text-gray-600">Phí vận chuyển</Text>
-          <Text className="text-black font-semibold">0₫</Text>
+          <Text className="text-gray-600">Phương thức thanh toán</Text>
+          <Text className="text-black font-semibold">
+            {order?.order.paymentMethod}
+          </Text>
         </View>
         <View className="flex-row justify-between mt-1">
-          <Text className="text-gray-600">Giảm giá</Text>
-          <Text className="text-black font-semibold">0₫</Text>
+          <Text className="text-gray-600">Địa chỉ giao hàng</Text>
+          <Text className="text-black font-semibold">
+            {order?.order.orderAddress}
+          </Text>
+        </View>
+        <View className="flex-row justify-between mt-1">
+          <Text className="text-gray-600">Trạng thái đơn hàng</Text>
+          <Text className="text-black font-semibold">
+            {order?.order.orderStatus &&
+              OrderRecord[order.order.orderStatus as OrderStatus]}
+          </Text>
         </View>
         <View className="flex-row justify-between mt-2 border-t border-gray-300 pt-2">
-          <Text className="text-xl font-bold">Tổng cộng</Text>
+          <Text className="text-xl font-bold">Giá trị đơn hàng</Text>
           <Text className="text-xl font-bold text-orange-600">
-            {order.total.toLocaleString()}₫
+            {order?.order.orderCost.toLocaleString()}₫
           </Text>
         </View>
 
-        <View className="flex-row mt-4">
-          <TouchableOpacity className="flex-1 bg-green-500 p-3 rounded-lg mx-2">
+        <View
+          className={`flex-row mt-4 ${
+            order?.order.orderStatus === OrderStatus.DELIVERING ? "" : "hidden"
+          }`}
+        >
+          <TouchableOpacity
+            className="flex-1 bg-green-500 p-3 rounded-lg mx-2"
+            onPress={() => handleCompletedOrder(order!)}
+          >
             <Text className="text-white text-center font-bold">Xác nhận</Text>
           </TouchableOpacity>
-          <TouchableOpacity className="flex-1 bg-red-500 p-3 rounded-lg mx-2">
+          <TouchableOpacity
+            className="flex-1 bg-red-500 p-3 rounded-lg mx-2"
+            onPress={() => handleCancelledOrder(order!)}
+          >
             <Text className="text-white text-center font-bold">Hủy đơn</Text>
           </TouchableOpacity>
         </View>
