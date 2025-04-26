@@ -10,8 +10,15 @@ import {
 } from "react-native";
 import { Globe, Mail, Phone, NotebookPen } from "lucide-react-native";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { useApi } from "@/hooks/useApi";
+import apiService from "@/constants/config/axiosConfig";
+import { IRegularFeedback } from "@/constants";
 
 export default function ShopFeedback() {
+  //hard coded data for user
+  const userId = "67fe6f866bcac94e258e3a20";
+
+  const { loading, errorMessage, callApi: callFeedbackApi } = useApi<void>();
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -27,23 +34,37 @@ export default function ShopFeedback() {
     });
   }, [navigation]);
 
+  const [openModal, setOpenModal] = useState<boolean>(false);
+  const [feedback, setFeedback] = useState<string>("");
+
   const handleOpenLink = (url: string) => {
     Linking.openURL(url).catch(() => alert("Không thể mở đường dẫn!"));
   };
-
-  const [openModal, setOpenModal] = useState<boolean>(false);
-  const [feedback, setFeedback] = useState<string>("");
 
   const handleCloseModal = () => {
     setFeedback("");
     setOpenModal(false);
   };
 
-  const handleSendFeedback = () => {
-    alert("Cảm ơn bạn đã gửi phản hồi!");
-    handleCloseModal();
+  const handleSendFeedback = async () => {
+    await callFeedbackApi(async () => {
+      const payload: IRegularFeedback = {
+        userId: userId,
+        feedbackContent: feedback,
+      };
+      const { data } = await apiService.post("/feedback/regular", payload);
+      if (data) {
+        alert("Cảm ơn bạn đã gửi phản hồi!");
+        handleCloseModal();
+      }
+    });
   };
 
+  useEffect(() => {
+    if (errorMessage) {
+      console.error("❌ Lỗi khi gửi phản hồi:", errorMessage);
+    }
+  }, [errorMessage]);
   return (
     <>
       <View className="flex-1 p-1">
@@ -133,7 +154,7 @@ export default function ShopFeedback() {
               className={`mt-4 p-3 rounded-lg ${
                 feedback.trim() ? "bg-yellow-500" : "bg-gray-300"
               }`}
-              disabled={!feedback.trim()}
+              disabled={!feedback.trim() || loading}
               onPress={handleSendFeedback}
             >
               <Text className="text-white text-center font-semibold">

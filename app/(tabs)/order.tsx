@@ -2,21 +2,29 @@ import {
   Category,
   CheckoutBtn,
   Collection,
-  Drinks,
+  DrinkSlotHorizontal,
   Header,
 } from "@/components/OrderScreen";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  ScrollView,
   View,
   SafeAreaView,
   ActivityIndicator,
   Text,
+  FlatList,
+  ListRenderItemInfo,
 } from "react-native";
 import apiService from "@/constants/config/axiosConfig";
 import { ICategory, IProductByCategory } from "@/constants/interface";
 import { useApi } from "@/hooks/useApi";
 import React from "react";
+
+type SectionItem = {
+  type: "collection" | "category";
+  categoryId?: string;
+  categoryName?: string;
+  products?: any[];
+};
 
 export default function OrderScreen() {
   const {
@@ -30,18 +38,17 @@ export default function OrderScreen() {
     errorMessage: productErrorMessage,
     callApi: callProductApi,
   } = useApi<void>();
+
   const [categoryGroups, setCategoryGroups] = useState<IProductByCategory[]>(
     []
   );
   const [categories, setCategories] = useState<ICategory[]>([]);
+  const [sectionData, setSectionData] = useState<SectionItem[]>([]);
 
   const getCategoryName = (categoryId: string): string => {
     const category = categories.find((cat) => cat.id === categoryId);
     return category ? category.name : `Danh mục ${categoryId}`;
   };
-
-  const scrollViewRef = useRef<ScrollView>(null);
-  const sectionsRef = useRef<Record<string, React.RefObject<View>>>({});
 
   const checkHasTopping = (categoryId: string) => {
     const category = categories.find((cat) => cat.id === categoryId);
@@ -55,16 +62,6 @@ export default function OrderScreen() {
     return product ? product.title : `Sản phẩm ${productId}`;
   };
 
-  const handleScroll = (categoryId: string) => {
-    const section = sectionsRef.current[categoryId]?.current;
-    const scrollView = scrollViewRef.current;
-    if (section && scrollView) {
-      section.measure((x, y) => {
-        scrollView.scrollTo({ x: 0, y: y - 32, animated: true });
-      });
-    }
-  };
-
   useEffect(() => {
     const fetchCategoryData = async () => {
       await callCategoryApi(async () => {
@@ -72,24 +69,32 @@ export default function OrderScreen() {
         setCategories(data);
       });
     };
+
     const fetchProductData = async () => {
       await callProductApi(async () => {
         const { data } = await apiService.get("/products/grouped-by-category");
         setCategoryGroups(data);
       });
     };
+
     fetchCategoryData();
     fetchProductData();
   }, []);
+
   useEffect(() => {
-    const refObj: Record<string, React.RefObject<View>> = {};
-    categories.forEach((category) => {
-      if (category.id) {
-        refObj[category.id] = React.createRef<View>();
-      }
-    });
-    sectionsRef.current = refObj;
-  }, [categories]);
+    if (categoryGroups.length > 0) {
+      const sections: SectionItem[] = [
+        { type: "collection" },
+        ...categoryGroups.map((group) => ({
+          type: "category" as const,
+          categoryId: group.categoryID,
+          categoryName: getCategoryName(group.categoryID),
+          products: group.products,
+        })),
+      ];
+      setSectionData(sections);
+    }
+  }, [categoryGroups]);
 
   useEffect(() => {
     if (categoryErrorMessage) {
@@ -100,46 +105,60 @@ export default function OrderScreen() {
     }
   }, [categoryErrorMessage, productErrorMessage]);
 
+  const renderItem = ({ item }: ListRenderItemInfo<SectionItem>) => {
+    if (item.type === "collection") {
+      return (
+        <View className="mt-4">
+          <Category categories={categories} loading={categoryLoading} />
+          <Collection />
+        </View>
+      );
+    }
+
+    return (
+      <View className="flex-col pb-6">
+        <Text className="font-bold text-xl pl-4 mt-6">{item.categoryName}</Text>
+        <View>
+          {item.products?.map((drink, index) => (
+            <View key={index} className="p-2 rounded-lg">
+              <DrinkSlotHorizontal drink={drink} check={checkHasTopping} />
+            </View>
+          ))}
+        </View>
+      </View>
+    );
+  };
+
+  const keyExtractor = (item: SectionItem, index: number) => {
+    if (item.type === "collection") return "collection";
+    return `cat-${item.categoryId ?? index}`;
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-white">
       <View className="flex-1 bg-white">
         <View className="absolute top-0 left-0 right-0 z-10 bg-white">
           <Header />
         </View>
-        <ScrollView className="mt-16" ref={scrollViewRef}>
-          <View className="mt-4">
-            <Category
-              handleScroll={handleScroll}
-              categories={categories}
-              loading={categoryLoading}
-            />
+
+        {productLoading ? (
+          <View className="flex-1 items-center justify-center h-full mt-5">
+            <ActivityIndicator size="large" color="#FF8C00" />
           </View>
-          <Collection />
-          {productLoading ? (
-            <View className="flex-1 items-center justify-center h-full mt-5">
-              <ActivityIndicator size="large" color="#FF8C00" />
-            </View>
-          ) : categories.length === 0 ? (
-            <View className="flex-1 items-center justify-center h-full mt-5">
-              <Text className="text-lg text-gray-500">Chưa có sản phẩm</Text>
-            </View>
-          ) : (
-            categoryGroups.map((group) => {
-              const categoryId = group.categoryID;
-              const categoryName = getCategoryName(categoryId);
-              return (
-                <View key={categoryId} ref={sectionsRef.current[categoryId]}>
-                  <Drinks
-                    title={categoryName}
-                    drinks={group.products}
-                    checkHasTopping={checkHasTopping}
-                  />
-                </View>
-              );
-            })
-          )}
-        </ScrollView>
+        ) : categories.length === 0 ? (
+          <View className="flex-1 items-center justify-center h-full mt-5">
+            <Text className="text-lg text-gray-500">Chưa có sản phẩm</Text>
+          </View>
+        ) : (
+          <FlatList
+            className="mt-16"
+            data={sectionData}
+            renderItem={renderItem}
+            keyExtractor={keyExtractor}
+          />
+        )}
       </View>
+
       <CheckoutBtn getProductName={getProductName} />
     </SafeAreaView>
   );

@@ -5,30 +5,26 @@ import {
   Image,
   Text,
   FlatList,
-  TouchableOpacity,
   Animated,
   ActivityIndicator,
+  Dimensions,
 } from "react-native";
 
 type CategoryProps = {
   categories: ICategory[];
-  handleScroll: (categoryID: string) => void;
   loading: boolean;
 };
 
-export const Category: React.FC<CategoryProps> = ({
-  handleScroll,
-  categories,
-  loading,
-}) => {
+export const Category: React.FC<CategoryProps> = ({ categories, loading }) => {
   const groupedCategories = [];
   for (let i = 0; i < categories.length; i += 2) {
     groupedCategories.push(categories.slice(i, i + 2));
   }
 
   const scrollX = useRef(new Animated.Value(0)).current;
-  const ITEM_WIDTH = 100;
-  const SCROLLBAR_WIDTH = 20;
+  const SCREEN_WIDTH = Dimensions.get("window").width;
+  const ITEM_WIDTH = SCREEN_WIDTH / groupedCategories.length;
+  const SCROLLBAR_WIDTH = SCREEN_WIDTH / (groupedCategories.length * 2);
 
   if (loading) {
     return (
@@ -48,11 +44,7 @@ export const Category: React.FC<CategoryProps> = ({
         renderItem={({ item }) => (
           <View className="mx-2">
             {item.map((category) => (
-              <TouchableOpacity
-                key={category.id}
-                className="items-center mb-4 h-32"
-                onPress={() => handleScroll(category.id)}
-              >
+              <View key={category.id} className="items-center mb-4 h-32">
                 <View className="w-20 h-20 rounded-full flex items-center justify-center">
                   <Image
                     source={{ uri: category.imgUrl }}
@@ -67,7 +59,7 @@ export const Category: React.FC<CategoryProps> = ({
                 >
                   {category.name}
                 </Text>
-              </TouchableOpacity>
+              </View>
             ))}
           </View>
         )}
@@ -80,18 +72,18 @@ export const Category: React.FC<CategoryProps> = ({
         <View className="w-10 h-2 bg-gray-300 rounded-full overflow-hidden">
           <Animated.View
             style={{
-              width: SCROLLBAR_WIDTH,
+              width: SCROLLBAR_WIDTH * 0.75,
               height: "100%",
               backgroundColor: "#FF8C00",
               borderRadius: 999,
               transform: [
                 {
                   translateX: scrollX.interpolate({
-                    inputRange: [0, ITEM_WIDTH * groupedCategories.length],
-                    outputRange: [
+                    inputRange: [
                       0,
-                      ITEM_WIDTH * groupedCategories.length - SCROLLBAR_WIDTH,
+                      ITEM_WIDTH * (groupedCategories.length - 1),
                     ],
+                    outputRange: [0, (SCREEN_WIDTH - SCROLLBAR_WIDTH) / 16],
                     extrapolate: "clamp",
                   }),
                 },

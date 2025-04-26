@@ -4,7 +4,7 @@ import {
   Text,
   TouchableOpacity,
   Modal,
-  ScrollView,
+  FlatList,
 } from "react-native";
 import { IFavouriteProductsResponse } from "@/constants";
 import { HeartOff, MinusIcon } from "lucide-react-native";
@@ -34,6 +34,44 @@ export const DrinkFavourite: React.FC<DrinkFavouriteProps> = ({
     return matched?.id;
   };
 
+  const renderItem = ({
+    item,
+  }: {
+    item: { id: string; imageUrl: string; title: string; price: number };
+  }) => {
+    return (
+      <View
+        className="relative rounded-2xl p-3 shadow-lg bg-white flex-row items-center gap-4 mb-2"
+        key={item.id}
+      >
+        <View className="w-1/3 h-32 rounded-lg">
+          <Image
+            source={{ uri: item.imageUrl }}
+            className="w-full h-full rounded-2xl"
+            resizeMode="contain"
+          />
+        </View>
+        <View className="flex-1 flex-row items-center justify-between">
+          <View className="flex-col gap-2 max-w-[160px]">
+            <Text className="font-semibold">{item.title}</Text>
+            <Text>{item.price.toLocaleString("vi-VN")}đ</Text>
+          </View>
+          <TouchableOpacity
+            className="w-8 h-8 p-[2px] rounded-full flex items-center justify-center"
+            onPress={() => {
+              const favId = extractFavouriteProductId(userId, item.id);
+              if (favId) {
+                handleUnlike(favId);
+              }
+            }}
+          >
+            <HeartOff size={24} color="red" />
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  };
+
   return (
     <Modal
       animationType="slide"
@@ -55,49 +93,17 @@ export const DrinkFavourite: React.FC<DrinkFavouriteProps> = ({
               <MinusIcon size={24} color="black" />
             </TouchableOpacity>
           </View>
-
-          <ScrollView className="flex-1 gap-5">
-            {drinks?.products.length === 0 ? (
+          <FlatList
+            data={(drinks?.products as Array<any>) || []}
+            keyExtractor={(item) => item.id}
+            renderItem={renderItem}
+            contentContainerStyle={{ paddingBottom: 10 }}
+            ListEmptyComponent={
               <View className="flex-1 items-center justify-center h-full mt-5">
                 <Text className="text-lg text-gray-500">Chưa có sản phẩm</Text>
               </View>
-            ) : (
-              drinks?.products.map((drink) => (
-                <View
-                  className="relative rounded-2xl p-3 shadow-lg bg-white flex-row items-center gap-4 mb-2"
-                  key={drink.id}
-                >
-                  <View className="w-1/3 h-32 rounded-lg">
-                    <Image
-                      source={{ uri: drink.imageUrl }}
-                      className="w-full h-full rounded-2xl"
-                      resizeMode="contain"
-                    />
-                  </View>
-                  <View className="flex-1 flex-row items-center justify-between">
-                    <View className="flex-col gap-2 max-w-[160px]">
-                      <Text className="font-semibold">{drink.title}</Text>
-                      <Text>{drink.price.toLocaleString("vi-VN")}đ</Text>
-                    </View>
-                    <TouchableOpacity
-                      className={`w-8 h-8 p-[2px] rounded-full flex items-center justify-center}`}
-                      onPress={() => {
-                        const favId = extractFavouriteProductId(
-                          userId,
-                          drink.id || ""
-                        );
-                        if (favId) {
-                          handleUnlike(favId);
-                        }
-                      }}
-                    >
-                      <HeartOff size={24} color="red" />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              ))
-            )}
-          </ScrollView>
+            }
+          />
         </View>
       </View>
     </Modal>

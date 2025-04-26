@@ -1,4 +1,7 @@
 import { RatingOrder } from "@/components/OtherScreen";
+import { IOrderFeedback } from "@/constants";
+import apiService from "@/constants/config/axiosConfig";
+import { useApi } from "@/hooks/useApi";
 import { useNavigation } from "expo-router";
 import { useEffect, useState } from "react";
 import { View, Text, TextInput, TouchableOpacity } from "react-native";
@@ -6,56 +9,59 @@ import { View, Text, TextInput, TouchableOpacity } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 
 export default function OrderFeedback() {
-  const orders = [
-    {
-      id: 1,
-      total: 245000,
-      date: "19/05/2024",
-      time: "08:50:12",
-      status: "Chờ xác nhận",
-    },
-    {
-      id: 2,
-      total: 245000,
-      date: "19/05/2024",
-      time: "08:50:12",
-      status: "Chờ xác nhận",
-    },
-    {
-      id: 3,
-      total: 245000,
-      date: "19/05/2024",
-      time: "08:50:12",
-      status: "Chờ xác nhận",
-    },
-    {
-      id: 4,
-      total: 245000,
-      date: "19/05/2024",
-      time: "08:50:12",
-      status: "Chờ xác nhận",
-    },
-    {
-      id: 5,
-      total: 245000,
-      date: "19/05/2024",
-      time: "08:50:12",
-      status: "Chờ xác nhận",
-    },
-  ];
+  //hard coded data for user
+  const userId = "67fe6f866bcac94e258e3a20";
+
+  const { errorMessage, callApi: callSuccessOrderApi } = useApi<void>();
 
   const navigation = useNavigation();
   const [feedback, setFeedback] = useState<string>("");
   const [rating, setRating] = useState<number>(3);
-  const [selectedOrder, setSelectedOrder] = useState<number | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<string>("");
 
   const [open, setOpen] = useState(false);
-  const [items, setItems] = useState(
-    orders.map((order) => ({
-      label: `Đơn #${order.id} - ${order.total.toLocaleString()}₫`,
-      value: order.id,
-    }))
-  );
+  const [items, setItems] = useState<{ label: string; value: string }[]>([]);
+
+  const handleClear = () => {
+    setFeedback("");
+    setRating(3);
+    setSelectedOrder("");
+  };
+
+  const handleSubmit = async () => {
+    await callSuccessOrderApi(async () => {
+      const payload: IOrderFeedback = {
+        userId: userId,
+        orderId: selectedOrder,
+        feedbackContent: feedback,
+        rating: rating,
+      };
+
+      const { data } = await apiService.post("/feedback/order", payload);
+      if (data) {
+        handleClear();
+        alert("Đánh giá của bạn đã được gửi đi!");
+      }
+    });
+  };
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      await callSuccessOrderApi(async () => {
+        const { data } = await apiService.get(
+          `/orders/success-orders/${userId}`
+        );
+        if (data) {
+          const orderItems = data.map((order: string) => ({
+            label: `Mã đơn hàng: ${order}`,
+            value: order,
+          }));
+          setItems(orderItems);
+        }
+      });
+    };
+    fetchOrders();
+  }, []);
 
   useEffect(() => {
     navigation.setOptions({
@@ -70,12 +76,11 @@ export default function OrderFeedback() {
     });
   }, [navigation]);
 
-  const handleSubmit = () => {
-    console.log("Đơn hàng:", selectedOrder);
-    console.log("Rating:", rating);
-    console.log("Feedback:", feedback);
-    alert("Đánh giá của bạn đã được gửi đi!");
-  };
+  useEffect(() => {
+    if (errorMessage) {
+      console.error("❌ Lỗi khi gửi phản hồi:", errorMessage);
+    }
+  }, [errorMessage]);
 
   return (
     <View className="flex-1 bg-white px-4 py-6">
