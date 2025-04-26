@@ -94,7 +94,7 @@ export default function OrderScreen() {
       ];
       setSectionData(sections);
     }
-  }, [categoryGroups]);
+  }, [categoryGroups, categories]);
 
   useEffect(() => {
     if (categoryErrorMessage) {
@@ -105,7 +105,7 @@ export default function OrderScreen() {
     }
   }, [categoryErrorMessage, productErrorMessage]);
 
-  const renderItem = ({ item }: ListRenderItemInfo<SectionItem>) => {
+  const SectionListItem = React.memo(({ item }: { item: SectionItem }) => {
     if (item.type === "collection") {
       return (
         <View className="mt-4">
@@ -127,6 +127,10 @@ export default function OrderScreen() {
         </View>
       </View>
     );
+  });
+
+  const renderItem = ({ item }: ListRenderItemInfo<SectionItem>) => {
+    return <SectionListItem item={item} />;
   };
 
   const keyExtractor = (item: SectionItem, index: number) => {
@@ -155,6 +159,10 @@ export default function OrderScreen() {
             data={sectionData}
             renderItem={renderItem}
             keyExtractor={keyExtractor}
+            initialNumToRender={5}
+            maxToRenderPerBatch={10}
+            windowSize={5}
+            removeClippedSubviews
           />
         )}
       </View>
