@@ -4,24 +4,28 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { CalendarDays } from "lucide-react-native";
 
 type DateSelectionProps = {
-  setTimePeriod: (timePeriod: number | null) => void;
+  startDate: number;
+  endDate: number;
+  setStartDate: (timePeriod: number) => void;
+  setEndDate: (timePeriod: number) => void;
 };
 
 export const DateSelection: React.FC<DateSelectionProps> = ({
-  setTimePeriod,
+  startDate,
+  endDate,
+  setStartDate,
+  setEndDate,
 }) => {
-  const [startDate, setStartDate] = useState(new Date());
-  const [endDate, setEndDate] = useState(new Date());
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
 
   useEffect(() => {
-    const timePeriod = endDate.getTime() - startDate.getTime();
-    setTimePeriod(timePeriod);
+    setStartDate(startDate);
+    setEndDate(endDate);
   }, [startDate, endDate]);
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString("vi-VN");
+  const formatDate = (date: number) => {
+    return new Date(date).toLocaleDateString("vi-VN");
   };
 
   return (
@@ -66,21 +70,21 @@ export const DateSelection: React.FC<DateSelectionProps> = ({
 
       {showStartPicker && (
         <DateTimePicker
-          value={startDate}
+          value={new Date(startDate)}
           mode="date"
           onChange={(event, date) => {
             setShowStartPicker(false);
-            if (date) setStartDate(date);
+            if (date) setStartDate(date.getTime());
           }}
         />
       )}
       {showEndPicker && (
         <DateTimePicker
-          value={endDate}
+          value={new Date(endDate)}
           mode="date"
           onChange={(event, date) => {
             setShowEndPicker(false);
-            if (date) setEndDate(date);
+            if (date) setEndDate(date.getTime());
           }}
         />
       )}

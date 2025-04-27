@@ -6,10 +6,20 @@ import {
   TouchableOpacity,
   Image,
 } from "react-native";
-import React, { useEffect, useState } from "react";
-import { useNavigation } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
+import { useFocusEffect, useNavigation } from "expo-router";
 import { LineChart } from "react-native-chart-kit";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { IProductStatistic, IRevenueStatistic } from "@/constants";
+import { useApi } from "@/hooks/useApi";
+import apiService from "@/constants/config/axiosConfig";
+
+type RevenueDataProps = {
+  labels: string[];
+  datasets: {
+    data: number[];
+  }[];
+};
 
 const DashboardChart = () => {
   const navigation = useNavigation();
@@ -28,62 +38,85 @@ const DashboardChart = () => {
     });
   }, [navigation]);
 
-  const revenueData = {
-    labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+  const [revenueData, setRevenueData] = useState<RevenueDataProps>({
+    labels: ["2025-01"],
     datasets: [
       {
-        data: [500, 1200, 800, 1800, 2200, 1900],
+        data: [0],
       },
     ],
-  };
+  });
 
-  const [startDate, setStartDate] = useState(new Date());
-  const [endDate, setEndDate] = useState(new Date());
+  const [startDate, setStartDate] = useState<Date>(new Date(2025, 0));
+  const [endDate, setEndDate] = useState<Date>(new Date());
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
-  const [timePeriod, setTimePeriod] = useState<number | null>(null);
 
-  const bestSellingProducts = [
-    {
-      id: 1,
-      image: require("@/assets/images/Products/tra-xanh-nong.jpg"),
-      name: "test truncate Sản phẩm A Sản phẩm A Sản phẩm A Sản phẩm A Sản phẩm A Sản phẩm A",
-      quantitySold: 120,
-    },
-    {
-      id: 2,
-      image: require("@/assets/images/Products/tra-xanh-nong.jpg"),
-      name: "test truncate Sản phẩm B Sản phẩm B Sản phẩm B Sản phẩm B Sản phẩm B Sản phẩm B",
-      quantitySold: 95,
-    },
-    {
-      id: 3,
-      image: require("@/assets/images/Products/tra-xanh-nong.jpg"),
-      name: "test truncate Sản phẩm C Sản phẩm C Sản phẩm C Sản phẩm C Sản phẩm C Sản phẩm C",
-      quantitySold: 80,
-    },
-    {
-      id: 4,
-      image: require("@/assets/images/Products/tra-xanh-nong.jpg"),
-      name: "test truncate Sản phẩm D Sản phẩm D Sản phẩm D Sản phẩm D Sản phẩm D Sản phẩm D",
-      quantitySold: 75,
-    },
-    {
-      id: 5,
-      image: require("@/assets/images/Products/tra-xanh-nong.jpg"),
-      name: "Sản phẩm E",
-      quantitySold: 60,
-    },
-  ];
+  const [bestSellingProducts, setBestSellingProducts] = useState<
+    IProductStatistic[]
+  >([]);
+  const { errorMessage, callApi: callStatisticApi } = useApi<void>();
+
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+
+      const fetchData = async () => {
+        await callStatisticApi(async () => {
+          const queryString = new URLSearchParams({
+            startDate: startDate.getTime().toString(),
+            endDate: endDate.getTime().toString(),
+          });
+          const url = `/statistic/revenue?${queryString}`;
+          const { data } = await apiService.get<IRevenueStatistic>(url);
+          if (data && isActive) {
+            setRevenueData({
+              labels: data.labels,
+              datasets: [
+                {
+                  data: data.data,
+                },
+              ],
+            });
+          }
+        });
+      };
+
+      fetchData();
+
+      return () => {
+        isActive = false;
+      };
+    }, [startDate, endDate])
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+
+      const fetchData = async () => {
+        await callStatisticApi(async () => {
+          const url = `/statistic/popular-products`;
+          const { data } = await apiService.get(url);
+          if (data && isActive) {
+            setBestSellingProducts(data);
+          }
+        });
+      };
+
+      fetchData();
+
+      return () => {
+        isActive = false;
+      };
+    }, [])
+  );
 
   useEffect(() => {
-    console.log("call API search order with timePeriod", timePeriod);
-  }, [timePeriod]);
-
-  useEffect(() => {
-    const timePeriod = endDate.getTime() - startDate.getTime();
-    setTimePeriod(timePeriod);
-  }, [startDate, endDate]);
+    if (errorMessage) {
+      console.error("❌ Lỗi khi lấy thông tin thống kê:", errorMessage);
+    }
+  }, [errorMessage]);
 
   return (
     <View className="flex-1 bg-white">
@@ -104,23 +137,30 @@ const DashboardChart = () => {
             </TouchableOpacity>
           </View>
         </View>
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
+          <LineChart
+            data={revenueData}
+            width={screenWidth - 26}
+            height={300}
+            chartConfig={{
+              backgroundGradientFrom: "#f3f4f6",
+              backgroundGradientTo: "#e5e7eb",
+              color: (opacity = 1) => `rgba(255, 99, 132, ${opacity})`,
+              labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+              strokeWidth: 4,
+            }}
+            bezier
+            style={{
+              borderRadius: 8,
+              margin: 4,
+              padding: 4,
+            }}
+          />
+        </View>
 
-        <LineChart
-          data={revenueData}
-          width={screenWidth - 26}
-          height={300}
-          chartConfig={{
-            backgroundGradientFrom: "#f3f4f6",
-            backgroundGradientTo: "#e5e7eb",
-            color: (opacity = 1) => `rgba(255, 99, 132, ${opacity})`,
-            labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-            strokeWidth: 2,
-          }}
-          bezier
-          style={{ borderRadius: 8, marginVertical: 8 }}
-        />
-
-        <Text className="text-xl font-bold">Sản phẩm bán chạy nhất:</Text>
+        <Text className="text-xl font-bold">5 sản phẩm bán chạy nhất:</Text>
         <View className="bg-gray-200 rounded-lg mt-3">
           <View className="flex-row items-center p-3 bg-gray-300 rounded-t-lg">
             <Text className="flex-1 text-center font-bold">Hình ảnh</Text>
@@ -130,7 +170,7 @@ const DashboardChart = () => {
 
           {bestSellingProducts.map((product, index) => (
             <View
-              key={product.id}
+              key={product.productId}
               className={`flex-row items-center p-3 ${
                 index !== bestSellingProducts.length - 1
                   ? "border-b border-gray-300"
@@ -138,7 +178,7 @@ const DashboardChart = () => {
               }`}
             >
               <Image
-                source={product.image}
+                source={{ uri: product.productImage }}
                 className="w-16 h-16 rounded-md flex-1 text-center"
                 style={{ resizeMode: "contain" }}
               />
@@ -147,7 +187,7 @@ const DashboardChart = () => {
                 numberOfLines={1}
                 ellipsizeMode="tail"
               >
-                {product.name}
+                {product.productName}
               </Text>
 
               <Text className="flex-1 text-center">{product.quantitySold}</Text>
