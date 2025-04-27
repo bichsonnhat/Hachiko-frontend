@@ -5,7 +5,7 @@ import {
   DrinkSlotHorizontal,
   Header,
 } from "@/components/OrderScreen";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   View,
   SafeAreaView,
@@ -26,7 +26,12 @@ type SectionItem = {
   products?: any[];
 };
 
+const ITEM_HEIGHT_COLLECTION = 500;
+const ITEM_HEIGHT_PRODUCT = 150;
+const HEADER_HEIGHT = 40;
+
 export default function OrderScreen() {
+  const flatListRef = useRef<FlatList>(null);
   const {
     loading: categoryLoading,
     errorMessage: categoryErrorMessage,
@@ -44,6 +49,20 @@ export default function OrderScreen() {
   );
   const [categories, setCategories] = useState<ICategory[]>([]);
   const [sectionData, setSectionData] = useState<SectionItem[]>([]);
+
+  const scrollToCategory = (categoryId: string) => {
+    console.log("Scrolling to category:", categoryId);
+    const index = sectionData.findIndex(
+      (item) => item.categoryId === categoryId
+    );
+    console.log("Index to scroll to:", index);
+    if (index !== -1 && flatListRef.current) {
+      flatListRef.current.scrollToIndex({
+        index,
+        animated: true,
+      });
+    }
+  };
 
   const getCategoryName = (categoryId: string): string => {
     const category = categories.find((cat) => cat.id === categoryId);
@@ -109,7 +128,11 @@ export default function OrderScreen() {
     if (item.type === "collection") {
       return (
         <View className="mt-4">
-          <Category categories={categories} loading={categoryLoading} />
+          <Category
+            categories={categories}
+            loading={categoryLoading}
+            scrollToCategory={scrollToCategory}
+          />
           <Collection />
         </View>
       );
@@ -138,6 +161,33 @@ export default function OrderScreen() {
     return `cat-${item.categoryId ?? index}`;
   };
 
+  const getItemLayout = (
+    data: ArrayLike<SectionItem> | null | undefined,
+    index: number
+  ) => {
+    let offset = 0;
+
+    for (let i = 0; i < index; i++) {
+      const item = sectionData[i];
+
+      if (item.type === "collection") {
+        offset += ITEM_HEIGHT_COLLECTION;
+      } else if (item.type === "category" && item.products) {
+        offset += HEADER_HEIGHT + item.products.length * ITEM_HEIGHT_PRODUCT;
+      }
+    }
+
+    const currentItem = sectionData[index];
+    let length = ITEM_HEIGHT_COLLECTION;
+
+    if (currentItem?.type === "category" && currentItem.products) {
+      length =
+        HEADER_HEIGHT + currentItem.products.length * ITEM_HEIGHT_PRODUCT;
+    }
+
+    return { length, offset, index };
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-white">
       <View className="flex-1 bg-white">
@@ -155,10 +205,11 @@ export default function OrderScreen() {
           </View>
         ) : (
           <FlatList
-            className="mt-16"
+            ref={flatListRef}
             data={sectionData}
             renderItem={renderItem}
             keyExtractor={keyExtractor}
+            getItemLayout={getItemLayout}
             initialNumToRender={5}
             maxToRenderPerBatch={10}
             windowSize={5}

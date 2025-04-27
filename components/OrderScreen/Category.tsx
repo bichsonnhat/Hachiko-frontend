@@ -8,14 +8,20 @@ import {
   Animated,
   ActivityIndicator,
   Dimensions,
+  TouchableOpacity,
 } from "react-native";
 
 type CategoryProps = {
   categories: ICategory[];
   loading: boolean;
+  scrollToCategory: (categoryId: string) => void;
 };
 
-export const Category: React.FC<CategoryProps> = ({ categories, loading }) => {
+export const Category: React.FC<CategoryProps> = ({
+  categories,
+  loading,
+  scrollToCategory,
+}) => {
   const groupedCategories = [];
   for (let i = 0; i < categories.length; i += 2) {
     groupedCategories.push(categories.slice(i, i + 2));
@@ -35,7 +41,7 @@ export const Category: React.FC<CategoryProps> = ({ categories, loading }) => {
   }
 
   return (
-    <View className="p-4 relative">
+    <View className="p-4 relative mt-16">
       <FlatList
         data={groupedCategories}
         keyExtractor={(_item, index) => `group-${index}`}
@@ -44,7 +50,11 @@ export const Category: React.FC<CategoryProps> = ({ categories, loading }) => {
         renderItem={({ item }) => (
           <View className="mx-2">
             {item.map((category) => (
-              <View key={category.id} className="items-center mb-4 h-32">
+              <TouchableOpacity
+                key={category.id}
+                className="items-center mb-4 h-32"
+                onPress={() => scrollToCategory(category.id || "")}
+              >
                 <View className="w-20 h-20 rounded-full flex items-center justify-center">
                   <Image
                     source={{ uri: category.imgUrl }}
@@ -59,7 +69,7 @@ export const Category: React.FC<CategoryProps> = ({ categories, loading }) => {
                 >
                   {category.name}
                 </Text>
-              </View>
+              </TouchableOpacity>
             ))}
           </View>
         )}
