@@ -162,13 +162,15 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
         storeId,
         orderStatus:
           paymentMethod === "Tiền mặt"
-            ? OrderStatus.IN_PROGRESS
+            ? OrderStatus.DELIVERING
             : OrderStatus.PENDING,
         createdAt: new Date(),
       },
       orderItems: cart.map((item) => ({
         id: item.id,
         productId: item.productId,
+        productImage: item.productImage,
+        productName: item.productName,
         quantity: item.quantity,
         price: item.price,
         size: item.size,

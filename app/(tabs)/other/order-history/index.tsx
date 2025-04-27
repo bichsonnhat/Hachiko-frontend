@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigation } from "expo-router";
 import { TabView, SceneMap, TabBar } from "react-native-tab-view";
 import {
@@ -6,9 +6,13 @@ import {
   CompletedOrders,
   PendingOrders,
 } from "@/components/OtherScreen";
+import { useBoolean } from "@/hooks/useBoolean";
 
 export default function OrderHistory() {
   const navigation = useNavigation();
+
+  const { value: isOrderChanged, toggle: orderChangedToggle } =
+    useBoolean(false);
   const [index, setIndex] = useState(0);
   const [routes] = useState([
     { key: "pending", title: "Đang chờ" },
@@ -29,11 +33,23 @@ export default function OrderHistory() {
     });
   }, [navigation]);
 
-  const renderScene = SceneMap({
-    pending: PendingOrders,
-    completed: CompletedOrders,
-    cancelled: CancelledOrders,
-  });
+  const renderScene = ({ route }: { route: any }) => {
+    switch (route.key) {
+      case "pending":
+        return (
+          <PendingOrders
+            onOrderChange={orderChangedToggle}
+            orderChanged={isOrderChanged}
+          />
+        );
+      case "completed":
+        return <CompletedOrders orderChanged={isOrderChanged} />;
+      case "cancelled":
+        return <CancelledOrders orderChanged={isOrderChanged} />;
+      default:
+        return null;
+    }
+  };
 
   return (
     <TabView

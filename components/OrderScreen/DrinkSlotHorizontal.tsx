@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import {
   View,
   Image,
@@ -24,42 +24,45 @@ type DrinkSlotHorizontalProps = {
   check: (categoryId: string) => boolean;
 };
 
+const USER_ID = "67ea8e54c54fd6723fbf8f0e";
+
+const TOPPINGS = [
+  { id: "1", name: "Trái Vải", price: 8000 },
+  { id: "2", name: "Hạt Sen", price: 8000 },
+  { id: "3", name: "Thạch Cà Phê", price: 6000 },
+  { id: "4", name: "Trân châu trắng", price: 6000 },
+  { id: "5", name: "Đào Miếng", price: 10000 },
+];
+
 export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
   drink,
   check,
 }) => {
-  //hard code userId for testing
-  const userId = "67ea8e54c54fd6723fbf8f0e";
+  const { cart, addNewToCart, addExistingToCart, checkExist } = useCartStore();
   const { callApi: callFavouriteApi } = useApi<void>();
 
-  const [modalVisible, setModalVisible] = useState<boolean>(false);
-  const [quantity, setQuantity] = useState<number>(1);
-  const [note, setNote] = useState<string>("");
-  const [selectedSize, setSelectedSize] = useState<string>("small");
+  const [modalVisible, setModalVisible] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [note, setNote] = useState("");
+  const [selectedSize, setSelectedSize] = useState("small");
   const [selectedToppings, setSelectedToppings] = useState<string[]>([]);
-  const radioButtons = [
-    {
-      id: "medium",
-      label: `Vừa - ${(Number(drink.price) + 10000).toLocaleString("vi-VN")}đ`,
-      value: (drink.price + 10000).toString(),
-    },
-    {
-      id: "small",
-      label: `Nhỏ - ${drink.price.toLocaleString("vi-VN")}đ`,
-      value: drink.price.toString(),
-    },
-  ];
-  const toppings = [
-    { id: "1", name: "Trái Vải", price: 8000 },
-    { id: "2", name: "Hạt Sen", price: 8000 },
-    { id: "3", name: "Thạch Cà Phê", price: 6000 },
-    { id: "4", name: "Trân châu trắng", price: 6000 },
-    { id: "5", name: "Đào Miếng", price: 10000 },
-  ];
+  const [isFavourite, setIsFavourite] = useState(false);
 
-  const { cart, addNewToCart, addExistingToCart, checkExist } = useCartStore();
-
-  const [isFavourite, setIsFavourite] = useState<boolean>(false);
+  const radioButtons = useMemo(
+    () => [
+      {
+        id: "medium",
+        label: `Vừa - ${(drink.price + 10000).toLocaleString("vi-VN")}đ`,
+        value: (drink.price + 10000).toString(),
+      },
+      {
+        id: "small",
+        label: `Nhỏ - ${drink.price.toLocaleString("vi-VN")}đ`,
+        value: drink.price.toString(),
+      },
+    ],
+    [drink.price]
+  );
 
   const toggleTopping = (name: string) => {
     setSelectedToppings((prev) =>
@@ -69,56 +72,24 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
     );
   };
 
-  const checkIfProductIsInFavouriteProductList = async (productId: string) => {
-    await callFavouriteApi(async () => {
-      const { data } = await apiService.get(
-        `/favourite-products/${userId}/${productId}`
-      );
-      setIsFavourite(!!data);
-    });
-  };
-
-  const handleUnlike = async (id: string) => {
-    await callFavouriteApi(async () => {
-      await apiService.delete(`/favourite-products/${id}`);
-      Alert.alert("Xoá sản phẩm yêu thích thành công!");
-    });
-  };
-
-  const handleLike = async (id: string) => {
-    await callFavouriteApi(async () => {
-      const sendData: IFavouriteProduct = {
-        userId,
-        productId: id,
-      };
-      const { data } = await apiService.post(`/favourite-products`, sendData);
-      if (data) {
-        Alert.alert("Thêm sản phẩm yêu thích thành công!");
-      }
-    });
-  };
-
-  const handleCalculatePrice = () => {
-    const basePrice = radioButtons.find(
-      (radio) => radio.id === selectedSize
-    )?.value;
-    const toppingPrice = selectedToppings.reduce((prev, curr) => {
-      const topping = toppings.find((topping) => topping.name === curr);
-      return prev + (topping ? topping.price : 0);
-    }, 0);
-
-    return (Number(basePrice) + toppingPrice) * quantity;
-  };
-
-  const handleCloseModal = () => {
-    setModalVisible(false);
+  const resetModalState = () => {
     setQuantity(1);
     setNote("");
     setSelectedToppings([]);
     setSelectedSize("small");
   };
 
-  const addMoreDrink = () => {
+  const calculatePrice = useCallback(() => {
+    const basePrice =
+      radioButtons.find((r) => r.id === selectedSize)?.value || "0";
+    const toppingPrice = selectedToppings.reduce((total, toppingName) => {
+      const topping = TOPPINGS.find((t) => t.name === toppingName);
+      return total + (topping?.price || 0);
+    }, 0);
+    return (Number(basePrice) + toppingPrice) * quantity;
+  }, [radioButtons, selectedSize, selectedToppings, quantity]);
+
+  const addDrinkToCart = () => {
     if (
       checkExist(
         drink.id ?? "",
@@ -132,20 +103,52 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
       const newItem: IOrderItem = {
         id: generateObjectId(),
         productId: drink.id ?? "",
+        productImage: drink.imageUrl,
+        productName: drink.title,
         topping: selectedToppings.join(", "),
         quantity,
-        price: handleCalculatePrice(),
+        price: calculatePrice(),
         note,
         size: selectedSize,
       };
       addNewToCart(newItem);
     }
-    handleCloseModal();
+    setModalVisible(false);
+    resetModalState();
+  };
+
+  const fetchFavouriteStatus = useCallback(async () => {
+    await callFavouriteApi(async () => {
+      const { data } = await apiService.get(
+        `/favourite-products/${USER_ID}/${drink.id}`
+      );
+      setIsFavourite(!!data);
+    });
+  }, [drink.id]);
+
+  const toggleFavourite = async () => {
+    if (isFavourite) {
+      await callFavouriteApi(async () => {
+        await apiService.delete(`/favourite-products/${drink.id}`);
+        Alert.alert("Xoá sản phẩm yêu thích thành công!");
+      });
+      setIsFavourite(false);
+    } else {
+      await callFavouriteApi(async () => {
+        const sendData: IFavouriteProduct = {
+          userId: USER_ID,
+          productId: drink.id ?? "",
+        };
+        await apiService.post(`/favourite-products`, sendData);
+        Alert.alert("Thêm sản phẩm yêu thích thành công!");
+      });
+      setIsFavourite(true);
+    }
   };
 
   useEffect(() => {
-    checkIfProductIsInFavouriteProductList(drink.id ?? "");
-  }, [handleLike, handleUnlike]);
+    fetchFavouriteStatus();
+  }, [fetchFavouriteStatus]);
 
   return (
     <>
@@ -169,26 +172,29 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
                   ? "bg-orange-300"
                   : "bg-green-500"
               }`}
-              onPress={addMoreDrink}
+              onPress={addDrinkToCart}
             >
               {cart.findIndex((d) => d.productId === drink.id) === -1 ? (
-                <Plus size={22} color={"white"} />
+                <Plus size={22} color="white" />
               ) : (
-                <Check size={22} color={"white"} />
+                <Check size={22} color="white" />
               )}
             </TouchableOpacity>
           </View>
         </View>
       </TouchableOpacity>
+
+      {/* Modal */}
       <Modal
         animationType="slide"
         transparent={true}
         visible={modalVisible}
-        onRequestClose={handleCloseModal}
+        onRequestClose={() => setModalVisible(false)}
       >
         <View className="flex-1 bg-black/50 justify-center items-center">
           <View className="w-full h-full bg-white">
             <ScrollView className="flex-1" keyboardShouldPersistTaps="handled">
+              {/* Image + Close */}
               <View className="relative">
                 <Image
                   source={{ uri: drink.imageUrl }}
@@ -197,67 +203,58 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
                 />
                 <TouchableOpacity
                   className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center"
-                  onPress={handleCloseModal}
+                  onPress={() => setModalVisible(false)}
                 >
                   <MinusIcon size={24} color="black" />
                 </TouchableOpacity>
               </View>
+
               <View className="p-4 pb-24">
+                {/* Title + Favourite */}
                 <View className="flex-row justify-between items-center">
                   <Text className="text-xl font-bold w-[80%]">
                     {drink.title}
                   </Text>
                   <TouchableOpacity
                     className="w-8 h-8 rounded-full flex items-center justify-center"
-                    onPress={() => {
-                      if (isFavourite) {
-                        handleUnlike(drink.id ?? "");
-                        setIsFavourite(false);
-                      } else {
-                        handleLike(drink.id ?? "");
-                        setIsFavourite(true);
-                      }
-                    }}
+                    onPress={toggleFavourite}
                   >
                     {isFavourite ? (
-                      <HeartOff size={24} color="gray" />
+                      <HeartOff size={24} color="red" />
                     ) : (
                       <Heart size={24} color="red" />
                     )}
-                    {/* <Heart size={24} color="orange" /> */}
                   </TouchableOpacity>
                 </View>
+
                 <Text className="text-lg font-semibold mt-1">
                   {drink.price.toLocaleString("vi-VN")}đ
                 </Text>
+
                 <ExpandableText
                   text={drink.description}
                   className="text-gray-600 mt-2"
                 />
+
+                {/* Size Select */}
                 <View className="border-t border-gray-300 mt-4 pt-4">
                   <View className="flex-row gap-1">
                     <Text className="font-semibold text-lg">Size</Text>
                     <Text className="text-red-600">*</Text>
                   </View>
-                  <Text className="text-gray-500 text-sm">
-                    Chọn 1 loại size
-                  </Text>
-                  <View className="flex-row items-center">
-                    <RadioGroup
-                      radioButtons={radioButtons}
-                      onPress={setSelectedSize}
-                      selectedId={selectedSize}
-                      containerStyle={{ alignItems: "flex-start" }}
-                    />
-                  </View>
+                  <RadioGroup
+                    radioButtons={radioButtons}
+                    onPress={setSelectedSize}
+                    selectedId={selectedSize}
+                    containerStyle={{ alignItems: "flex-start" }}
+                  />
                 </View>
+
+                {/* Topping Select */}
                 <View className="border-t border-gray-300 mt-4 pt-4">
                   <Text className="font-semibold text-lg">Topping</Text>
-                  <Text className="text-gray-500 text-sm">
-                    Chọn tối đa 2 loại
-                  </Text>
                   <View className="grid grid-cols-2 gap-2 mt-2">
-                    {toppings.map((topping) => (
+                    {TOPPINGS.map((topping) => (
                       <View
                         key={topping.id}
                         className="flex-row items-center gap-2 ml-3"
@@ -287,11 +284,10 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
                     ))}
                   </View>
                 </View>
+
+                {/* Notes */}
                 <View className="border-t border-gray-300 mt-4 pt-4">
                   <Text className="font-semibold text-lg">Yêu cầu khác</Text>
-                  <Text className="text-gray-500 text-sm">
-                    Những tùy chọn khác
-                  </Text>
                   <TextInput
                     className="border border-gray-300 rounded-md p-2 mt-2"
                     placeholder="Thêm ghi chú"
@@ -301,6 +297,8 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
                 </View>
               </View>
             </ScrollView>
+
+            {/* Bottom Price + Quantity */}
             <View className="absolute bottom-0 left-0 w-full bg-white p-4 border-t border-gray-200 shadow-md">
               <View className="flex-row items-center justify-between">
                 <View className="flex-row items-center gap-4">
@@ -321,10 +319,10 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
                 </View>
                 <TouchableOpacity
                   className="bg-orange-500 px-6 py-3 rounded-full flex-row items-center justify-center"
-                  onPress={addMoreDrink}
+                  onPress={addDrinkToCart}
                 >
                   <Text className="text-white font-bold text-lg">
-                    {`${handleCalculatePrice().toLocaleString("vi-VN")}đ`}
+                    {`${calculatePrice().toLocaleString("vi-VN")}đ`}
                   </Text>
                 </TouchableOpacity>
               </View>

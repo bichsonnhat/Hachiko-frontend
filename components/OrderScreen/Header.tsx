@@ -60,7 +60,7 @@ export const Header = () => {
     <>
       <SafeAreaView
         style={{ marginTop: safeHeight }}
-        className="flex-row justify-between px-4"
+        className="flex-row justify-between p-4"
       >
         <View className="flex-row items-center gap-2">
           <Image
