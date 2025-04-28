@@ -1,7 +1,7 @@
 import { ProductFromAPI } from '@/constants';
 import React from 'react';
 import { View, Text, ScrollView, FlatList } from 'react-native';
-import { DrinkSlotVertical } from './DrinkSlotVerticalProps';
+import { DrinkSlotVertical } from './DrinkSlotVertical';
 
 interface ProductGridProps {
     title: string;
@@ -20,7 +20,7 @@ const ProductGridSection: React.FC<ProductGridProps> = ({ title, products, numCo
                 numColumns={2}
                 renderItem={({ item }) => (
                     <View style={{ flex: 1 }}>
-                        <DrinkSlotVertical drink={item} />
+                        <DrinkSlotVertical drink={item} check={true} />
                     </View>
                 )}
             />
