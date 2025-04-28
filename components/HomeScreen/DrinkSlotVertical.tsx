@@ -4,20 +4,15 @@ import {
   Image,
   Text,
   TouchableOpacity,
-  Modal,
-  ScrollView,
-  TextInput,
   Alert,
 } from "react-native";
-import { Plus, MinusIcon, Heart, Check, HeartOff } from "lucide-react-native";
-import { ExpandableText } from "@/components/ui";
-import { RadioGroup } from "react-native-radio-buttons-group";
-import Checkbox from "expo-checkbox";
+import { Plus, Check, Heart, HeartOff } from "lucide-react-native";
 import { useCartStore } from "@/stores";
 import { IFavouriteProduct, IOrderItem, IProduct } from "@/constants";
 import { generateObjectId } from "@/utils/helpers/randomHexString";
 import { useApi } from "@/hooks/useApi";
 import apiService from "@/constants/config/axiosConfig";
+import { DrinkModal } from "./DrinkModal";
 
 type DrinkSlotVerticalProps = {
   drink: IProduct;
@@ -25,14 +20,6 @@ type DrinkSlotVerticalProps = {
 };
 
 const USER_ID = "67ea8e54c54fd6723fbf8f0e";
-
-const TOPPINGS = [
-  { id: "1", name: "Trái Vải", price: 8000 },
-  { id: "2", name: "Hạt Sen", price: 8000 },
-  { id: "3", name: "Thạch Cà Phê", price: 6000 },
-  { id: "4", name: "Trân châu trắng", price: 6000 },
-  { id: "5", name: "Đào Miếng", price: 10000 },
-];
 
 export const DrinkSlotVertical: React.FC<DrinkSlotVerticalProps> = ({
   drink,
@@ -47,21 +34,6 @@ export const DrinkSlotVertical: React.FC<DrinkSlotVerticalProps> = ({
   const [selectedSize, setSelectedSize] = useState("small");
   const [selectedToppings, setSelectedToppings] = useState<string[]>([]);
   const [isFavourite, setIsFavourite] = useState(false);
-  const radioButtons = useMemo(
-    () => [
-      {
-        id: "medium",
-        label: `Vừa - ${(drink.price + 10000).toLocaleString("vi-VN")}đ`,
-        value: (drink.price + 10000).toString(),
-      },
-      {
-        id: "small",
-        label: `Nhỏ - ${drink.price.toLocaleString("vi-VN")}đ`,
-        value: drink.price.toString(),
-      },
-    ],
-    [drink.price]
-  );
 
   const toggleTopping = (name: string) => {
     setSelectedToppings((prev) =>
@@ -79,14 +51,13 @@ export const DrinkSlotVertical: React.FC<DrinkSlotVerticalProps> = ({
   };
 
   const calculatePrice = useCallback(() => {
-    const basePrice =
-      radioButtons.find((r) => r.id === selectedSize)?.value || "0";
+    const basePrice = selectedSize === "medium" ? drink.price + 10000 : drink.price;
     const toppingPrice = selectedToppings.reduce((total, toppingName) => {
       const topping = TOPPINGS.find((t) => t.name === toppingName);
       return total + (topping?.price || 0);
     }, 0);
-    return (Number(basePrice) + toppingPrice) * quantity;
-  }, [radioButtons, selectedSize, selectedToppings, quantity]);
+    return (basePrice + toppingPrice) * quantity;
+  }, [selectedSize, selectedToppings, quantity, drink.price]);
 
   const addDrinkToCart = () => {
     if (
@@ -115,7 +86,6 @@ export const DrinkSlotVertical: React.FC<DrinkSlotVerticalProps> = ({
     setModalVisible(false);
     resetModalState();
   };
-
 
   const fetchFavouriteStatus = useCallback(async () => {
     await callFavouriteApi(async () => {
@@ -157,7 +127,6 @@ export const DrinkSlotVertical: React.FC<DrinkSlotVerticalProps> = ({
         className="w-[165px] mb-4 "
       >
         <View className="bg-white rounded-2xl relative">
-
           <View className="w-[165px] h-[165px] mb-3">
             <Image
               source={{ uri: drink.imageUrl }}
@@ -177,8 +146,8 @@ export const DrinkSlotVertical: React.FC<DrinkSlotVerticalProps> = ({
 
             <TouchableOpacity
               className={`w-8 h-8 p-[2px] rounded-full items-center justify-center ml-auto ${cart.findIndex((d) => d.productId === drink.id) === -1
-                ? "bg-orange-300"
-                : "bg-green-500"
+                  ? "bg-orange-300"
+                  : "bg-green-500"
                 }`}
               onPress={addDrinkToCart}
             >
@@ -191,142 +160,33 @@ export const DrinkSlotVertical: React.FC<DrinkSlotVerticalProps> = ({
           </View>
         </View>
       </TouchableOpacity>
-      <Modal
-        animationType="slide"
-        transparent={true}
+
+      <DrinkModal
         visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View className="flex-1 bg-black/50 justify-center items-center">
-          <View className="w-full h-full bg-white">
-            <ScrollView className="flex-1" keyboardShouldPersistTaps="handled">
-              <View className="relative">
-                <Image
-                  source={{ uri: drink.imageUrl }}
-                  className="w-full h-[360px]"
-                  resizeMode="cover"
-                />
-                <TouchableOpacity
-                  className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center"
-                  onPress={() => setModalVisible(false)}
-                >
-                  <MinusIcon size={24} color="black" />
-                </TouchableOpacity>
-              </View>
-              <View className="p-4 pb-24">
-                <View className="flex-row justify-between items-center">
-                  <Text className="text-xl font-bold w-[80%]">
-                    {drink.title}
-                  </Text>
-                  <TouchableOpacity
-                    className="w-8 h-8 rounded-full flex items-center justify-center"
-                    onPress={toggleFavourite}
-                  >
-                    {isFavourite ? (
-                      <HeartOff size={24} color="red" />
-                    ) : (
-                      <Heart size={24} color="red" />
-                    )}
-                  </TouchableOpacity>
-                </View>
-                <Text className="text-lg font-semibold mt-1">
-                  {drink.price.toLocaleString("vi-VN")}đ
-                </Text>
-                <ExpandableText
-                  text={drink.description}
-                  className="text-gray-600 mt-2"
-                />
-
-                <View className="border-t border-gray-300 mt-4 pt-4">
-                  <View className="flex-row gap-1">
-                    <Text className="font-semibold text-lg">Size</Text>
-                    <Text className="text-red-600">*</Text>
-                  </View>
-                  <RadioGroup
-                    radioButtons={radioButtons}
-                    onPress={setSelectedSize}
-                    selectedId={selectedSize}
-                    containerStyle={{ alignItems: "flex-start" }}
-                  />
-                </View>
-
-                <View className="border-t border-gray-300 mt-4 pt-4">
-                  <Text className="font-semibold text-lg">Topping</Text>
-                  <View className="grid grid-cols-2 gap-2 mt-2">
-                    {TOPPINGS.map((topping) => (
-                      <View
-                        key={topping.id}
-                        className="flex-row items-center gap-2 ml-3"
-                      >
-                        <Checkbox
-                          disabled={
-                            check ||
-                            (selectedToppings.length >= 2 &&
-                              !selectedToppings.includes(topping.name))
-                          }
-                          style={{ width: 20, height: 20 }}
-                          value={selectedToppings.includes(topping.name)}
-                          onValueChange={() => {
-                            if (
-                              selectedToppings.includes(topping.name) ||
-                              selectedToppings.length < 2
-                            ) {
-                              toggleTopping(topping.name);
-                            }
-                          }}
-                        />
-                        <Text>
-                          {topping.name} -{" "}
-                          {topping.price.toLocaleString("vi-VN")}đ
-                        </Text>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-
-                <View className="border-t border-gray-300 mt-4 pt-4">
-                  <Text className="font-semibold text-lg">Yêu cầu khác</Text>
-                  <TextInput
-                    className="border border-gray-300 rounded-md p-2 mt-2"
-                    placeholder="Thêm ghi chú"
-                    value={note}
-                    onChangeText={setNote}
-                  />
-                </View>
-              </View>
-            </ScrollView>
-            <View className="absolute bottom-0 left-0 w-full bg-white p-4 border-t border-gray-200 shadow-md">
-              <View className="flex-row items-center justify-between">
-                <View className="flex-row items-center gap-4">
-                  <TouchableOpacity
-                    className="w-10 h-10 rounded-full bg-amber-300 flex items-center justify-center"
-                    onPress={() => setQuantity(Math.max(1, quantity - 1))}
-                    disabled={quantity === 1}
-                  >
-                    <MinusIcon size={20} color="white" />
-                  </TouchableOpacity>
-                  <Text className="text-lg font-bold">{quantity}</Text>
-                  <TouchableOpacity
-                    className="w-10 h-10 rounded-full bg-amber-300 flex items-center justify-center"
-                    onPress={() => setQuantity(quantity + 1)}
-                  >
-                    <Plus size={20} color="white" />
-                  </TouchableOpacity>
-                </View>
-                <TouchableOpacity
-                  className="bg-orange-500 px-6 py-3 rounded-full flex-row items-center justify-center"
-                  onPress={addDrinkToCart}
-                >
-                  <Text className="text-white font-bold text-lg">
-                    {`${calculatePrice().toLocaleString("vi-VN")}đ`}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setModalVisible(false)}
+        drink={drink}
+        isFavourite={isFavourite}
+        toggleFavourite={toggleFavourite}
+        quantity={quantity}
+        setQuantity={setQuantity}
+        note={note}
+        setNote={setNote}
+        selectedSize={selectedSize}
+        setSelectedSize={setSelectedSize}
+        selectedToppings={selectedToppings}
+        toggleTopping={toggleTopping}
+        calculatePrice={calculatePrice}
+        addDrinkToCart={addDrinkToCart}
+        check={check}
+      />
     </>
-
   );
-}
+};
+
+const TOPPINGS = [
+  { id: "1", name: "Trái Vải", price: 8000 },
+  { id: "2", name: "Hạt Sen", price: 8000 },
+  { id: "3", name: "Thạch Cà Phê", price: 6000 },
+  { id: "4", name: "Trân châu trắng", price: 6000 },
+  { id: "5", name: "Đào Miếng", price: 10000 },
+];
