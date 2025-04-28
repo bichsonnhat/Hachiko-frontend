@@ -14,6 +14,7 @@ import { useApi } from "@/hooks/useApi";
 import apiService from "@/constants/config/axiosConfig";
 import { useBoolean } from "@/hooks/useBoolean";
 import { Heart, HeartIcon, SearchIcon } from "lucide-react-native";
+import { router } from 'expo-router';
 
 export const Header = () => {
   const safeHeight = StatusBar.currentHeight || 0;
@@ -70,7 +71,7 @@ export const Header = () => {
           <ThemedText className="font-bold">Danh mục</ThemedText>
         </View>
         <View className="flex-row items-center gap-3">
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/search')}>
             <SearchIcon className="scale-125" color="black" />
           </TouchableOpacity>
           <TouchableOpacity onPress={handleOpenModal}>
