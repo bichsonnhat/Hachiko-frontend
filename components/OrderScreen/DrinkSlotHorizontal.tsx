@@ -167,11 +167,10 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
               <Text>{drink.price.toLocaleString("vi-VN")}đ</Text>
             </View>
             <TouchableOpacity
-              className={`w-8 h-8 p-[2px] rounded-full flex items-center justify-center ${
-                cart.findIndex((d) => d.productId === drink.id) === -1
+              className={`w-8 h-8 p-[2px] rounded-full flex items-center justify-center ${cart.findIndex((d) => d.productId === drink.id) === -1
                   ? "bg-orange-300"
                   : "bg-green-500"
-              }`}
+                }`}
               onPress={addDrinkToCart}
             >
               {cart.findIndex((d) => d.productId === drink.id) === -1 ? (
