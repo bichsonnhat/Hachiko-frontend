@@ -8,8 +8,9 @@ import {
   TextInput,
   Alert,
   Image,
+  TouchableWithoutFeedback,
 } from "react-native";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useCartStore } from "@/stores";
 import { useApi } from "@/hooks/useApi";
 import {
@@ -17,6 +18,8 @@ import {
   ShoppingCart,
   Trash2Icon,
   MapPin,
+  MinusCircle,
+  PlusCircle,
 } from "lucide-react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -39,7 +42,11 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
   //hard code for testing
   const [shippingFee, setShippingFee] = useState<number>(15000);
   const address = "Địa chỉ giao hàng";
+
+  //cái này cần api current user hay gì đó, kiểu đăng nhập từ clerk thì call api để lấy rồi lưu vô store, lúc xài thì lấy ra thôi
   const userId = "67fe6f866bcac94e258e3a20";
+  const username = "Nguyen Van A";
+  const userphone = "0123456789";
 
   const router = useRouter();
   const { errorMessage, callApi: callStoreApi } = useApi<void>();
@@ -49,10 +56,16 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
     useApi<void>();
 
   const [modalVisible, setModalVisible] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
 
-  const { cart, clearCart, removeFromCart } = useCartStore();
+  const {
+    cart,
+    clearCart,
+    removeFromCart,
+    removeExistingFromCart,
+    addExistingToCart,
+  } = useCartStore();
   const [totalQuantity, setTotalQuantity] = useState(0);
-  const [totalPrice, setTotalPrice] = useState(0);
 
   const [stores, setStores] = useState<IStoreDropdown[]>([]);
   const [storeId, setStoreId] = useState("");
@@ -63,13 +76,18 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
   const [showPicker, setShowPicker] = useState(false);
 
   const [showCustomerModal, setShowCustomerModal] = useState(false);
-  const [customerName, setCustomerName] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
+  const [customerName, setCustomerName] = useState(username);
+  const [customerPhone, setCustomerPhone] = useState(userphone);
 
   const [voucher, setVoucher] = useState<IVoucher[]>([]);
   const [openCoupon, setOpenCoupon] = useState(false);
   const [couponList, setCouponList] = useState<IVoucherDropdown[]>([]);
   const [coupon, setCoupon] = useState("");
+
+  const [percentDiscount, setPercentDiscount] = useState<number>(0);
+  const [priceDiscount, setPriceDiscount] = useState<number>(0);
+  const [isFreeShip, setIsFreeShip] = useState<boolean>(false);
+  const [priceAfterDiscount, setPriceAfterDiscount] = useState<number>(0);
 
   const [openPaymentMethod, setOpenPaymentMethod] = useState(false);
   const [paymentMethodList, setPaymentMethodList] = useState<
@@ -81,7 +99,7 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
     { label: "Tiền mặt", value: "Tiền mặt" },
     { label: "QR Code", value: "QR Code" },
   ]);
-  const [paymentMethod, setPaymentMethod] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("Tiền mặt");
 
   const onChangeTime = (event: any, selectedTime?: Date) => {
     setShowPicker(Platform.OS === "ios");
@@ -104,10 +122,10 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
   const handleClearInfo = () => {
     setStoreId("");
     setShippingTime(new Date());
-    setCustomerName("");
-    setCustomerPhone("");
+    setCustomerName(username);
+    setCustomerPhone(userphone);
     setCoupon("");
-    setPaymentMethod("");
+    setPaymentMethod("Tiền mặt");
   };
   const handleCloseModal = () => {
     handleClearInfo();
@@ -133,12 +151,13 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
 
   const handleWithPayOS = async () => {
     await callCheckoutApi(async () => {
+      const newShippingFee = isFreeShip ? 0 : shippingFee;
       const sendData = {
         productName: "Đơn hàng " + userId,
         description: "Thanh toán đơn hàng",
-        price: totalPrice + shippingFee,
-        returnUrl: "exp://192.168.1.2:8081/--/payment/success",
-        cancelUrl: "exp://192.168.1.2:8081/--/payment/failed",
+        price: priceAfterDiscount + newShippingFee,
+        returnUrl: "exp://192.168.1.9:8081/--/payment/success", //kiểm tra lại url lúc chạy npx expo start, đều là localhost nhưng mà khác mạng thì config ip khác
+        cancelUrl: "exp://192.168.1.9:8081/--/payment/failed",
       };
       const { data } = await apiService.post("/orders/payos", sendData);
       if (data) {
@@ -148,13 +167,18 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
     });
   };
 
+  const checkoutCondition = () => {
+    return cart.length > 0 && storeId.length > 0 && customerPhone.length > 0;
+  };
+
   const handleCheckout = async () => {
+    const newShippingFee = isFreeShip ? 0 : shippingFee;
     const sendData: IFullOrder = {
       order: {
         userId,
         orderAddress: address,
         orderTime: shippingTime,
-        orderCost: totalPrice + shippingFee,
+        orderCost: priceAfterDiscount + newShippingFee,
         paymentMethod,
         ...(coupon.length > 0 ? { voucherId: coupon } : {}),
         recipientName: customerName,
@@ -178,9 +202,36 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
         note: item.note,
       })),
     };
-    checkout(sendData);
-    if (paymentMethod === "QR Code") {
-      handleWithPayOS();
+    if (checkoutCondition()) {
+      checkout(sendData);
+      if (paymentMethod === "QR Code") {
+        handleWithPayOS();
+      }
+    } else {
+      Alert.alert("Kiểm tra giỏ hàng hoặc cung cấp đủ thông tin!");
+    }
+  };
+
+  const resetDiscount = useCallback(() => {
+    setIsFreeShip(false);
+    setPercentDiscount(0);
+    setPriceDiscount(0);
+    setCoupon("");
+  }, []);
+
+  const handleQuantityChange = (
+    action: string,
+    productId: string,
+    currentQuantity: number
+  ) => {
+    if (action === "add") {
+      addExistingToCart(productId);
+    } else if (action === "remove") {
+      if (currentQuantity > 1) {
+        removeExistingFromCart(productId);
+      } else {
+        removeFromCart(productId);
+      }
     }
   };
 
@@ -207,30 +258,15 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
     };
     const fetchUserVouchers = async () => {
       await callVoucherApi(async () => {
-        const { data } = await apiService.get(`/vouchers/${userId}`);
+        const { data } = await apiService.get<IVoucher[]>(
+          `/vouchers/${userId}`
+        );
         if (data) {
-          setVoucher(data);
           const now = new Date();
-          const voucherList = data
-            .filter((voucher: IVoucher) => new Date(voucher.expiryDate) >= now)
-            .map((voucher: IVoucher) => ({
-              label: (
-                <View style={{ flexDirection: "row", alignItems: "center" }}>
-                  <Image
-                    source={{ uri: voucher.imgUrl }}
-                    className="w-10 h-10 rounded-lg mr-2"
-                  />
-                  <Text
-                    numberOfLines={1}
-                    className="text-lg font-normal truncate max-w-[90%]"
-                  >
-                    {voucher.description}
-                  </Text>
-                </View>
-              ),
-              value: voucher.id,
-            }));
-          setCouponList(voucherList);
+          const validVoucher = data.filter(
+            (voucher: IVoucher) => new Date(voucher.expiryDate) >= now
+          );
+          setVoucher(validVoucher);
         }
       });
     };
@@ -245,37 +281,51 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
     const quantity = cart.reduce((acc, item) => {
       return acc + item.quantity;
     }, 0);
+
+    const newPriceAfterDiscount =
+      total - total * percentDiscount - priceDiscount;
+
+    setPriceAfterDiscount(newPriceAfterDiscount);
     setTotalQuantity(quantity);
-    setTotalPrice(total);
-  }, [cart, clearCart]);
+
+    const validVouchers = voucher.filter((v) => {
+      const enoughItems = quantity >= (v.minOrderItem ?? 0);
+      const enoughPrice = total >= (v.minOrderPrice ?? 0);
+      return enoughItems && enoughPrice;
+    });
+
+    const voucherList = validVouchers.map((voucher: IVoucher) => ({
+      label: (
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Image
+            source={{ uri: voucher.imgUrl }}
+            className="w-10 h-10 rounded-lg mr-2"
+          />
+          <Text
+            numberOfLines={1}
+            className="text-lg font-normal truncate max-w-[90%]"
+          >
+            {voucher.description}
+          </Text>
+        </View>
+      ),
+      value: voucher.id!,
+    }));
+
+    setCouponList(voucherList);
+  }, [cart, percentDiscount, priceDiscount, voucher]);
+
+  useEffect(() => {
+    resetDiscount();
+  }, [cart, resetDiscount]);
 
   useEffect(() => {
     const voucherSelected = voucher.find((v) => v.id === coupon);
     if (!voucherSelected) return;
-    const {
-      isFreeShip,
-      minOrderItem,
-      minOrderPrice,
-      discountPercent,
-      discountPrice,
-    } = voucherSelected;
-
-    if (isFreeShip) {
-      setShippingFee(0);
-    }
-
-    const enoughItems = cart.length >= (minOrderItem ?? 0);
-    const enoughPrice = totalPrice >= (minOrderPrice ?? 0);
-
-    if (enoughItems && enoughPrice) {
-      const discountFromPercent = totalPrice * (discountPercent ?? 0);
-      const discountFromPrice = discountPrice ?? 0;
-
-      const newPriceAfterDiscount =
-        totalPrice - discountFromPercent - discountFromPrice;
-
-      setTotalPrice(newPriceAfterDiscount);
-    }
+    const { isFreeShip, discountPercent, discountPrice } = voucherSelected;
+    setIsFreeShip(isFreeShip);
+    setPercentDiscount(discountPercent);
+    setPriceDiscount(discountPrice);
   }, [coupon]);
 
   useEffect(() => {
@@ -325,7 +375,7 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
                 </View>
 
                 <Text className="text-white font-semibold text-base">{`${(
-                  totalPrice + shippingFee
+                  priceAfterDiscount + (isFreeShip ? 0 : shippingFee)
                 ).toLocaleString()}đ`}</Text>
               </View>
             </View>
@@ -558,15 +608,82 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
                                 <Trash2Icon size={25} color="red" />
                               </TouchableOpacity>
                               <View>
-                                <View className="flex-row gap-2">
-                                  <Text className="font-semibold text-lg text-gray-800">
-                                    x{item.quantity}{" "}
-                                    {getProductName(item.productId)}
-                                  </Text>
-                                </View>
+                                <TouchableOpacity
+                                  onPress={() => setShowPopup(true)}
+                                  activeOpacity={0.5}
+                                >
+                                  <View className="flex-row gap-2 items-center bg-gray-50 rounded-lg px-3 py-2">
+                                    <Text className="font-semibold text-lg text-gray-800">
+                                      x{item.quantity}{" "}
+                                      {getProductName(item.productId)}
+                                    </Text>
+                                  </View>
+                                </TouchableOpacity>
                                 <Text className="text-base text-gray-600 mt-1">
                                   {item.size}
                                 </Text>
+                                <Modal
+                                  visible={showPopup}
+                                  transparent
+                                  animationType="fade"
+                                  onRequestClose={() => setShowPopup(false)}
+                                >
+                                  <TouchableWithoutFeedback
+                                    onPress={() => setShowPopup(false)}
+                                  >
+                                    <View className="absolute inset-0 bg-black/50 justify-center items-center">
+                                      <TouchableWithoutFeedback>
+                                        <View className="bg-white rounded-xl p-6 w-80">
+                                          <Text className="text-lg font-bold text-center mb-4">
+                                            {getProductName(item.productId)}
+                                          </Text>
+
+                                          <View className="flex-row items-center justify-between my-2">
+                                            <TouchableOpacity
+                                              onPress={() =>
+                                                handleQuantityChange(
+                                                  "remove",
+                                                  item.productId,
+                                                  totalQuantity
+                                                )
+                                              }
+                                              className="p-2 rounded-full"
+                                            >
+                                              <MinusCircle
+                                                size={28}
+                                                color="#ef4444"
+                                              />
+                                            </TouchableOpacity>
+
+                                            <Text className="text-2xl font-bold mx-4">
+                                              {item.quantity}
+                                            </Text>
+
+                                            <TouchableOpacity
+                                              onPress={() =>
+                                                handleQuantityChange(
+                                                  "add",
+                                                  item.productId,
+                                                  totalQuantity
+                                                )
+                                              }
+                                              className="p-2 rounded-full"
+                                            >
+                                              <PlusCircle
+                                                size={28}
+                                                color="#10b981"
+                                              />
+                                            </TouchableOpacity>
+                                          </View>
+
+                                          <Text className="text-gray-500 text-center mt-2">
+                                            Nhấn bên ngoài để đóng
+                                          </Text>
+                                        </View>
+                                      </TouchableWithoutFeedback>
+                                    </View>
+                                  </TouchableWithoutFeedback>
+                                </Modal>
                               </View>
                             </View>
                             <View className="flex-row items-center gap-2 justify-end">
@@ -587,7 +704,7 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
                             Thành tiền
                           </Text>
                           <Text className="font-medium text-lg">
-                            {totalPrice.toLocaleString()}đ
+                            {priceAfterDiscount.toLocaleString()}đ
                           </Text>
                         </View>
                         <View className="flex-row justify-between px-4">
@@ -595,7 +712,7 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
                             Phí vận chuyển
                           </Text>
                           <Text className="font-medium text-lg">
-                            {shippingFee.toLocaleString()}đ
+                            {(isFreeShip ? 0 : shippingFee).toLocaleString()}đ
                           </Text>
                         </View>
 
@@ -631,7 +748,11 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
                             Số tiền thanh toán
                           </Text>
                           <Text className="font-medium text-lg">
-                            {(totalPrice + shippingFee).toLocaleString()}đ
+                            {(
+                              priceAfterDiscount +
+                              (isFreeShip ? 0 : shippingFee)
+                            ).toLocaleString()}
+                            đ
                           </Text>
                         </View>
                       </View>
@@ -654,7 +775,6 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
                               setValue={setPaymentMethod}
                               setItems={setPaymentMethodList}
                               placeholder="Phương thức thanh toán"
-                              // containerStyle={{ marginBottom: 10 }}
                               dropDownContainerStyle={{
                                 borderColor: "#d1d5db",
                               }}
@@ -684,7 +804,10 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
                       </View>
                       <View>
                         <Text className="text-white text-lg font-extrabold">
-                          {(totalPrice + shippingFee).toLocaleString()}đ
+                          {(
+                            priceAfterDiscount + (isFreeShip ? 0 : shippingFee)
+                          ).toLocaleString()}
+                          đ
                         </Text>
                       </View>
                     </View>
