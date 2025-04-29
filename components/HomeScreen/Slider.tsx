@@ -26,7 +26,7 @@ const Slider: React.FC<SliderProps> = ({ advertisements }) => {
                     data={advertisements}
                     autoPlay={true}
                     pagingEnabled={true}
-                    scrollAnimationDuration={1500}
+                    scrollAnimationDuration={2500}
                     onProgressChange={(_, absoluteProgress) => {
                         progress.value = absoluteProgress;
                     }}
