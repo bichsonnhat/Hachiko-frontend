@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { View, Text, Image, TextInput, Button, TouchableOpacity,  } from "react-native";
+import { View, Text, Image, TextInput, Button, TouchableOpacity, } from "react-native";
 import * as WebBrowser from 'expo-web-browser'
 import SocialLoginButton from "@/components/SocialLoginButton";
 import { Redirect, useRouter } from "expo-router";
@@ -44,11 +44,11 @@ export default function SignIn() {
 
   return (
     <View className="flex flex-col h-screen bg-white">
-        <Image source={require('@/assets/images/auth/Hachiko.png')} className="w-full h-2/5" />
-        <View className="absolute gap-4 bottom-0 w-full h-2/3 bg-white rounded-t-3xl flex items-center">
-          <Text className="text-md mt-10">Chào mừng bạn đến với</Text>
-          <Text style={{fontFamily: 'BaronNeueBlack'}} className="text-3xl">THE HACHIKO COFFEE</Text>
-          <View className="w-3/4 gap-5">
+      <Image source={require('@/assets/images/auth/Hachiko.png')} className="w-full h-2/5" />
+      <View className="absolute gap-4 bottom-0 w-full h-2/3 bg-white rounded-t-3xl flex items-center">
+        <Text className="text-md mt-10">Chào mừng bạn đến với</Text>
+        <Text style={{ fontFamily: 'BaronNeueBlack' }} className="text-3xl">THE HACHIKO COFFEE</Text>
+        <View className="w-3/4 gap-5">
           <View className="flex flex-row items-center gap-2">
             <View className="flex flex-row w-full border border-gray-300 rounded-lg overflow-hidden">
               <View className="bg-gray-100 px-3 flex flex-row gap-2 items-center justify-center border-r border-gray-300">
@@ -74,10 +74,10 @@ export default function SignIn() {
                 backgroundColor: isValidPhone ? '#E47905' : '#E4790550'
               }}
               className="py-3 rounded-lg"
-                onPress={() => router.push({
-                  pathname: '/phone-auth',
-                  params: { phoneNumber }
-                })}
+              onPress={() => router.push({
+                pathname: '/phone-auth',
+                params: { phoneNumber }
+              })}
               activeOpacity={0.8}
             >
               <Text className="text-white text-center font-medium text-base">
@@ -106,7 +106,7 @@ export default function SignIn() {
           <View className="rounded-lg overflow-hidden">
             <SocialLoginButton strategy="google" />
           </View>
-          
+
           {/* <TouchableOpacity 
             className="bg-black py-3 rounded-lg flex flex-row items-center justify-center gap-2"
             onPress={() => {}}
@@ -118,8 +118,8 @@ export default function SignIn() {
           </TouchableOpacity> */}
 
           <Text className="text-center mt-5">Tiếng Việt</Text>
-          </View>
         </View>
+      </View>
     </View>
   );
 }
