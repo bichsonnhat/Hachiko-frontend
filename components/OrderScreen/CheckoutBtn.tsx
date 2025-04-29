@@ -8,6 +8,7 @@ import {
   TextInput,
   Alert,
   Image,
+  TouchableWithoutFeedback,
 } from "react-native";
 import { useCallback, useEffect, useState } from "react";
 import { useCartStore } from "@/stores";
@@ -17,6 +18,8 @@ import {
   ShoppingCart,
   Trash2Icon,
   MapPin,
+  MinusCircle,
+  PlusCircle,
 } from "lucide-react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -53,10 +56,16 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
     useApi<void>();
 
   const [modalVisible, setModalVisible] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
 
-  const { cart, clearCart, removeFromCart } = useCartStore();
+  const {
+    cart,
+    clearCart,
+    removeFromCart,
+    removeExistingFromCart,
+    addExistingToCart,
+  } = useCartStore();
   const [totalQuantity, setTotalQuantity] = useState(0);
-  const [totalPrice, setTotalPrice] = useState(0);
 
   const [stores, setStores] = useState<IStoreDropdown[]>([]);
   const [storeId, setStoreId] = useState("");
@@ -204,10 +213,27 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
   };
 
   const resetDiscount = useCallback(() => {
+    setIsFreeShip(false);
     setPercentDiscount(0);
     setPriceDiscount(0);
     setCoupon("");
   }, []);
+
+  const handleQuantityChange = (
+    action: string,
+    productId: string,
+    currentQuantity: number
+  ) => {
+    if (action === "add") {
+      addExistingToCart(productId);
+    } else if (action === "remove") {
+      if (currentQuantity > 1) {
+        removeExistingFromCart(productId);
+      } else {
+        removeFromCart(productId);
+      }
+    }
+  };
 
   useEffect(() => {
     const fetchStores = async () => {
@@ -259,7 +285,6 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
     const newPriceAfterDiscount =
       total - total * percentDiscount - priceDiscount;
 
-    setTotalPrice(total);
     setPriceAfterDiscount(newPriceAfterDiscount);
     setTotalQuantity(quantity);
 
@@ -583,15 +608,82 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
                                 <Trash2Icon size={25} color="red" />
                               </TouchableOpacity>
                               <View>
-                                <View className="flex-row gap-2">
-                                  <Text className="font-semibold text-lg text-gray-800">
-                                    x{item.quantity}{" "}
-                                    {getProductName(item.productId)}
-                                  </Text>
-                                </View>
+                                <TouchableOpacity
+                                  onPress={() => setShowPopup(true)}
+                                  activeOpacity={0.5}
+                                >
+                                  <View className="flex-row gap-2 items-center bg-gray-50 rounded-lg px-3 py-2">
+                                    <Text className="font-semibold text-lg text-gray-800">
+                                      x{item.quantity}{" "}
+                                      {getProductName(item.productId)}
+                                    </Text>
+                                  </View>
+                                </TouchableOpacity>
                                 <Text className="text-base text-gray-600 mt-1">
                                   {item.size}
                                 </Text>
+                                <Modal
+                                  visible={showPopup}
+                                  transparent
+                                  animationType="fade"
+                                  onRequestClose={() => setShowPopup(false)}
+                                >
+                                  <TouchableWithoutFeedback
+                                    onPress={() => setShowPopup(false)}
+                                  >
+                                    <View className="absolute inset-0 bg-black/50 justify-center items-center">
+                                      <TouchableWithoutFeedback>
+                                        <View className="bg-white rounded-xl p-6 w-80">
+                                          <Text className="text-lg font-bold text-center mb-4">
+                                            {getProductName(item.productId)}
+                                          </Text>
+
+                                          <View className="flex-row items-center justify-between my-2">
+                                            <TouchableOpacity
+                                              onPress={() =>
+                                                handleQuantityChange(
+                                                  "remove",
+                                                  item.productId,
+                                                  totalQuantity
+                                                )
+                                              }
+                                              className="p-2 rounded-full"
+                                            >
+                                              <MinusCircle
+                                                size={28}
+                                                color="#ef4444"
+                                              />
+                                            </TouchableOpacity>
+
+                                            <Text className="text-2xl font-bold mx-4">
+                                              {item.quantity}
+                                            </Text>
+
+                                            <TouchableOpacity
+                                              onPress={() =>
+                                                handleQuantityChange(
+                                                  "add",
+                                                  item.productId,
+                                                  totalQuantity
+                                                )
+                                              }
+                                              className="p-2 rounded-full"
+                                            >
+                                              <PlusCircle
+                                                size={28}
+                                                color="#10b981"
+                                              />
+                                            </TouchableOpacity>
+                                          </View>
+
+                                          <Text className="text-gray-500 text-center mt-2">
+                                            Nhấn bên ngoài để đóng
+                                          </Text>
+                                        </View>
+                                      </TouchableWithoutFeedback>
+                                    </View>
+                                  </TouchableWithoutFeedback>
+                                </Modal>
                               </View>
                             </View>
                             <View className="flex-row items-center gap-2 justify-end">

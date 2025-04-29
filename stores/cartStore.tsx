@@ -13,6 +13,7 @@ type CartState = {
   ) => boolean;
   addNewToCart: (item: IOrderItem) => void;
   addExistingToCart: (productId: string) => void;
+  removeExistingFromCart: (productId: string) => void;
   removeFromCart: (productId: string) => void;
   clearCart: () => void;
 };
@@ -34,6 +35,15 @@ export const useCartStore = create<CartState>()(
       addNewToCart: (newProduct) => {
         set((state) => ({
           cart: [...state.cart, newProduct],
+        }));
+      },
+      removeExistingFromCart: (productId) => {
+        set((state) => ({
+          cart: state.cart.map((item) =>
+            item.productId === productId
+              ? { ...item, quantity: item.quantity - 1 }
+              : item
+          ),
         }));
       },
       addExistingToCart: (productId) => {
