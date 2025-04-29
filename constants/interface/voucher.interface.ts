@@ -11,7 +11,7 @@ export interface IVoucher {
     isFreeShip: boolean,
     minOrderPrice: number,
     minOrderItem: number,
-    type: string ,
+    type: string,
     expiryDate: Date,
 }
 
