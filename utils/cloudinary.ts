@@ -10,7 +10,7 @@ const cloudinaryConfig = (expoConfig as any)?.extra?.cloudinary || {};
 // Cloudinary configuration
 const CLOUDINARY_CLOUD_NAME = process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME || cloudinaryConfig.cloudName || '';
 const CLOUDINARY_API_KEY = process.env.EXPO_PUBLIC_CLOUDINARY_API_KEY || cloudinaryConfig.apiKey || '';
-const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET || '';
+const CLOUDINARY_API_SECRET = process.env.EXPO_PUBLIC_CLOUDINARY_API_SECRET || cloudinaryConfig.apiSecret || '';
 const UPLOAD_PRESET = cloudinaryConfig.uploadPreset || 'hachiko_uploads'; // You can create a preset in your Cloudinary dashboard
 
 // Get cloudinary upload URL

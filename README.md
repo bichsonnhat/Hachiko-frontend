@@ -81,7 +81,7 @@ This application uses Cloudinary for image uploads. Follow these steps to config
    ```
    EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME=your_cloud_name
    EXPO_PUBLIC_CLOUDINARY_API_KEY=your_api_key
-   CLOUDINARY_API_SECRET=your_api_secret
+   EXPO_PUBLIC_CLOUDINARY_API_SECRET=your_api_secret
    ```
 
 ### Using the Image Uploader
