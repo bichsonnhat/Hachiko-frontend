@@ -146,8 +146,8 @@ export const DrinkSlotVertical: React.FC<DrinkSlotVerticalProps> = ({
 
             <TouchableOpacity
               className={`w-8 h-8 p-[2px] rounded-full items-center justify-center ml-auto ${cart.findIndex((d) => d.productId === drink.id) === -1
-                  ? "bg-orange-300"
-                  : "bg-green-500"
+                ? "bg-orange-300"
+                : "bg-green-500"
                 }`}
               onPress={addDrinkToCart}
             >

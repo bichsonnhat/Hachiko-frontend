@@ -1,8 +1,8 @@
 import { View, Text, TouchableOpacity, FlatList, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Plus, Edit, ChevronLeft } from "lucide-react-native";
-import {router, useNavigation} from "expo-router";
-import {useEffect, useState} from "react";
+import { router, useNavigation } from "expo-router";
+import { useEffect, useState } from "react";
 
 const categories = [
     { id: "1", name: "Danh mục 1" },

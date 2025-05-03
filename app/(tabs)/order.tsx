@@ -133,7 +133,7 @@ export default function OrderScreen() {
             loading={categoryLoading}
             scrollToCategory={scrollToCategory}
           />
-          <Collection />
+          {/* <Collection /> */}
         </View>
       );
     }
