@@ -1,3 +1,4 @@
+import React, { FC } from "react";
 import {
   View,
   Text,
@@ -9,6 +10,9 @@ import {
   Alert,
   Image,
   TouchableWithoutFeedback,
+  Animated,
+  Easing,
+  Pressable,
 } from "react-native";
 import { useCallback, useEffect, useState } from "react";
 import { useCartStore } from "@/stores";
@@ -20,6 +24,7 @@ import {
   MapPin,
   MinusCircle,
   PlusCircle,
+  Edit,
 } from "lucide-react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -30,18 +35,49 @@ import {
   IVoucher,
   IVoucherDropdown,
   OrderStatus,
+  IProduct,
 } from "@/constants";
 import apiService from "@/constants/config/axiosConfig";
 import { useRouter } from "expo-router";
+import { DrinkModal } from "@/components/HomeScreen/DrinkModal";
+import { generateObjectId } from "@/utils/helpers/randomHexString";
+import { ItemType } from "react-native-dropdown-picker";
 
 type CheckoutBtnProps = {
   getProductName: (productId: string) => string;
 };
 
-export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
+export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName }) => {
   //hard code for testing
   const [shippingFee, setShippingFee] = useState<number>(15000);
   const address = "Địa chỉ giao hàng";
+
+  // Animation value for the edit button
+  const editButtonOpacity = new Animated.Value(0.8);
+  
+  // Animation effect for the edit button
+  useEffect(() => {
+    const pulseAnimation = Animated.sequence([
+      Animated.timing(editButtonOpacity, {
+        toValue: 1,
+        duration: 800,
+        easing: Easing.inOut(Easing.ease),
+        useNativeDriver: true
+      }),
+      Animated.timing(editButtonOpacity, {
+        toValue: 0.8,
+        duration: 800,
+        easing: Easing.inOut(Easing.ease),
+        useNativeDriver: true
+      })
+    ]);
+    
+    Animated.loop(pulseAnimation).start();
+    
+    return () => {
+      editButtonOpacity.stopAnimation();
+    };
+  }, []);
 
   //cái này cần api current user hay gì đó, kiểu đăng nhập từ clerk thì call api để lấy rồi lưu vô store, lúc xài thì lấy ra thôi
   const userId = "67fe6f866bcac94e258e3a20";
@@ -54,9 +90,21 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
     useApi<void>();
   const { errorMessage: checkoutErrorMessage, callApi: callCheckoutApi } =
     useApi<void>();
+  const { errorMessage: productErrorMessage, callApi: callProductApi } =
+    useApi<void>();
 
   const [modalVisible, setModalVisible] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
+
+  // DrinkModal states
+  const [drinkModalVisible, setDrinkModalVisible] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<IProduct | null>(null);
+  const [quantity, setQuantity] = useState(1);
+  const [note, setNote] = useState("");
+  const [selectedSize, setSelectedSize] = useState("small");
+  const [selectedToppings, setSelectedToppings] = useState<string[]>([]);
+  const [isFavourite, setIsFavourite] = useState(false);
+  const [selectedCartItemId, setSelectedCartItemId] = useState<string>("");
 
   const {
     cart,
@@ -64,10 +112,12 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
     removeFromCart,
     removeExistingFromCart,
     addExistingToCart,
+    addNewToCart,
+    checkExist,
   } = useCartStore();
   const [totalQuantity, setTotalQuantity] = useState(0);
 
-  const [stores, setStores] = useState<IStoreDropdown[]>([]);
+  const [stores, setStores] = useState<ItemType<any>[]>([]);
   const [storeId, setStoreId] = useState("");
   const [openStoreModal, setOpenStoreModal] = useState(false);
 
@@ -81,7 +131,7 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
 
   const [voucher, setVoucher] = useState<IVoucher[]>([]);
   const [openCoupon, setOpenCoupon] = useState(false);
-  const [couponList, setCouponList] = useState<IVoucherDropdown[]>([]);
+  const [couponList, setCouponList] = useState<ItemType<any>[]>([]);
   const [coupon, setCoupon] = useState("");
 
   const [percentDiscount, setPercentDiscount] = useState<number>(0);
@@ -240,17 +290,15 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
       await callStoreApi(async () => {
         const { data } = await apiService.get("/stores");
         if (data) {
-          const storeList = data.map((store: IStore) => ({
-            label: (
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Image
-                  source={{ uri: store.imageURL }}
-                  className="w-10 h-10 rounded-lg mr-2"
-                />
-                <Text className="text-lg font-normal">{store.name}</Text>
-              </View>
-            ),
+          const storeList: ItemType<any>[] = data.map((store: IStore) => ({
+            label: store.name,
             value: store.id,
+            icon: () => (
+              <Image
+                source={{ uri: store.imageURL }}
+                className="w-10 h-10 rounded-lg mr-2"
+              />
+            )
           }));
           setStores(storeList);
         }
@@ -294,22 +342,15 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
       return enoughItems && enoughPrice;
     });
 
-    const voucherList = validVouchers.map((voucher: IVoucher) => ({
-      label: (
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Image
-            source={{ uri: voucher.imgUrl }}
-            className="w-10 h-10 rounded-lg mr-2"
-          />
-          <Text
-            numberOfLines={1}
-            className="text-lg font-normal truncate max-w-[90%]"
-          >
-            {voucher.description}
-          </Text>
-        </View>
-      ),
+    const voucherList: ItemType<any>[] = validVouchers.map((voucher: IVoucher) => ({
+      label: voucher.description,
       value: voucher.id!,
+      icon: () => (
+        <Image
+          source={{ uri: voucher.imgUrl }}
+          className="w-10 h-10 rounded-lg mr-2"
+        />
+      )
     }));
 
     setCouponList(voucherList);
@@ -339,6 +380,106 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
       console.error("❌ Lỗi khi đặt hàng:", checkoutErrorMessage);
     }
   }, [errorMessage, voucherErrorMessage, checkoutErrorMessage]);
+
+  // DrinkModal functions
+  const toggleTopping = (name: string) => {
+    setSelectedToppings((prev) =>
+      prev.includes(name)
+        ? prev.filter((topping) => topping !== name)
+        : [...prev, name]
+    );
+  };
+
+  const fetchProductDetails = async (productId: string) => {
+    await callProductApi(async () => {
+      const { data } = await apiService.get(`/products/${productId}`);
+      if (data) {
+        setSelectedProduct(data);
+      }
+    });
+  };
+
+  // Add this helper function to format sizes
+  const formatSize = (size: string): string => {
+    switch (size) {
+      case 'small':
+        return 'Nhỏ';
+      case 'medium':
+        return 'Vừa';
+      default:
+        return size;
+    }
+  };
+
+  const calculatePrice = useCallback(() => {
+    if (!selectedProduct) return 0;
+    
+    const basePrice = selectedSize === "medium" 
+      ? selectedProduct.price + 10000 
+      : selectedProduct.price;
+    
+    const toppingPrice = selectedToppings.reduce((total, toppingName) => {
+      const topping = TOPPINGS.find((t) => t.name === toppingName);
+      return total + (topping?.price || 0);
+    }, 0);
+    
+    return (basePrice + toppingPrice) * quantity;
+  }, [selectedProduct, selectedSize, selectedToppings, quantity]);
+
+  const resetModalState = () => {
+    setQuantity(1);
+    setNote("");
+    setSelectedToppings([]);
+    setSelectedSize("small");
+    setSelectedProduct(null);
+    setSelectedCartItemId("");
+  };
+
+  const toggleFavourite = async () => {
+    // This is just a placeholder for the required prop
+    setIsFavourite(!isFavourite);
+  };
+
+  const handleOpenProductModal = async (item: any) => {
+    setSelectedCartItemId(item.id);
+    await fetchProductDetails(item.productId);
+    
+    // Set initial values from the cart item
+    setQuantity(item.quantity);
+    setNote(item.note);
+    setSelectedSize(item.size);
+    setSelectedToppings(item.topping ? item.topping.split(", ").filter(Boolean) : []);
+    
+    setDrinkModalVisible(true);
+  };
+
+  const updateProductInCart = () => {
+    if (!selectedProduct || !selectedCartItemId) return;
+    
+    // Instead of removing and adding a new item, find and update the existing item
+    const updatedCart = cart.map(item => {
+      if (item.id === selectedCartItemId) {
+        return {
+          ...item,
+          size: selectedSize,
+          topping: selectedToppings.join(", "),
+          quantity: quantity,
+          price: calculatePrice() / quantity, // Store the unit price
+          note: note
+        };
+      }
+      return item;
+    });
+    
+    // Update the entire cart with the modified items
+    clearCart();
+    updatedCart.forEach(item => {
+      addNewToCart(item);
+    });
+    
+    setDrinkModalVisible(false);
+    resetModalState();
+  };
 
   return (
     <>
@@ -594,100 +735,90 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
                           </TouchableOpacity>
                         </View>
                       </View>
+                      <View className="bg-blue-50 mx-4 p-3 rounded-lg mb-2 flex-row items-center">
+                        <View className="bg-blue-100 rounded-full p-1 mr-2">
+                          <Edit size={16} color="#1d4ed8" />
+                        </View>
+                        <Text className="text-blue-800 text-sm flex-1">
+                          Biểu tượng bút <Edit size={12} color="#1d4ed8" /> bên cạnh tên sản phẩm cho phép chỉnh sửa kích thước, số lượng hoặc topping
+                        </Text>
+                      </View>
                       <View className="flex-1 gap-4">
                         {cart.map((item) => (
                           <View
                             key={item.id}
-                            className="flex-row justify-between items-start px-4 py-3"
+                            className="flex-row justify-between items-start px-4 py-3 border-b border-gray-200"
                           >
-                            <View className="flex-row w-[70%] gap-1">
+                            <View className="flex-row w-[75%] gap-2">
                               <TouchableOpacity
                                 onPress={() => removeFromCart(item.productId)}
-                                className="flex justify-center items-center"
+                                className="flex justify-center items-center p-1 mt-1"
                               >
-                                <Trash2Icon size={25} color="red" />
+                                <Trash2Icon size={22} color="red" />
                               </TouchableOpacity>
-                              <View>
-                                <TouchableOpacity
-                                  onPress={() => setShowPopup(true)}
-                                  activeOpacity={0.5}
+                              <View className="flex-1">
+                                <Pressable
+                                  onPress={() => handleOpenProductModal(item)}
+                                  android_ripple={{ color: '#e5e7eb' }}
+                                  style={({ pressed }) => [
+                                    { 
+                                      backgroundColor: pressed ? '#f3f4f6' : 'transparent',
+                                      borderRadius: 8,
+                                    }
+                                  ]}
+                                  className="flex-row justify-between items-center p-2"
                                 >
-                                  <View className="flex-row gap-2 items-center bg-gray-50 rounded-lg px-3 py-2">
-                                    <Text className="font-semibold text-lg text-gray-800">
-                                      x{item.quantity}{" "}
+                                  <View className="flex-row items-center flex-1">
+                                    <Text className="font-bold text-base text-gray-800">
                                       {getProductName(item.productId)}
                                     </Text>
+                                    <Animated.View 
+                                      style={{
+                                        marginLeft: 8,
+                                        backgroundColor: '#dbeafe',
+                                        borderRadius: 100,
+                                        padding: 4, 
+                                        opacity: editButtonOpacity
+                                      }}
+                                    >
+                                      <Edit size={12} color="#1d4ed8" />
+                                    </Animated.View>
                                   </View>
-                                </TouchableOpacity>
-                                <Text className="text-base text-gray-600 mt-1">
-                                  {item.size}
-                                </Text>
-                                <Modal
-                                  visible={showPopup}
-                                  transparent
-                                  animationType="fade"
-                                  onRequestClose={() => setShowPopup(false)}
-                                >
-                                  <TouchableWithoutFeedback
-                                    onPress={() => setShowPopup(false)}
-                                  >
-                                    <View className="absolute inset-0 bg-black/50 justify-center items-center">
-                                      <TouchableWithoutFeedback>
-                                        <View className="bg-white rounded-xl p-6 w-80">
-                                          <Text className="text-lg font-bold text-center mb-4">
-                                            {getProductName(item.productId)}
-                                          </Text>
-
-                                          <View className="flex-row items-center justify-between my-2">
-                                            <TouchableOpacity
-                                              onPress={() =>
-                                                handleQuantityChange(
-                                                  "remove",
-                                                  item.productId,
-                                                  totalQuantity
-                                                )
-                                              }
-                                              className="p-2 rounded-full"
-                                            >
-                                              <MinusCircle
-                                                size={28}
-                                                color="#ef4444"
-                                              />
-                                            </TouchableOpacity>
-
-                                            <Text className="text-2xl font-bold mx-4">
-                                              {item.quantity}
-                                            </Text>
-
-                                            <TouchableOpacity
-                                              onPress={() =>
-                                                handleQuantityChange(
-                                                  "add",
-                                                  item.productId,
-                                                  totalQuantity
-                                                )
-                                              }
-                                              className="p-2 rounded-full"
-                                            >
-                                              <PlusCircle
-                                                size={28}
-                                                color="#10b981"
-                                              />
-                                            </TouchableOpacity>
-                                          </View>
-
-                                          <Text className="text-gray-500 text-center mt-2">
-                                            Nhấn bên ngoài để đóng
-                                          </Text>
-                                        </View>
-                                      </TouchableWithoutFeedback>
+                                </Pressable>
+                                
+                                <View className="flex-row flex-wrap mt-1">
+                                  <View className="bg-orange-100 rounded-full px-2 py-0.5 mr-2 mb-1">
+                                    <Text className="text-sm text-orange-800">
+                                      {formatSize(item.size)}
+                                    </Text>
+                                  </View>
+                                  
+                                  <View className="bg-orange-100 rounded-full px-2 py-0.5 mr-2 mb-1">
+                                    <Text className="text-sm text-orange-800">
+                                      x{item.quantity}
+                                    </Text>
+                                  </View>
+                                  
+                                  {item.topping && item.topping.length > 0 && item.topping.split(', ').map((topping, index) => (
+                                    <View key={index} className="bg-green-100 rounded-full px-2 py-0.5 mr-2 mb-1">
+                                      <Text className="text-sm text-green-800">
+                                        {topping}
+                                      </Text>
                                     </View>
-                                  </TouchableWithoutFeedback>
-                                </Modal>
+                                  ))}
+                                </View>
+                                
+                                {item.note && item.note.length > 0 && (
+                                  <View className="mt-1 bg-gray-100 rounded-md p-1">
+                                    <Text className="text-sm text-gray-600">
+                                      <Text className="italic">Ghi chú:</Text> {item.note}
+                                    </Text>
+                                  </View>
+                                )}
                               </View>
                             </View>
-                            <View className="flex-row items-center gap-2 justify-end">
-                              <Text className="font-semibold text-base text-gray-800">
+                            <View className="flex-row items-start justify-end w-[25%] mt-1">
+                              <Text className="font-bold text-base text-orange-500">
                                 {(item.price * item.quantity).toLocaleString()}đ
                               </Text>
                             </View>
@@ -826,6 +957,36 @@ export const CheckoutBtn: React.FC<CheckoutBtnProps> = ({ getProductName }) => {
           </Modal>
         </View>
       )}
+      
+      {selectedProduct && (
+        <DrinkModal
+          visible={drinkModalVisible}
+          onClose={() => setDrinkModalVisible(false)}
+          drink={selectedProduct}
+          isFavourite={isFavourite}
+          toggleFavourite={toggleFavourite}
+          quantity={quantity}
+          setQuantity={setQuantity}
+          note={note}
+          setNote={setNote}
+          selectedSize={selectedSize}
+          setSelectedSize={setSelectedSize}
+          selectedToppings={selectedToppings}
+          toggleTopping={toggleTopping}
+          calculatePrice={calculatePrice}
+          addDrinkToCart={updateProductInCart}
+          check={false}
+        />
+      )}
     </>
   );
 };
+
+// Constant for toppings
+const TOPPINGS = [
+  { id: "1", name: "Trái Vải", price: 8000 },
+  { id: "2", name: "Hạt Sen", price: 8000 },
+  { id: "3", name: "Thạch Cà Phê", price: 6000 },
+  { id: "4", name: "Trân châu trắng", price: 6000 },
+  { id: "5", name: "Đào Miếng", price: 10000 },
+];
