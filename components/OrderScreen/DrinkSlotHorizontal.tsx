@@ -18,6 +18,7 @@ import { IFavouriteProduct, IOrderItem, IProduct } from "@/constants";
 import { generateObjectId } from "@/utils/helpers/randomHexString";
 import { useApi } from "@/hooks/useApi";
 import apiService from "@/constants/config/axiosConfig";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 type DrinkSlotHorizontalProps = {
   drink: IProduct;
@@ -40,6 +41,7 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
 }) => {
   const { cart, addNewToCart, addExistingToCart, checkExist } = useCartStore();
   const { callApi: callFavouriteApi } = useApi<void>();
+  const insets = useSafeAreaInsets();
 
   const [modalVisible, setModalVisible] = useState(false);
   const [quantity, setQuantity] = useState(1);
@@ -153,24 +155,25 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
   return (
     <>
       <TouchableOpacity onPress={() => setModalVisible(true)}>
-        <View className="relative rounded-2xl p-3 shadow-lg bg-white flex-row items-center gap-4">
-          <View className="w-1/3 h-32 rounded-lg">
+        <View className="relative rounded-xl p-3 mx-4 shadow-sm bg-white flex-row items-center gap-3 border border-gray-100">
+          <View className="w-[30%] h-32 rounded-lg">
             <Image
               source={{ uri: drink.imageUrl }}
-              className="w-full h-full rounded-2xl"
+              className="w-full h-full rounded-xl"
               resizeMode="contain"
             />
           </View>
           <View className="flex-1 flex-row items-center justify-between">
             <View className="flex-col gap-2 max-w-[160px]">
-              <Text className="font-semibold">{drink.title}</Text>
-              <Text>{drink.price.toLocaleString("vi-VN")}đ</Text>
+              <Text className="font-semibold text-base">{drink.title}</Text>
+              <Text className="text-gray-700">{drink.price.toLocaleString("vi-VN")}đ</Text>
             </View>
             <TouchableOpacity
-              className={`w-8 h-8 p-[2px] rounded-full flex items-center justify-center ${cart.findIndex((d) => d.productId === drink.id) === -1
+              className={`w-9 h-9 p-[2px] rounded-full flex items-center justify-center ${
+                cart.findIndex((d) => d.productId === drink.id) === -1
                   ? "bg-orange-300"
                   : "bg-green-500"
-                }`}
+              }`}
               onPress={addDrinkToCart}
             >
               {cart.findIndex((d) => d.productId === drink.id) === -1 ? (
@@ -189,10 +192,15 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
         transparent={true}
         visible={modalVisible}
         onRequestClose={() => setModalVisible(false)}
+        statusBarTranslucent={true}
       >
         <View className="flex-1 bg-black/50 justify-center items-center">
-          <View className="w-full h-full bg-white">
-            <ScrollView className="flex-1" keyboardShouldPersistTaps="handled">
+          <View className="w-full h-full bg-white" style={{ paddingTop: insets.top }}>
+            <ScrollView 
+              className="flex-1" 
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{ paddingBottom: 120 }}
+            >
               {/* Image + Close */}
               <View className="relative">
                 <Image
@@ -201,14 +209,14 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
                   resizeMode="cover"
                 />
                 <TouchableOpacity
-                  className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center"
+                  className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center bg-white/80"
                   onPress={() => setModalVisible(false)}
                 >
                   <MinusIcon size={24} color="black" />
                 </TouchableOpacity>
               </View>
 
-              <View className="p-4 pb-24">
+              <View className="p-4">
                 {/* Title + Favourite */}
                 <View className="flex-row justify-between items-center">
                   <Text className="text-xl font-bold w-[80%]">
@@ -285,7 +293,7 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
                 </View>
 
                 {/* Notes */}
-                <View className="border-t border-gray-300 mt-4 pt-4">
+                <View className="border-t border-gray-300 mt-4 pt-4 mb-4">
                   <Text className="font-semibold text-lg">Yêu cầu khác</Text>
                   <TextInput
                     className="border border-gray-300 rounded-md p-2 mt-2"
@@ -298,8 +306,11 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
             </ScrollView>
 
             {/* Bottom Price + Quantity */}
-            <View className="absolute bottom-0 left-0 w-full bg-white p-4 border-t border-gray-200 shadow-md">
-              <View className="flex-row items-center justify-between">
+            <View 
+              className="absolute bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-md"
+              style={{ paddingBottom: Math.max(insets.bottom, 16) }}
+            >
+              <View className="flex-row items-center justify-between p-4">
                 <View className="flex-row items-center gap-4">
                   <TouchableOpacity
                     className="w-10 h-10 rounded-full bg-amber-300 flex items-center justify-center"

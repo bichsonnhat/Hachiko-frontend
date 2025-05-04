@@ -34,19 +34,20 @@ export const Category: React.FC<CategoryProps> = ({
 
   if (loading) {
     return (
-      <View className="p-4 relative h-48 justify-center">
+      <View className="px-4 py-3 relative h-48 justify-center">
         <ActivityIndicator size="large" color="#FF8C00" />
       </View>
     );
   }
 
   return (
-    <View className="p-4 relative mt-16">
+    <View className="py-3 relative border-b border-gray-100">
       <FlatList
         data={groupedCategories}
         keyExtractor={(_item, index) => `group-${index}`}
         horizontal
         showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 4 }}
         renderItem={({ item }) => (
           <View className="mx-2">
             {item.map((category) => (
@@ -78,7 +79,7 @@ export const Category: React.FC<CategoryProps> = ({
           { useNativeDriver: false }
         )}
       />
-      <View className="absolute bottom-0 left-0 right-0 flex items-center">
+      <View className="absolute bottom-2 left-0 right-0 flex items-center">
         <View className="w-10 h-2 bg-gray-300 rounded-full overflow-hidden">
           <Animated.View
             style={{

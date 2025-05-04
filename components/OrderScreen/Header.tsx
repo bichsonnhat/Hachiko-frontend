@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ThemedText } from "../ThemedText";
 import {
   TouchableOpacity,
@@ -13,12 +13,10 @@ import { IFavouriteProductsResponse } from "@/constants";
 import { useApi } from "@/hooks/useApi";
 import apiService from "@/constants/config/axiosConfig";
 import { useBoolean } from "@/hooks/useBoolean";
-import { Heart, HeartIcon, SearchIcon } from "lucide-react-native";
+import { HeartIcon, SearchIcon } from "lucide-react-native";
 import { router } from 'expo-router';
 
 export const Header = () => {
-  const safeHeight = StatusBar.currentHeight || 0;
-
   //hard code userId for testing
   const userId = "67ea8e54c54fd6723fbf8f0e";
 
@@ -61,22 +59,30 @@ export const Header = () => {
   return (
     <>
       <SafeAreaView
-        style={{ marginTop: safeHeight }}
-        className="flex-row justify-between p-4"
+        className="border-b border-gray-100"
       >
-        <View className="flex-row items-center gap-2">
-          <Image
-            source={require("@/assets/images/OrderScreen/category-icon.png")}
-          />
-          <ThemedText className="font-bold">Danh mục</ThemedText>
-        </View>
-        <View className="flex-row items-center gap-3">
-          <TouchableOpacity onPress={() => router.push('/search')}>
-            <SearchIcon className="scale-125" color="black" />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleOpenModal}>
-            <HeartIcon className="scale-125" color="black" />
-          </TouchableOpacity>
+        <View className="flex-row justify-between items-center px-4 py-3">
+          <View className="flex-row items-center gap-2">
+            <Image
+              source={require("@/assets/images/OrderScreen/category-icon.png")}
+              style={{ width: 24, height: 24 }}
+            />
+            <ThemedText className="font-bold text-base">Danh mục</ThemedText>
+          </View>
+          <View className="flex-row items-center">
+            <TouchableOpacity 
+              onPress={() => router.push('/search')}
+              className="w-10 h-10 flex items-center justify-center"
+            >
+              <SearchIcon size={22} color="black" />
+            </TouchableOpacity>
+            <TouchableOpacity 
+              onPress={handleOpenModal}
+              className="w-10 h-10 flex items-center justify-center"
+            >
+              <HeartIcon size={22} color="black" />
+            </TouchableOpacity>
+          </View>
         </View>
       </SafeAreaView>
       <DrinkFavourite

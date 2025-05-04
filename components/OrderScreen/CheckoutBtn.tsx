@@ -42,6 +42,7 @@ import { useRouter } from "expo-router";
 import { DrinkModal } from "@/components/HomeScreen/DrinkModal";
 import { generateObjectId } from "@/utils/helpers/randomHexString";
 import { ItemType } from "react-native-dropdown-picker";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 type CheckoutBtnProps = {
   getProductName: (productId: string) => string;
@@ -51,6 +52,7 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName }) => {
   //hard code for testing
   const [shippingFee, setShippingFee] = useState<number>(15000);
   const address = "Địa chỉ giao hàng";
+  const insets = useSafeAreaInsets();
 
   // Animation value for the edit button
   const editButtonOpacity = new Animated.Value(0.8);
@@ -484,7 +486,7 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName }) => {
   return (
     <>
       {cart.length > 0 && (
-        <View className="shadow-lg">
+        <SafeAreaView className="shadow-lg" edges={['bottom']}>
           <TouchableOpacity
             onPress={handleOpenModal}
             className="absolute bottom-2 mx-10 w-[80%] h-12 rounded-full bg-white flex items-center justify-center"
@@ -526,28 +528,29 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName }) => {
             transparent={true}
             visible={modalVisible}
             onRequestClose={handleCloseModal}
+            statusBarTranslucent={true}
           >
             <View className="flex-1 bg-black/50 justify-center items-center">
-              <View className="w-full h-full bg-gray-100">
+              <View className="w-full h-full bg-gray-100" style={{ paddingTop: insets.top }}>
                 <ScrollView
                   className="flex-1"
-                  contentContainerStyle={{ paddingBottom: 60 }}
+                  contentContainerStyle={{ paddingBottom: 120 }}
                   keyboardShouldPersistTaps="handled"
                 >
-                  <View className="flex-row justify-between px-4 py-2 bg-white mb-4">
-                    <TouchableOpacity onPress={handleClearStorage}>
-                      <Text className="italic text-xl">Xóa</Text>
-                    </TouchableOpacity>
-                    <Text className="font-bold text-xl">Xác nhận đơn hàng</Text>
-                    <TouchableOpacity
-                      className="w-8 h-8 rounded-full flex items-center justify-center"
-                      onPress={handleCloseModal}
-                    >
-                      <MinusIcon size={24} color="black" />
-                    </TouchableOpacity>
-                  </View>
-
                   <View className="flex-1">
+                    <View className="flex-row justify-between px-4 py-2 bg-white mb-4">
+                      <TouchableOpacity onPress={handleClearStorage}>
+                        <Text className="italic text-xl">Xóa</Text>
+                      </TouchableOpacity>
+                      <Text className="font-bold text-xl">Xác nhận đơn hàng</Text>
+                      <TouchableOpacity
+                        className="w-8 h-8 rounded-full flex items-center justify-center"
+                        onPress={handleCloseModal}
+                      >
+                        <MinusIcon size={24} color="black" />
+                      </TouchableOpacity>
+                    </View>
+
                     <View className="flex-1 justify-start bg-white mb-4 py-4 gap-4">
                       <View className="flex-row px-4">
                         <Text className="font-bold text-2xl">
@@ -606,9 +609,13 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName }) => {
                             visible={showTimeModal}
                             animationType="slide"
                             transparent
+                            statusBarTranslucent={true}
                           >
                             <View className="flex-1 justify-end bg-black/50">
-                              <View className="bg-white rounded-t-2xl p-4">
+                              <View 
+                                className="bg-white rounded-t-2xl p-4" 
+                                style={{ paddingBottom: Math.max(insets.bottom, 16) }}
+                              >
                                 <View className="flex-row justify-between items-center mb-2">
                                   <Text className="text-lg font-semibold">
                                     Chọn thời gian giao hàng
@@ -673,9 +680,13 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName }) => {
                             visible={showCustomerModal}
                             animationType="slide"
                             transparent
+                            statusBarTranslucent={true}
                           >
                             <View className="flex-1 justify-end bg-black/50">
-                              <View className="bg-white rounded-t-2xl p-4">
+                              <View 
+                                className="bg-white rounded-t-2xl p-4"
+                                style={{ paddingBottom: Math.max(insets.bottom, 16) }}
+                              >
                                 <View className="flex-row justify-between items-center mb-2">
                                   <Text className="text-lg font-semibold">
                                     Cung cấp thông tin liên hệ
@@ -888,7 +899,7 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName }) => {
                         </View>
                       </View>
                     </View>
-                    <View className="flex-1 justify-start bg-white mb-4 py-4 gap-4">
+                    <View className="flex-1 justify-start bg-white mb-16 py-4 gap-4">
                       <Text className="font-bold text-2xl pl-4">
                         Thanh toán
                       </Text>
@@ -897,7 +908,7 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName }) => {
                           Chọn phương thức thanh toán
                         </Text>
                         <View className="flex-1 gap-2">
-                          <View className="flex-1 gap-2 px-4">
+                          <View className="flex-1 gap-2 px-4 mb-4">
                             <DropDownPicker
                               open={openPaymentMethod}
                               value={paymentMethod}
@@ -925,7 +936,10 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName }) => {
                     </View>
                   </View>
                 </ScrollView>
-                <View className="absolute bottom-0 left-0 w-full bg-orange-500 shadow-md">
+                <View 
+                  className="absolute bottom-0 left-0 w-full bg-orange-500 shadow-md"
+                  style={{ paddingBottom: Math.max(insets.bottom, 0) }}
+                >
                   <View className="flex-row justify-center items-center p-2 px-6">
                     <View className="flex-col justify-start">
                       <View>
@@ -955,7 +969,7 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName }) => {
               </View>
             </View>
           </Modal>
-        </View>
+        </SafeAreaView>
       )}
       
       {selectedProduct && (

@@ -1,4 +1,4 @@
-import {View, Text, TextInput, TouchableOpacity} from 'react-native'
+import {View, Text, TextInput, TouchableOpacity, StatusBar} from 'react-native'
 import React, {useState} from 'react'
 import {ThemedView} from '../ThemedView'
 import {ThemedText} from '../ThemedText'
@@ -8,13 +8,16 @@ import BadgeButton from "@/components/HomeScreen/BadgeButton";
 import NotificationButton from "@/components/HomeScreen/NotificationButton";
 import {router, useNavigation} from "expo-router";
 import {MapScreen} from "@/components/ShopScreen/MapScreen";
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ShopHeader() {
     const [isOpen, setIsOpen] = useState(false)
+    const insets = useSafeAreaInsets();
+    
     return (
-        <ThemedView className={"p-5 pt-10"}>
+        <ThemedView style={{ paddingTop: insets.top }} className={"px-4 py-3 border-b border-gray-100"}>
             <ThemedView className={"flex flex-row items-center"}>
-                <ThemedText className={"font-bold text-xs"}>Cửa hàng</ThemedText>
+                <ThemedText className={"font-bold text-xl"}>Cửa hàng</ThemedText>
                 <View className={"ml-auto flex flex-row"}>
                     <BadgeButton className='mr-2' icon={<Ticket size={24} color={Colors.PRIMARY}/>} text={11}/>
                     <NotificationButton icon={<Bell size={24} color="black"/>} count={1}/>

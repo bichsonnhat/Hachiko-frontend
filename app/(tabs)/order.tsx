@@ -127,7 +127,7 @@ export default function OrderScreen() {
   const SectionListItem = React.memo(({ item }: { item: SectionItem }) => {
     if (item.type === "collection") {
       return (
-        <View className="mt-4">
+        <View className="mt-0">
           <Category
             categories={categories}
             loading={categoryLoading}
@@ -139,11 +139,11 @@ export default function OrderScreen() {
     }
 
     return (
-      <View className="flex-col pb-6">
-        <Text className="font-bold text-xl pl-4 mt-6">{item.categoryName}</Text>
+      <View className="flex-col pb-4 border-b border-gray-100">
+        <Text className="font-bold text-xl px-4 py-2">{item.categoryName}</Text>
         <View>
           {item.products?.map((drink, index) => (
-            <View key={index} className="p-2 rounded-lg">
+            <View key={index} className="mb-3">
               <DrinkSlotHorizontal drink={drink} check={checkHasTopping} />
             </View>
           ))}
@@ -190,17 +190,15 @@ export default function OrderScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
+      <Header />
+      
       <View className="flex-1 bg-white">
-        <View className="absolute top-0 left-0 right-0 z-10 bg-white">
-          <Header />
-        </View>
-
         {productLoading ? (
-          <View className="flex-1 items-center justify-center h-full mt-5">
+          <View className="flex-1 items-center justify-center h-full">
             <ActivityIndicator size="large" color="#FF8C00" />
           </View>
         ) : categories.length === 0 ? (
-          <View className="flex-1 items-center justify-center h-full mt-5">
+          <View className="flex-1 items-center justify-center h-full">
             <Text className="text-lg text-gray-500">Chưa có sản phẩm</Text>
           </View>
         ) : (
@@ -213,6 +211,7 @@ export default function OrderScreen() {
             initialNumToRender={5}
             maxToRenderPerBatch={10}
             windowSize={5}
+            contentContainerStyle={{ paddingTop: 0, paddingBottom: 80 }}
             removeClippedSubviews
           />
         )}

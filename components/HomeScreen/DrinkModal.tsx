@@ -7,12 +7,14 @@ import {
     ScrollView,
     TextInput,
     Modal,
+    StatusBar,
 } from "react-native";
 import { MinusIcon, Plus, Heart, HeartOff } from "lucide-react-native";
 import { ExpandableText } from "@/components/ui";
 import { RadioGroup } from "react-native-radio-buttons-group";
 import Checkbox from "expo-checkbox";
 import { IProduct } from "@/constants";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const TOPPINGS = [
     { id: "1", name: "Trái Vải", price: 8000 },
@@ -59,6 +61,7 @@ export const DrinkModal: React.FC<DrinkModalProps> = ({
     addDrinkToCart,
     check,
 }) => {
+    const insets = useSafeAreaInsets();
     const radioButtons = useMemo(
         () => [
             {
@@ -81,9 +84,10 @@ export const DrinkModal: React.FC<DrinkModalProps> = ({
             transparent={true}
             visible={visible}
             onRequestClose={onClose}
+            statusBarTranslucent={true}
         >
             <View className="flex-1 bg-black/50 justify-center items-center">
-                <View className="w-full h-full bg-white">
+                <View className="w-full h-full bg-white" style={{ paddingTop: insets.top }}>
                     <ScrollView className="flex-1" keyboardShouldPersistTaps="handled">
                         <View className="relative">
                             <Image
@@ -177,8 +181,11 @@ export const DrinkModal: React.FC<DrinkModalProps> = ({
                             </View>
                         </View>
                     </ScrollView>
-                    <View className="absolute bottom-0 left-0 w-full bg-white p-4 border-t border-gray-200 shadow-md">
-                        <View className="flex-row items-center justify-between">
+                    <View 
+                        className="absolute bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-md" 
+                        style={{ paddingBottom: Math.max(insets.bottom, 16) }}
+                    >
+                        <View className="flex-row items-center justify-between p-4">
                             <View className="flex-row items-center gap-4">
                                 <TouchableOpacity
                                     className="w-10 h-10 rounded-full bg-amber-300 flex items-center justify-center"
