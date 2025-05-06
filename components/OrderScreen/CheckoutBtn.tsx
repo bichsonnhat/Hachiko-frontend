@@ -56,7 +56,7 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName }) => {
 
   // Animation value for the edit button
   const editButtonOpacity = new Animated.Value(0.8);
-  
+
   // Animation effect for the edit button
   useEffect(() => {
     const pulseAnimation = Animated.sequence([
@@ -73,9 +73,9 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName }) => {
         useNativeDriver: true
       })
     ]);
-    
+
     Animated.loop(pulseAnimation).start();
-    
+
     return () => {
       editButtonOpacity.stopAnimation();
     };
@@ -415,16 +415,16 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName }) => {
 
   const calculatePrice = useCallback(() => {
     if (!selectedProduct) return 0;
-    
-    const basePrice = selectedSize === "medium" 
-      ? selectedProduct.price + 10000 
+
+    const basePrice = selectedSize === "medium"
+      ? selectedProduct.price + 10000
       : selectedProduct.price;
-    
+
     const toppingPrice = selectedToppings.reduce((total, toppingName) => {
       const topping = TOPPINGS.find((t) => t.name === toppingName);
       return total + (topping?.price || 0);
     }, 0);
-    
+
     return (basePrice + toppingPrice) * quantity;
   }, [selectedProduct, selectedSize, selectedToppings, quantity]);
 
@@ -445,19 +445,19 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName }) => {
   const handleOpenProductModal = async (item: any) => {
     setSelectedCartItemId(item.id);
     await fetchProductDetails(item.productId);
-    
+
     // Set initial values from the cart item
     setQuantity(item.quantity);
     setNote(item.note);
     setSelectedSize(item.size);
     setSelectedToppings(item.topping ? item.topping.split(", ").filter(Boolean) : []);
-    
+
     setDrinkModalVisible(true);
   };
 
   const updateProductInCart = () => {
     if (!selectedProduct || !selectedCartItemId) return;
-    
+
     // Instead of removing and adding a new item, find and update the existing item
     const updatedCart = cart.map(item => {
       if (item.id === selectedCartItemId) {
@@ -472,13 +472,13 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName }) => {
       }
       return item;
     });
-    
+
     // Update the entire cart with the modified items
     clearCart();
     updatedCart.forEach(item => {
       addNewToCart(item);
     });
-    
+
     setDrinkModalVisible(false);
     resetModalState();
   };
@@ -612,8 +612,8 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName }) => {
                             statusBarTranslucent={true}
                           >
                             <View className="flex-1 justify-end bg-black/50">
-                              <View 
-                                className="bg-white rounded-t-2xl p-4" 
+                              <View
+                                className="bg-white rounded-t-2xl p-4"
                                 style={{ paddingBottom: Math.max(insets.bottom, 16) }}
                               >
                                 <View className="flex-row justify-between items-center mb-2">
@@ -683,7 +683,7 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName }) => {
                             statusBarTranslucent={true}
                           >
                             <View className="flex-1 justify-end bg-black/50">
-                              <View 
+                              <View
                                 className="bg-white rounded-t-2xl p-4"
                                 style={{ paddingBottom: Math.max(insets.bottom, 16) }}
                               >
@@ -772,7 +772,7 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName }) => {
                                   onPress={() => handleOpenProductModal(item)}
                                   android_ripple={{ color: '#e5e7eb' }}
                                   style={({ pressed }) => [
-                                    { 
+                                    {
                                       backgroundColor: pressed ? '#f3f4f6' : 'transparent',
                                       borderRadius: 8,
                                     }
@@ -783,12 +783,12 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName }) => {
                                     <Text className="font-bold text-base text-gray-800">
                                       {getProductName(item.productId)}
                                     </Text>
-                                    <Animated.View 
+                                    <Animated.View
                                       style={{
                                         marginLeft: 8,
                                         backgroundColor: '#dbeafe',
                                         borderRadius: 100,
-                                        padding: 4, 
+                                        padding: 4,
                                         opacity: editButtonOpacity
                                       }}
                                     >
@@ -796,20 +796,20 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName }) => {
                                     </Animated.View>
                                   </View>
                                 </Pressable>
-                                
+
                                 <View className="flex-row flex-wrap mt-1">
                                   <View className="bg-orange-100 rounded-full px-2 py-0.5 mr-2 mb-1">
                                     <Text className="text-sm text-orange-800">
                                       {formatSize(item.size)}
                                     </Text>
                                   </View>
-                                  
+
                                   <View className="bg-orange-100 rounded-full px-2 py-0.5 mr-2 mb-1">
                                     <Text className="text-sm text-orange-800">
                                       x{item.quantity}
                                     </Text>
                                   </View>
-                                  
+
                                   {item.topping && item.topping.length > 0 && item.topping.split(', ').map((topping, index) => (
                                     <View key={index} className="bg-green-100 rounded-full px-2 py-0.5 mr-2 mb-1">
                                       <Text className="text-sm text-green-800">
@@ -818,7 +818,7 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName }) => {
                                     </View>
                                   ))}
                                 </View>
-                                
+
                                 {item.note && item.note.length > 0 && (
                                   <View className="mt-1 bg-gray-100 rounded-md p-1">
                                     <Text className="text-sm text-gray-600">
@@ -936,7 +936,7 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName }) => {
                     </View>
                   </View>
                 </ScrollView>
-                <View 
+                <View
                   className="absolute bottom-0 left-0 w-full bg-orange-500 shadow-md"
                   style={{ paddingBottom: Math.max(insets.bottom, 0) }}
                 >
@@ -971,7 +971,7 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName }) => {
           </Modal>
         </SafeAreaView>
       )}
-      
+
       {selectedProduct && (
         <DrinkModal
           visible={drinkModalVisible}
