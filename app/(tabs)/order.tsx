@@ -191,7 +191,7 @@ export default function OrderScreen() {
   return (
     <SafeAreaView className="flex-1 bg-white">
       <Header />
-      
+
       <View className="flex-1 bg-white">
         {productLoading ? (
           <View className="flex-1 items-center justify-center h-full">
