@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   StatusBar,
   Alert,
+  Platform,
 } from "react-native";
 import { DrinkFavourite } from "./DrinkFavourite";
 import { IFavouriteProductsResponse } from "@/constants";
@@ -58,33 +59,38 @@ export const Header = () => {
 
   return (
     <>
-      <SafeAreaView
+      <View
         className="border-b border-gray-100"
+        style={{
+          paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+        }}
       >
-        <View className="flex-row justify-between items-center px-4 py-3">
-          <View className="flex-row items-center gap-2">
-            <Image
-              source={require("@/assets/images/OrderScreen/category-icon.png")}
-              style={{ width: 24, height: 24 }}
-            />
-            <ThemedText className="font-bold text-base">Danh mục</ThemedText>
+        <SafeAreaView>
+          <View className="flex-row justify-between items-center px-4 py-3">
+            <View className="flex-row items-center gap-2">
+              <Image
+                source={require("@/assets/images/OrderScreen/category-icon.png")}
+                style={{ width: 24, height: 24 }}
+              />
+              <ThemedText className="font-bold text-base">Danh mục</ThemedText>
+            </View>
+            <View className="flex-row items-center">
+              <TouchableOpacity 
+                onPress={() => router.push('/search')}
+                className="w-10 h-10 flex items-center justify-center"
+              >
+                <SearchIcon size={22} color="black" />
+              </TouchableOpacity>
+              <TouchableOpacity 
+                onPress={handleOpenModal}
+                className="w-10 h-10 flex items-center justify-center"
+              >
+                <HeartIcon size={22} color="black" />
+              </TouchableOpacity>
+            </View>
           </View>
-          <View className="flex-row items-center">
-            <TouchableOpacity 
-              onPress={() => router.push('/search')}
-              className="w-10 h-10 flex items-center justify-center"
-            >
-              <SearchIcon size={22} color="black" />
-            </TouchableOpacity>
-            <TouchableOpacity 
-              onPress={handleOpenModal}
-              className="w-10 h-10 flex items-center justify-center"
-            >
-              <HeartIcon size={22} color="black" />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </SafeAreaView>
+        </SafeAreaView>
+      </View>
       <DrinkFavourite
         modalVisible={modalVisible}
         handleModalClose={handleModalClose}
