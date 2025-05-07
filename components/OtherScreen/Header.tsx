@@ -6,6 +6,7 @@ import BadgeButton from "../HomeScreen/BadgeButton";
 import NotificationButton from "../HomeScreen/NotificationButton";
 import { ThemedView } from "../ThemedView";
 import { ThemedText } from "../ThemedText";
+import HeaderActions from "../common/HeaderActions";
 
 export const Header = () => {
   return (
@@ -13,15 +14,7 @@ export const Header = () => {
       <ThemedView className={"flex flex-row items-center"}>
         <ThemedText className={"font-medium text-xs"}>Khác</ThemedText>
         <View className={"ml-auto flex flex-row"}>
-          <BadgeButton
-            className="mr-2"
-            icon={<Ticket size={24} color={Colors.PRIMARY} />}
-            text={11}
-          />
-          <NotificationButton
-            icon={<Bell size={24} color="black" />}
-            count={1}
-          />
+          <HeaderActions />
         </View>
       </ThemedView>
     </ThemedView>

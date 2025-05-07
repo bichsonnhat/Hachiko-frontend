@@ -61,7 +61,7 @@ export default function HomeScreen() {
   }, [productErrorMessage, advertisementErrorMessage]);
 
   return (
-    <View className="flex bg-white h-full">
+    <SafeAreaView className="flex bg-white h-full">
       <Header />
       {advertisementLoading || productLoading ? (
         <View className="flex-1 items-center justify-center h-full mt-5">
@@ -74,6 +74,6 @@ export default function HomeScreen() {
           <ProductGridSection title={"Món mới phải thử"} products={products} />
         </>
       )}
-    </View>
+    </SafeAreaView>
   );
 }
