@@ -1,20 +1,30 @@
 import {
-    View, Image, Text, TouchableOpacity, TextInput,
-    Platform, ScrollView, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard,
+    View, Text, TextInput, ScrollView, KeyboardAvoidingView,
+    Platform, TouchableWithoutFeedback, Keyboard, TouchableOpacity,
+    Switch,
 } from 'react-native';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigation } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
+import ImagePickerPreview, { ImagePickerPreviewRef } from '@/components/common/ImagePickerPreview';
+import { useApi } from '@/hooks/useApi';
+import apiService from '@/constants/config/axiosConfig';
 
 export default function AddCategory() {
-
     const navigation = useNavigation();
-    const [categoryName, setCategoryName] = useState("");
-    const [image, setImage] = useState<string | null>(null);
+    const [categoryName, setCategoryName] = useState('');
+    const [hasTopping, setHasTopping] = useState(false);
+    const [hasImage, setHasImage] = useState(false);
+    const imagePickerRef = useRef<ImagePickerPreviewRef>(null);
+
+    const {
+        loading: categoryLoading,
+        errorMessage: categoryErrorMessage,
+        callApi: callCategoryApi,
+    } = useApi<void>();
 
     useEffect(() => {
         navigation.setOptions({
-            headerTitle: "Thêm danh mục mới",
+            headerTitle: 'Thêm danh mục mới',
             headerShown: true,
             headerTitleAlign: 'center',
             headerStyle: {
@@ -25,65 +35,93 @@ export default function AddCategory() {
         });
     }, [navigation]);
 
-    const onImagePick = async () => {
-        let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
-            allowsEditing: true,
-            quality: 1,
-        });
-        if (!result.canceled && result.assets && result.assets.length > 0) {
-            setImage(result.assets[0].uri);
-            console.log(result);
+    const isSubmitDisabled = (): boolean => {
+        return !categoryName.trim() || !hasImage;
+    };
+
+    const handleImageSelected = (hasSelectedImage: boolean) => {
+        setHasImage(hasSelectedImage);
+    };
+
+    const handleSubmit = async () => {
+        try {
+            const result = await imagePickerRef.current?.upload();
+            if (result) {
+                console.log('Upload thành công:', result.secure_url);
+
+                const categoryData = {
+                    name: categoryName,
+                    hasToppings: hasTopping,
+                    imgUrl: result.secure_url,
+                };
+
+                await callCategoryApi(async () => {
+                    const response = await apiService.post('/categories', categoryData);
+
+                    console.log('Thêm danh mục thành công:', response.data);
+                });
+                setCategoryName('');
+                setHasTopping(false);
+                setHasImage(false);
+                imagePickerRef.current?.reset();
+            }
+        } catch (err) {
+            console.error('Lỗi upload:', err);
         }
-        console.log(result);
     };
 
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <KeyboardAvoidingView
-                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 className="flex-1 bg-white"
             >
-                <ScrollView
-                    contentContainerStyle={{ paddingBottom: 20 }}
-                    keyboardShouldPersistTaps="handled"
-                    nestedScrollEnabled={true}
-                >
+                <ScrollView contentContainerStyle={{ paddingBottom: 20 }} keyboardShouldPersistTaps="handled">
                     <View className="py-0 px-7">
-                        <View>
-                            <View>
-                                <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Tên danh mục*</Text>
-                                <TextInput
-                                    placeholder="Nhập tên danh mục"
-                                    className="p-[10px] border border-gray-300 rounded-[10px] text-[16px] bg-white mt-[10px]"
-                                    value={categoryName}
-                                    placeholderTextColor="#9ca3af"
-                                    onChangeText={setCategoryName}
-                                />
-                            </View>
-                            <View>
-                                <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Hình ảnh*</Text>
-                                <TouchableOpacity className="mt-3" onPress={onImagePick}>
-                                    {!image ? (
-                                        <Image
-                                            source={require('./../../../assets/images/Profile/camera.png')}
-                                            className="w-[150px] h-[150px]"
-                                        />
-                                    ) : (
-                                        <Image
-                                            source={{ uri: image }}
-                                            className="w-[150px] h-[150px] rounded-2xl"
-                                        />
-                                    )}
-                                </TouchableOpacity>
-                            </View>
-                            <TouchableOpacity className='bg-gray-200 py-4 px-5 rounded-[10px] items-center mt-[15px]'>
-                                <Text className='text-white text-[16px] font-bold'>Xong</Text>
-                            </TouchableOpacity>
+                        <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Tên danh mục*</Text>
+                        <TextInput
+                            placeholder="Nhập tên danh mục"
+                            className="p-[10px] border border-gray-300 rounded-[10px] text-[16px] bg-white mt-[10px]"
+                            value={categoryName}
+                            placeholderTextColor="#9ca3af"
+                            onChangeText={setCategoryName}
+                        />
+
+                        <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Topping*</Text>
+                        <View className="flex-row items-center mt-[10px]">
+                            <Switch
+                                value={hasTopping}
+                                onValueChange={setHasTopping}
+                                trackColor={{ false: '#767577', true: '#f59e0b' }}
+                                thumbColor={hasTopping ? '#f4f3f4' : '#f4f3f4'}
+                            />
+                            <Text className="ml-2 text-[16px] text-gray-600">
+                                {hasTopping ? 'Có topping' : 'Không có topping'}
+                            </Text>
                         </View>
+
+                        <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Hình ảnh*</Text>
+                        <ImagePickerPreview
+                            ref={imagePickerRef}
+                            onImageSelected={handleImageSelected}
+                        />
+
+                        <TouchableOpacity
+                            onPress={handleSubmit}
+                            disabled={isSubmitDisabled()}
+                            className={`py-4 px-5 rounded-[10px] items-center mt-[20px] ${isSubmitDisabled() ? 'bg-gray-200' : 'bg-[#f59e0b]'
+                                }`}
+                        >
+                            <Text
+                                className={`text-[16px] font-bold ${isSubmitDisabled() ? 'text-gray-500' : 'text-white'
+                                    }`}
+                            >
+                                Xong
+                            </Text>
+                        </TouchableOpacity>
                     </View>
                 </ScrollView>
             </KeyboardAvoidingView>
         </TouchableWithoutFeedback>
-    )
+    );
 }
