@@ -11,7 +11,7 @@ export type ImagePickerPreviewRef = {
 };
 
 type Props = {
-    initialUri?: string;
+    initialUri?: string | null;
     onImageSelected?: (hasImage: boolean) => void;
 };
 
