@@ -5,7 +5,7 @@ import {
     ActivityIndicator,
 } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigation, useLocalSearchParams } from 'expo-router';
+import { useNavigation, useLocalSearchParams, router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { useApi } from '@/hooks/useApi';
@@ -112,8 +112,16 @@ export default function UpdateCategory() {
             });
 
             setOriginalData(categoryData);
-            imagePickerRef.current?.reset();
+            // imagePickerRef.current?.reset();
             console.log('Cập nhật thành công');
+            router.back();
+
+            router.replace({
+                pathname: "/(dashboard)/category",
+                params: {
+                    updatedCategory: JSON.stringify(categoryData),
+                },
+            });
         } catch (err) {
             console.error('Lỗi upload hoặc update:', err);
         }
