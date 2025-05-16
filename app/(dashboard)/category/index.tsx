@@ -8,17 +8,6 @@ import { ICategory } from "@/constants";
 import apiService from "@/constants/config/axiosConfig";
 import React from "react";
 
-// const categories = [
-//     { id: "1", name: "Danh mục 1" },
-//     { id: "2", name: "Danh mục 2" },
-//     { id: "3", name: "Danh mục 3" },
-//     { id: "4", name: "Danh mục 4" },
-//     { id: "5", name: "Danh mục 5" },
-//     { id: "6", name: "Danh mục 6" },
-//     { id: "7", name: "Danh mục 7" },
-//     { id: "8", name: "Danh mục 8" },
-// ];
-
 export default function CategoryScreen() {
     const navigation = useNavigation();
     const [categories, setCategories] = useState<ICategory[]>([]);
