@@ -121,3 +121,81 @@ const {
 ```
 
 A full example is available at `/app/cloudinary-example.tsx`
+
+# Clerk Webhook Integration
+
+This repository contains a webhook handler for Clerk authentication service. The webhook allows your application to receive real-time notifications when authentication-related events occur, such as user creation, user updates, or user deletion.
+
+## Setup Instructions
+
+### 1. Install Required Dependency
+
+```bash
+npm install svix --save
+```
+
+### 2. Environment Variables
+
+Add the following environment variable to your project:
+
+```
+CLERK_WEBHOOK_SECRET=your_webhook_signing_secret_from_clerk_dashboard
+```
+
+You can get the webhook signing secret from the Clerk Dashboard when you create a new webhook endpoint.
+
+### 3. Set up Webhook Endpoint in Clerk Dashboard
+
+1. Go to the Clerk Dashboard for your application
+2. Navigate to the "Webhooks" section
+3. Click "Add Endpoint"
+4. Enter your webhook URL (e.g., `https://your-app.com/webhook`)
+5. Select the events you want to subscribe to (e.g., user.created, user.updated, etc.)
+6. Save the webhook configuration
+7. Copy the Signing Secret and add it to your environment variables as `CLERK_WEBHOOK_SECRET`
+
+### 4. Testing Locally
+
+To test the webhook locally, you'll need to use a service like ngrok to create a public URL that forwards to your local server:
+
+1. Install ngrok: `npm install -g ngrok`
+2. Start your application locally
+3. In a separate terminal, run: `ngrok http 8081` (or whatever port your app is running on)
+4. Copy the ngrok URL (e.g., `https://1234abcd.ngrok.io`)
+5. Update your webhook URL in the Clerk Dashboard to the ngrok URL (e.g., `https://1234abcd.ngrok.io/webhook`)
+6. Send a test webhook from the Clerk Dashboard
+
+### 5. Implementation Details
+
+The webhook handler is implemented in `app/webhook+api.ts`. It verifies the webhook signature using the Svix library and processes different event types.
+
+## Supported Events
+
+The webhook handler currently supports the following events:
+
+- `user.created`: Triggered when a new user is created
+- `user.updated`: Triggered when a user's information is updated
+- `user.deleted`: Triggered when a user is deleted
+- `session.created`: Triggered when a user creates a new session
+- `session.ended`: Triggered when a user's session ends
+
+## Customizing the Webhook Handler
+
+To customize the webhook handler, edit the `app/webhook+api.ts` file. You can add custom logic in the event handlers for each event type:
+
+```typescript
+switch (type) {
+  case 'user.created': {
+    // Your custom logic here
+    // e.g., create a user in your database
+    break;
+  }
+  // ... other event types
+}
+```
+
+## Security Considerations
+
+- The webhook handler verifies the signature of each request to ensure it's coming from Clerk.
+- Make sure to keep your webhook secret secure and never commit it to your repository.
+- Consider using environment variables for all sensitive configuration.
