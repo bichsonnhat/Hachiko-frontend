@@ -5,8 +5,8 @@ import { Colors } from '@/constants/Colors';
 import { router, useFocusEffect } from 'expo-router';
 import apiService from '@/constants/config/axiosConfig';
 import { useApi } from '@/hooks/useApi';
-import BadgeButton from '@/app-example/components/HomeScreen/BadgeButton';
-import NotificationButton from '@/app-example/components/HomeScreen/NotificationButton';
+import BadgeButton from '@/components/HomeScreen/BadgeButton';
+import NotificationButton from '@/components/HomeScreen/NotificationButton';
 
 export default function HeaderActions() {
     const [unseenCount, setUnseenCount] = useState<number>(0);
