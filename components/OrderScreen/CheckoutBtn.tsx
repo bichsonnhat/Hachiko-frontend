@@ -208,8 +208,8 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName }) => {
         productName: "Đơn hàng " + userId,
         description: "Thanh toán đơn hàng",
         price: priceAfterDiscount + newShippingFee,
-        returnUrl: "exp://192.168.1.9:8081/--/payment/success", //kiểm tra lại url lúc chạy npx expo start, đều là localhost nhưng mà khác mạng thì config ip khác
-        cancelUrl: "exp://192.168.1.9:8081/--/payment/failed",
+        returnUrl: "exp://172.16.0.191:8081/--/payment/success", //kiểm tra lại url lúc chạy npx expo start, đều là localhost nhưng mà khác mạng thì config ip khác
+        cancelUrl: "exp://172.16.0.191:8081/--/payment/failed",
       };
       const { data } = await apiService.post("/orders/payos", sendData);
       if (data) {

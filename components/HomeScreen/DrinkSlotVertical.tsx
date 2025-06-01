@@ -6,13 +6,14 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native";
-import { Plus, Check, Heart, HeartOff } from "lucide-react-native";
+import { Plus, Check, Heart, HeartOff, Star } from "lucide-react-native";
 import { useCartStore } from "@/stores";
 import { IFavouriteProduct, IOrderItem, IProduct } from "@/constants";
 import { generateObjectId } from "@/utils/helpers/randomHexString";
 import { useApi } from "@/hooks/useApi";
 import apiService from "@/constants/config/axiosConfig";
 import { DrinkModal } from "./DrinkModal";
+import { ReviewModal } from "@/components/OrderScreen/ReviewModal";
 
 type DrinkSlotVerticalProps = {
   drink: IProduct;
@@ -29,6 +30,7 @@ export const DrinkSlotVertical: React.FC<DrinkSlotVerticalProps> = ({
   const { callApi: callFavouriteApi } = useApi<void>();
 
   const [modalVisible, setModalVisible] = useState(false);
+  const [reviewModalVisible, setReviewModalVisible] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [note, setNote] = useState("");
   const [selectedSize, setSelectedSize] = useState("small");
@@ -141,7 +143,7 @@ export const DrinkSlotVertical: React.FC<DrinkSlotVerticalProps> = ({
             </Text>
           </View>
 
-          <View className="w-full mb-3 flex-row items-center justify-between">
+          <View className="w-full mb-2 flex-row items-center justify-between">
             <Text className="flex-1">{drink.price.toLocaleString("vi-VN")}đ</Text>
 
             <TouchableOpacity
@@ -158,8 +160,29 @@ export const DrinkSlotVertical: React.FC<DrinkSlotVerticalProps> = ({
               )}
             </TouchableOpacity>
           </View>
+
+          {/* Review Button */}
+          <TouchableOpacity
+            onPress={(e) => {
+              e.stopPropagation();
+              setReviewModalVisible(true);
+            }}
+            className="flex-row items-center mb-3 ml-1"
+          >
+            <Star size={12} color="#FFD700" fill="#FFD700" />
+            <Text className="text-blue-600 text-xs ml-1 underline">
+              Xem đánh giá
+            </Text>
+          </TouchableOpacity>
         </View>
       </TouchableOpacity>
+
+      {/* Review Modal */}
+      <ReviewModal
+        visible={reviewModalVisible}
+        onClose={() => setReviewModalVisible(false)}
+        product={drink}
+      />
 
       <DrinkModal
         visible={modalVisible}
