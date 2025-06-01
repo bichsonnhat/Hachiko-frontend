@@ -4,53 +4,20 @@ import {Button, Image, Modal, StyleSheet, View, Text} from 'react-native';
 import * as Location from 'expo-location';
 import axios from 'axios';
 import apiService from "@/constants/config/axiosConfig";
-import {ItemType} from "react-native-dropdown-picker";
 import {IStore, IVoucher, Store} from "@/constants";
 import {useApi} from "@/hooks/useApi";
-import {HereRoutingResponse} from "@/constants/interface/here-routing-response.interface";
+// @ts-ignore
+import polyline from '@mapbox/polyline';
 
 interface ShopModalProps {
     visible: boolean;
     onClose: () => void;
 }
-
-const HERE_APP_ID = "OB7L6jOZrcE10QGpbzMM";
-const HERE_APP_CODE = "fkQia5FxXS2fTgEq-96IWfkHLWoiMKzRglwUhml0x1c";
-
-// Colors constant
 const COLORS = {
     green: '#00FF00',
     red: '#FF0000',
     blue: '#0000FF'
 };
-const decodePolyline = (t: any) => {
-    let points: any = [];
-    let index = 0, len = t.length;
-    let lat = 0, lng = 0;
-
-    while (index < len) {
-        let b, shift = 0, result = 0;
-        do {
-            b = t.charCodeAt(index++) - 63;
-            result |= (b & 0x1f) << shift;
-            shift += 5;
-        } while (b >= 0x20);
-        let dlat = ((result & 1) ? ~(result >> 1) : (result >> 1));
-        lat += dlat;
-
-        shift = 0;
-        result = 0;
-        do {
-            b = t.charCodeAt(index++) - 63;
-            result |= (b & 0x1f) << shift;
-            shift += 5;
-        } while (b >= 0x20);
-        let dlng = ((result & 1) ? ~(result >> 1) : (result >> 1));
-        lng += dlng;
-
-        points.push({ latitude: lat / 1e5, longitude: lng / 1e5 });
-    }
-    return points;};
 export const MapScreen = ({visible, onClose}: ShopModalProps) => {
     const [location, setLocation] = useState<Location.LocationObject | null>(null);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -59,48 +26,19 @@ export const MapScreen = ({visible, onClose}: ShopModalProps) => {
     const [selectedStore, setSelectedStore] = useState<IStore | null>(null);
     const [coordinates, setCoordinates] = useState<any[]>([]);
 
-    // Decode polyline function
-    const decodePolyline = (t: any) => {
-        let points: any = [];
-        let index = 0, len = t.length;
-        let lat = 0, lng = 0;
-
-        while (index < len) {
-            let b, shift = 0, result = 0;
-            do {
-                b = t.charCodeAt(index++) - 63;
-                result |= (b & 0x1f) << shift;
-                shift += 5;
-            } while (b >= 0x20);
-            let dlat = ((result & 1) ? ~(result >> 1) : (result >> 1));
-            lat += dlat;
-
-            shift = 0;
-            result = 0;
-            do {
-                b = t.charCodeAt(index++) - 63;
-                result |= (b & 0x1f) << shift;
-                shift += 5;
-            } while (b >= 0x20);
-            let dlng = ((result & 1) ? ~(result >> 1) : (result >> 1));
-            lng += dlng;
-
-            points.push({ latitude: lat / 1e5, longitude: lng / 1e5 });
-        }
-        return points;
-    };
-
     // Function to get route from HERE API
     const getRoute = async (fromLat: number, fromLong: number, toLat: number, toLong: number) => {
         try {
-
-            const url = `https://router.hereapi.com/v8/routes?transportMode=car&origin=${fromLat+","+fromLong}&destination=${toLat+","+toLong}&return=summary,polyline&apikey=${HERE_APP_CODE}`;
-            console.log('HERE API URL:', url);
-
-            const response = await axios.get<HereRoutingResponse>(url);
-            console.log("decode",decodePolyline(response.data.routes[0].sections[0].polyline))
-            setCoordinates(decodePolyline(response.data.routes[0].sections[0].polyline))
-            console.log('HERE API response:', response.data);
+            const url = `https://api.locationiq.com/v1/directions/driving/${fromLong},${fromLat};${toLong},${toLat}?key=pk.b9cc0f340e91ba9cdd679d5da8a156bc&overview=full`;
+            const response = await axios.get(url);
+            const encodedPolyline = response.data.routes[0].geometry;
+            const decodedCoordinates = polyline.decode(encodedPolyline);
+            console.log(decodedCoordinates)
+            // @ts-ignore
+            const formattedCoordinates = decodedCoordinates.map(coordPair => {
+                return { latitude: coordPair[0], longitude: coordPair[1] };
+            });
+            setCoordinates(formattedCoordinates);
 
 
 
@@ -140,8 +78,6 @@ export const MapScreen = ({visible, onClose}: ShopModalProps) => {
 
         getCurrentLocation();
     }, []);
-
-    // Effect to get route when both location and selected store are available
     useEffect(() => {
         if (location && selectedStore) {
             getRoute(
@@ -151,17 +87,10 @@ export const MapScreen = ({visible, onClose}: ShopModalProps) => {
                 selectedStore.longitude
             );
         } else {
-            // Clear coordinates if no store is selected
             setCoordinates([]);
         }
     }, [location, selectedStore]);
 
-    let text = 'Waiting...';
-    if (errorMsg) {
-        text = errorMsg;
-    } else if (location) {
-        text = `Location: ${location.coords.latitude.toFixed(4)}, ${location.coords.longitude.toFixed(4)}`;
-    }
 
     return (
         <Modal
@@ -181,7 +110,6 @@ export const MapScreen = ({visible, onClose}: ShopModalProps) => {
                         longitudeDelta: 0.0421,
                     }}
                 >
-                    {/* Marker cho vị trí hiện tại của người dùng */}
                     {location && (
                         <Marker
                             coordinate={{
@@ -193,7 +121,6 @@ export const MapScreen = ({visible, onClose}: ShopModalProps) => {
                         />
                     )}
 
-                    {/* Marker cho các store */}
                     {stores.map((store) => (
                         <Marker
                             key={store.id}
@@ -216,18 +143,35 @@ export const MapScreen = ({visible, onClose}: ShopModalProps) => {
                         </Marker>
                     ))}
 
-                    {/* Polyline with route from HERE API */}
                     {coordinates.length > 0 && (
                         <Polyline
                             coordinates={coordinates}
-                            strokeColor={COLORS.green}
+                            strokeColor={COLORS.blue}
                             strokeWidth={5}
                         />
                     )}
                 </MapView>
 
-                <Button title={text} onPress={onClose} />
+                <View style={styles.buttonContainer}>
+                    <Button title="Tắt map" onPress={onClose} />
+                </View>
             </View>
         </Modal>
     );
 }
+const styles = StyleSheet.create({
+    buttonContainer: {
+        position: 'absolute',
+        bottom: 20,
+        left: 20,
+        right: 20,
+        backgroundColor: 'white',
+        padding: 10,
+        borderRadius: 10,
+        alignItems: 'center',
+    },
+    locationText: {
+        fontSize: 12,
+        marginBottom: 5,
+    },
+});
