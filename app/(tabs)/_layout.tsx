@@ -24,7 +24,7 @@ export default function TabLayout() {
     return <Redirect href="/auth" />;
   }
 
-  // return <Redirect href="/cloudinary-example" />
+  return <Redirect href="/(dashboard)/dashboard" />
 
   const pageToHideTabBar = [
     "order-feedback",
