@@ -3,6 +3,7 @@ import { View, Text, Image, TouchableOpacity, Modal, Dimensions } from "react-na
 import { Locate, Navigation } from "lucide-react-native";
 import Slider from "@/components/HomeScreen/Slider";
 import {IStore, Store} from "@/constants";
+import {useRouter} from "expo-router";
 
 interface ShopModalProps {
     store?: IStore;
@@ -12,13 +13,7 @@ interface ShopModalProps {
 const { height } = Dimensions.get('window');
 
 const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose, store }) => {
-   /* const formattedOpenTime = store?.open_time.toLocaleTimeString("vi-VN", {
-        hour: "2-digit",
-        minute: "2-digit",
-    }); const formattedCloseTime = store?.close_time.toLocaleTimeString("vi-VN", {
-        hour: "2-digit",
-        minute: "2-digit",
-    });*/
+    const router = useRouter();
     return (
         <Modal visible={visible} animationType="slide" >
             <View className="flex-1 bg-white">
@@ -53,7 +48,10 @@ const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose, store }) => {
                 </View>
 
                 {/* Nút đặt hàng */}
-                <TouchableOpacity className="bg-orange-500 p-5 items-center ">
+                <TouchableOpacity className="bg-orange-500 p-5 items-center "
+                                  onPress={() => router.push("/(tabs)/order")}
+
+                >
                     <Text className="text-white font-bold text-xl">Đặt mang đi</Text>
                     <Text className="text-white opacity-80">Tự đến lấy tại cửa hàng này</Text>
                 </TouchableOpacity>
