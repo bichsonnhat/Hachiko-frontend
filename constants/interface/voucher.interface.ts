@@ -2,7 +2,6 @@ import { ReactElement } from "react";
 
 export interface IVoucher {
     id?: string,
-    userId?: string,
     title: string,
     description: string,
     imgUrl: string,

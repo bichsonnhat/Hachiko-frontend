@@ -1,17 +1,14 @@
-import React, { useState } from "react";
-import { View } from "react-native";
-import DropDownPicker from "react-native-dropdown-picker";
-
-interface DropdownItem {
-  label: string;
-  value: string;
-}
+import React, { useEffect, useState } from "react";
+import { View, StyleSheet } from "react-native";
+import { Dropdown } from "react-native-element-dropdown";
+import { IDropdownItem } from "@/constants/interface/dropdown-item.interface";
 
 interface CustomDropdownProps {
-  items: DropdownItem[];
+  items: IDropdownItem[];
   placeholder?: string;
   zIndex?: number;
   onSelect?: (value: string | null) => void;
+  value?: string | null;
 }
 
 const CustomDropdown: React.FC<CustomDropdownProps> = ({
@@ -19,36 +16,76 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
   placeholder = "Chọn",
   zIndex = 1000,
   onSelect,
+  value,
 }) => {
-  const [open, setOpen] = useState(false);
-  const [value, setValue] = useState<string | null>(null);
-  const [items_temp, setItems] = useState(items)
+  const [selectedValue, setSelectedValue] = useState<string | null>(value ?? null);
+  const [itemsTemp, setItemsTemp] = useState<IDropdownItem[]>(items);
+
+  useEffect(() => {
+    setItemsTemp(items);
+  }, [items]);
+
+  useEffect(() => {
+    setSelectedValue(value ?? null);
+  }, [value]);
+
+  const handleChange = (item: IDropdownItem) => {
+    setSelectedValue(item.value);
+    onSelect?.(item.value);
+  };
 
   return (
-    <View style={{ zIndex: zIndex }}>
-      <DropDownPicker
-        open={open}
-        value={value}
-        items={items_temp}
-        setOpen={setOpen}
-        setValue={setValue}
-        setItems={setItems}
+    <View style={[styles.container, { zIndex }]}>
+      <Dropdown
+        style={styles.dropdown}
+        containerStyle={styles.dropdownContainer}
+        placeholderStyle={styles.placeholderStyle}
+        selectedTextStyle={styles.selectedTextStyle}
+        itemTextStyle={styles.itemTextStyle}
+        data={itemsTemp}
+        labelField="label"
+        valueField="value"
         placeholder={placeholder}
-        listMode="SCROLLVIEW"
-        scrollViewProps={{ nestedScrollEnabled: true }}
-        containerStyle={{ height: 50, marginTop: 10 }}
-        style={{
-          borderColor: "#d1d5db",
-          borderWidth: 1,
-          borderRadius: 10,
-        }}
-        textStyle={{ fontSize: 16 }}
-        dropDownContainerStyle={{
-          borderColor: "#d1d5db",
-        }}
+        search
+        searchPlaceholder="Tìm kiếm..."
+        value={selectedValue}
+        onChange={handleChange}
+        maxHeight={200}
+        showsVerticalScrollIndicator
+        autoScroll
       />
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    marginTop: 10,
+  },
+  dropdown: {
+    height: 50,
+    borderColor: "#d1d5db",
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    backgroundColor: "#fff",
+  },
+  dropdownContainer: {
+    borderColor: "#d1d5db",
+    borderRadius: 10,
+  },
+  placeholderStyle: {
+    fontSize: 16,
+    color: "#9ca3af",
+  },
+  selectedTextStyle: {
+    fontSize: 16,
+    color: "#111827",
+  },
+  itemTextStyle: {
+    fontSize: 16,
+    color: "#374151",
+  },
+});
 
 export default CustomDropdown;

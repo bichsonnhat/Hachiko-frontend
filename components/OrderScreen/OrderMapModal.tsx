@@ -8,12 +8,15 @@ import {IStore, IVoucher, Store} from "@/constants";
 import {useApi} from "@/hooks/useApi";
 // @ts-ignore
 import polyline from '@mapbox/polyline';
+import {RouteResponse} from "@/constants/interface/routeResponse.interface";
 
 interface OrderMapModalProps {
     visible: boolean;
     onClose: () => void;
     setSelectedStoreId?: (storeId: string) => void;
     setSelectedStoreItem?: Dispatch<SetStateAction<IStore | null>>;
+
+    setShippingFee: Dispatch<SetStateAction<number>>;
 }
 
 const COLORS = {
@@ -21,7 +24,8 @@ const COLORS = {
     red: '#FF0000',
     blue: '#0000FF'
 };
-export const OrderMapModal = ({visible, onClose, setSelectedStoreId,setSelectedStoreItem}: OrderMapModalProps) => {
+
+export const OrderMapModal = ({visible, onClose, setSelectedStoreId,setSelectedStoreItem,setShippingFee}: OrderMapModalProps) => {
     const [location, setLocation] = useState<Location.LocationObject | null>(null);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const {errorMessage, callApi: callStoreApi} = useApi<void>()
@@ -33,7 +37,11 @@ export const OrderMapModal = ({visible, onClose, setSelectedStoreId,setSelectedS
     const getRoute = async (fromLat: number, fromLong: number, toLat: number, toLong: number) => {
         try {
             const url = `https://api.locationiq.com/v1/directions/driving/${fromLong},${fromLat};${toLong},${toLat}?key=pk.b9cc0f340e91ba9cdd679d5da8a156bc&overview=full`;
-            const response = await axios.get(url);
+
+            console.log("Fetching route from:",url);
+            const response = await axios.get<RouteResponse>(url);
+            console.log("Route response:", response.data);
+
             const encodedPolyline = response.data.routes[0].geometry;
             const decodedCoordinates = polyline.decode(encodedPolyline);
             // @ts-ignore
@@ -41,6 +49,10 @@ export const OrderMapModal = ({visible, onClose, setSelectedStoreId,setSelectedS
                 return {latitude: coordPair[0], longitude: coordPair[1]};
             });
             setCoordinates(formattedCoordinates);
+
+            const distance = response.data.routes[0].legs[0].distance
+            const shippingFee = Math.ceil(distance / 1000) * 5000;
+            setShippingFee(shippingFee);
 
 
         } catch (error) {
@@ -111,6 +123,8 @@ export const OrderMapModal = ({visible, onClose, setSelectedStoreId,setSelectedS
                 >
                     {location && (
                         <Marker
+
+                            draggable={true}
                             coordinate={{
                                 latitude: location.coords.latitude,
                                 longitude: location.coords.longitude,
@@ -135,6 +149,8 @@ export const OrderMapModal = ({visible, onClose, setSelectedStoreId,setSelectedS
                                 }
                                 onClose()
                             }}
+
+                            title={store.name}
                         >
                             <Callout >
                                 <View><Text>Some text here</Text></View>

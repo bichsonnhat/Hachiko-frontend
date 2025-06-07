@@ -20,12 +20,10 @@ const COLORS = {
     blue: '#0000FF'
 };
 
-
-
 export const MapScreen = ({visible, onClose}: ShopModalProps) => {
     const [location, setLocation] = useState<Location.LocationObject | null>(null);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
-    const {errorMessage, callApi: callStoreApi} = useApi<void>()
+    const { errorMessage, callApi: callStoreApi } = useApi<void>()
     const [stores, setStores] = useState<IStore[]>([]);
     const [selectedStore, setSelectedStore] = useState<IStore | null>(null);
     const [coordinates, setCoordinates] = useState<any[]>([]);
@@ -39,16 +37,13 @@ export const MapScreen = ({visible, onClose}: ShopModalProps) => {
             const decodedCoordinates = polyline.decode(encodedPolyline);
             // @ts-ignore
             const formattedCoordinates = decodedCoordinates.map(coordPair => {
-                return {latitude: coordPair[0], longitude: coordPair[1]};
+                return { latitude: coordPair[0], longitude: coordPair[1] };
             });
             setCoordinates(formattedCoordinates);
-
-
         } catch (error) {
-            console.log('Error fetching route:', error);
             setCoordinates([
-                {latitude: fromLat, longitude: fromLong},
-                {latitude: toLat, longitude: toLong}
+                { latitude: fromLat, longitude: fromLong },
+                { latitude: toLat, longitude: toLong }
             ]);
         }
     };
@@ -56,7 +51,7 @@ export const MapScreen = ({visible, onClose}: ShopModalProps) => {
     useEffect(() => {
         const fetchStores = async () => {
             await callStoreApi(async () => {
-                const {data} = await apiService.get<IStore[]>("/stores");
+                const { data } = await apiService.get<IStore[]>("/stores");
                 setStores(data);
             });
         };
@@ -132,15 +127,15 @@ export const MapScreen = ({visible, onClose}: ShopModalProps) => {
                             onCalloutPress={() => console.log(selectedStore?.id)}
                         >
                             <Callout>
-                                <View style={{
-                                    alignItems: 'center', width: 150, height: 380,
+
+                                <View style={{ alignItems: 'center', width: 150, height: 380,
                                 }}>
                                     <Image
-                                        source={{uri: store.imageURL}}
-                                        style={{width: 100, height: 60, borderRadius: 8, marginBottom: 4}}
+                                        source={{ uri: store.imageURL }}
+                                        style={{ width: 100, height: 60, borderRadius: 8, marginBottom: 4 }}
                                         resizeMode="cover"
                                     />
-                                    <Text style={{fontWeight: 'bold'}}>{store.name}</Text>
+                                    <Text style={{ fontWeight: 'bold' }}>{store.name}</Text>
                                 </View>
                             </Callout>
                         </Marker>
@@ -156,7 +151,8 @@ export const MapScreen = ({visible, onClose}: ShopModalProps) => {
                 </MapView>
 
                 <View style={styles.buttonContainer}>
-                    <Button title="Tắt map" onPress={onClose}/>
+
+                    <Button title="Tắt map" onPress={onClose} />
                 </View>
             </View>
         </Modal>

@@ -1,23 +1,31 @@
 import { View, Text, TouchableOpacity, FlatList, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Plus, Edit, ChevronLeft } from "lucide-react-native";
-import {router, useNavigation} from "expo-router";
-import {useEffect, useState} from "react";
-
-const stores = [
-    { id: "1", name: "Cửa hàng 1" },
-    { id: "2", name: "Cửa hàng 2" },
-    { id: "3", name: "Cửa hàng 3" },
-    { id: "4", name: "Cửa hàng 4" },
-    { id: "5", name: "Cửa hàng 5" },
-    { id: "6", name: "Cửa hàng 6" },
-    { id: "7", name: "Cửa hàng 7" },
-    { id: "8", name: "Cửa hàng 8" },
-];
+import { router, useFocusEffect, useLocalSearchParams, useNavigation } from "expo-router";
+import { useEffect, useState } from "react";
+import { IStore } from "@/constants";
+import { useApi } from "@/hooks/useApi";
+import apiService from "@/constants/config/axiosConfig";
+import React from "react";
 
 export default function StoresScreen() {
     const navigation = useNavigation();
-    const [data, setData] = useState(stores);
+    const [stores, setStores] = useState<IStore[]>([]);
+    const params = useLocalSearchParams();
+
+    const {
+        loading: storeLoading,
+        errorMessage: storeErrorMessage,
+        callApi: callStoreApi,
+    } = useApi<void>();
+
+    const fetchStoreData = async () => {
+        await callStoreApi(async () => {
+            const { data } = await apiService.get("/stores");
+            setStores(data);
+        });
+    };
+
     useEffect(() => {
         navigation.setOptions({
             headerTitle: "Quản lý cửa hàng",
@@ -29,6 +37,26 @@ export default function StoresScreen() {
             },
         });
     }, [navigation]);
+
+    useFocusEffect(
+        React.useCallback(() => {
+            if (params?.updatedStore) {
+                try {
+                    const updated = JSON.parse(params.updatedStore as string) as IStore;
+
+                    setStores((prev) =>
+                        prev.map((cat) => (cat.id === updated.id ? { ...cat, ...updated } : cat))
+                    );
+                } catch (err) {
+                    console.warn("Lỗi parse updatedStore", err);
+                }
+            }
+        }, [])
+    );
+
+    useEffect(() => {
+        fetchStoreData();
+    }, []);
     return (
         <View className="flex-1 bg-white ">
 
@@ -41,18 +69,24 @@ export default function StoresScreen() {
             </TouchableOpacity>
 
             <FlatList
-                data={data}
-                keyExtractor={(item) => item.id}
+                data={stores}
+                keyExtractor={(item) => item.id || ""}
                 renderItem={({ item }) => (
                     <View className="flex-row items-center justify-between px-4 py-3 border-b border-gray-300">
                         <View className="flex-row items-center">
                             <Image
-                                source={{ uri: "https://via.placeholder.com/40" }} // Ảnh placeholder
+                                source={{ uri: item.imageURL || "https://via.placeholder.com/40" }}
                                 className="w-10 h-10 rounded-full bg-yellow-200"
                             />
-                            <View className="ml-3">
+                            <View className="ml-3 w-[280px]">
                                 <Text className="text-lg font-semibold">{item.name}</Text>
-                                <Text className="text-gray-500 text-sm">ID cửa hàng {item.id}</Text>
+                                <Text
+                                    className="text-gray-500 text-sm "
+                                    numberOfLines={1}
+                                    ellipsizeMode="tail"
+                                >
+                                    Địa chỉ: {item.address}
+                                </Text>
                             </View>
                         </View>
                         <TouchableOpacity onPress={() => router.push(`/(dashboard)/store/edit/${item.id}`)}>
