@@ -9,7 +9,7 @@ import {
   TextInput,
   Alert,
 } from "react-native";
-import { Plus, MinusIcon, Heart, Check, HeartOff } from "lucide-react-native";
+import { Plus, MinusIcon, Heart, Check, HeartOff, Star } from "lucide-react-native";
 import { ExpandableText } from "@/components/ui";
 import { RadioGroup } from "react-native-radio-buttons-group";
 import Checkbox from "expo-checkbox";
@@ -19,6 +19,7 @@ import { generateObjectId } from "@/utils/helpers/randomHexString";
 import { useApi } from "@/hooks/useApi";
 import apiService from "@/constants/config/axiosConfig";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { ReviewModal } from "./ReviewModal";
 
 type DrinkSlotHorizontalProps = {
   drink: IProduct;
@@ -44,6 +45,7 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
   const insets = useSafeAreaInsets();
 
   const [modalVisible, setModalVisible] = useState(false);
+  const [reviewModalVisible, setReviewModalVisible] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [note, setNote] = useState("");
   const [selectedSize, setSelectedSize] = useState("small");
@@ -167,6 +169,20 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
             <View className="flex-col gap-2 max-w-[160px]">
               <Text className="font-semibold text-base">{drink.title}</Text>
               <Text className="text-gray-700">{drink.price.toLocaleString("vi-VN")}đ</Text>
+              
+              {/* Review Button */}
+              <TouchableOpacity
+                onPress={(e) => {
+                  e.stopPropagation();
+                  setReviewModalVisible(true);
+                }}
+                className="flex-row items-center mt-1"
+              >
+                <Star size={14} color="#FFD700" fill="#FFD700" />
+                <Text className="text-blue-600 text-sm ml-1 underline">
+                  Xem đánh giá
+                </Text>
+              </TouchableOpacity>
             </View>
             <TouchableOpacity
               className={`w-9 h-9 p-[2px] rounded-full flex items-center justify-center ${
@@ -186,7 +202,14 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
         </View>
       </TouchableOpacity>
 
-      {/* Modal */}
+      {/* Review Modal */}
+      <ReviewModal
+        visible={reviewModalVisible}
+        onClose={() => setReviewModalVisible(false)}
+        product={drink}
+      />
+
+      {/* Existing Product Modal */}
       <Modal
         animationType="slide"
         transparent={true}

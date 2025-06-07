@@ -18,6 +18,7 @@ import apiService from "@/constants/config/axiosConfig";
 import { ICategory, IProductByCategory } from "@/constants/interface";
 import { useApi } from "@/hooks/useApi";
 import React from "react";
+import { useLocalSearchParams } from 'expo-router';
 
 type SectionItem = {
   type: "collection" | "category";
@@ -31,6 +32,10 @@ const ITEM_HEIGHT_PRODUCT = 150;
 const HEADER_HEIGHT = 40;
 
 export default function OrderScreen() {
+  // Get the voucher ID from route params
+  const params = useLocalSearchParams();
+  const voucherId = params.voucherId as string;
+
   const flatListRef = useRef<FlatList>(null);
   const {
     loading: categoryLoading,
@@ -217,7 +222,7 @@ export default function OrderScreen() {
         )}
       </View>
 
-      <CheckoutBtn getProductName={getProductName} />
+      <CheckoutBtn getProductName={getProductName} voucherId={voucherId} />
     </SafeAreaView>
   );
 }

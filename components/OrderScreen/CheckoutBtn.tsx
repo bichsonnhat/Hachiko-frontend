@@ -43,12 +43,24 @@ import { DrinkModal } from "@/components/HomeScreen/DrinkModal";
 import { generateObjectId } from "@/utils/helpers/randomHexString";
 import { ItemType } from "react-native-dropdown-picker";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {OrderMapModal} from "@/components/OrderScreen/OrderMapModal";
+
+// Interface for user voucher mapping
+interface UserVoucher {
+  id: string;
+  userId: string;
+  voucherId: string;
+  createdAt: string;
+  updatedAt: string;
+  status: string;
+}
 
 type CheckoutBtnProps = {
   getProductName: (productId: string) => string;
+  voucherId?: string;
 };
 
-export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName }) => {
+export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId }) => {
   //hard code for testing
   const [shippingFee, setShippingFee] = useState<number>(15000);
   const address = "Địa chỉ giao hàng";
@@ -82,7 +94,7 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName }) => {
   }, []);
 
   //cái này cần api current user hay gì đó, kiểu đăng nhập từ clerk thì call api để lấy rồi lưu vô store, lúc xài thì lấy ra thôi
-  const userId = "67fe6f866bcac94e258e3a20";
+  const userId = "user_2xtymyaMoP8EhMJCay8ab9plDBU";
   const username = "Nguyen Van A";
   const userphone = "0123456789";
 
@@ -208,8 +220,8 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName }) => {
         productName: "Đơn hàng " + userId,
         description: "Thanh toán đơn hàng",
         price: priceAfterDiscount + newShippingFee,
-        returnUrl: "exp://192.168.1.9:8081/--/payment/success", //kiểm tra lại url lúc chạy npx expo start, đều là localhost nhưng mà khác mạng thì config ip khác
-        cancelUrl: "exp://192.168.1.9:8081/--/payment/failed",
+        returnUrl: "exp://172.16.0.191:8081/--/payment/success", //kiểm tra lại url lúc chạy npx expo start, đều là localhost nhưng mà khác mạng thì config ip khác
+        cancelUrl: "exp://172.16.0.191:8081/--/payment/failed",
       };
       const { data } = await apiService.post("/orders/payos", sendData);
       if (data) {
@@ -307,18 +319,36 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName }) => {
       });
     };
     const fetchUserVouchers = async () => {
-      await callVoucherApi(async () => {
-        const { data } = await apiService.get<IVoucher[]>(
-          `/vouchers/${userId}`
-        );
-        if (data) {
-          const now = new Date();
-          const validVoucher = data.filter(
-            (voucher: IVoucher) => new Date(voucher.expiryDate) >= now
-          );
-          setVoucher(validVoucher);
+      try {
+        // If a voucherId is provided, we can skip the API call to fetch all vouchers
+        if (voucherId) {
+          setCoupon(voucherId);
+          return;
         }
-      });
+        
+        await callVoucherApi(async () => {
+          // Use the correct endpoint for fetching available user vouchers
+          const { data } = await apiService.get<UserVoucher[]>(
+            `/user-vouchers/user/${userId}/available`
+          );
+          if (data && data.length > 0) {
+            // Extract voucher IDs from the user-voucher mappings
+            const voucherIds = data.map(mapping => mapping.voucherId);
+            
+            // Fetch details for each voucher
+            const voucherPromises = voucherIds.map(id => 
+              apiService.get<IVoucher>(`/vouchers/${id}`).then(response => response.data)
+            );
+            
+            const voucherDetails = await Promise.all(voucherPromises);
+            setVoucher(voucherDetails);
+          } else {
+            setVoucher([]);
+          }
+        });
+      } catch (error) {
+        console.error("Error fetching vouchers:", error);
+      }
     };
     fetchStores();
     fetchUserVouchers();
@@ -362,14 +392,54 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName }) => {
     resetDiscount();
   }, [cart, resetDiscount]);
 
+  // Set the voucher when voucherId is provided directly
   useEffect(() => {
+    if (voucherId && voucherId.length > 0) {
+      setCoupon(voucherId);
+      
+      // If we already have voucher data, find the matching voucher
+      if (voucher.length > 0) {
+        const selectedVoucher = voucher.find(v => v.id === voucherId);
+        if (selectedVoucher) {
+          setIsFreeShip(selectedVoucher.isFreeShip);
+          setPercentDiscount(selectedVoucher.discountPercent);
+          setPriceDiscount(selectedVoucher.discountPrice);
+        }
+      } else {
+        // If we don't have voucher data yet, we'll need to fetch this specific voucher
+        const fetchSingleVoucher = async () => {
+          try {
+            // Use the correct endpoint: /vouchers/{id} as shown in the API documentation
+            const { data } = await apiService.get<IVoucher>(`/vouchers/${voucherId}`);
+            if (data) {
+              setIsFreeShip(data.isFreeShip);
+              setPercentDiscount(data.discountPercent);
+              setPriceDiscount(data.discountPrice);
+              // Add to voucher list so it shows up in dropdown
+              setVoucher(prev => [...prev, data]);
+            }
+          } catch (error) {
+            console.error("Error fetching voucher details:", error);
+          }
+        };
+        
+        fetchSingleVoucher();
+      }
+    }
+  }, [voucherId, voucher]);
+
+  // Handle when user selects a voucher from dropdown
+  useEffect(() => {
+    // Skip if the coupon was set by the voucherId prop
+    if (coupon === voucherId) return;
+    
     const voucherSelected = voucher.find((v) => v.id === coupon);
     if (!voucherSelected) return;
     const { isFreeShip, discountPercent, discountPrice } = voucherSelected;
     setIsFreeShip(isFreeShip);
     setPercentDiscount(discountPercent);
     setPriceDiscount(discountPrice);
-  }, [coupon]);
+  }, [coupon, voucherId, voucher]);
 
   useEffect(() => {
     if (errorMessage) {
@@ -531,6 +601,7 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName }) => {
             statusBarTranslucent={true}
           >
             <View className="flex-1 bg-black/50 justify-center items-center">
+              <OrderMapModal visible={openStoreModal} onClose={()=>{setOpenStoreModal(false)}} setSelectedStoreId={setStoreId} setShippingFee={setShippingFee} />
               <View className="w-full h-full bg-gray-100" style={{ paddingTop: insets.top }}>
                 <ScrollView
                   className="flex-1"
@@ -567,7 +638,7 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName }) => {
                             Vui lòng chọn cửa hàng
                           </Text>
                           <DropDownPicker<any>
-                            open={openStoreModal}
+                            open={false}
                             setOpen={setOpenStoreModal}
                             items={stores}
                             setItems={setStores}
