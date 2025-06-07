@@ -13,11 +13,13 @@ interface ShopModalProps {
     visible: boolean;
     onClose: () => void;
 }
+
 const COLORS = {
     green: '#00FF00',
     red: '#FF0000',
     blue: '#0000FF'
 };
+
 export const MapScreen = ({visible, onClose}: ShopModalProps) => {
     const [location, setLocation] = useState<Location.LocationObject | null>(null);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -33,17 +35,12 @@ export const MapScreen = ({visible, onClose}: ShopModalProps) => {
             const response = await axios.get(url);
             const encodedPolyline = response.data.routes[0].geometry;
             const decodedCoordinates = polyline.decode(encodedPolyline);
-            console.log(decodedCoordinates)
             // @ts-ignore
             const formattedCoordinates = decodedCoordinates.map(coordPair => {
                 return { latitude: coordPair[0], longitude: coordPair[1] };
             });
             setCoordinates(formattedCoordinates);
-
-
-
         } catch (error) {
-            console.log('Error fetching route:', error);
             setCoordinates([
                 { latitude: fromLat, longitude: fromLong },
                 { latitude: toLat, longitude: toLong }
@@ -55,7 +52,6 @@ export const MapScreen = ({visible, onClose}: ShopModalProps) => {
         const fetchStores = async () => {
             await callStoreApi(async () => {
                 const { data } = await apiService.get<IStore[]>("/stores");
-                console.log("Fetched stores:", data);
                 setStores(data);
             });
         };
@@ -65,14 +61,13 @@ export const MapScreen = ({visible, onClose}: ShopModalProps) => {
 
     useEffect(() => {
         async function getCurrentLocation() {
-            let { status } = await Location.requestForegroundPermissionsAsync();
+            let {status} = await Location.requestForegroundPermissionsAsync();
             if (status !== 'granted') {
                 setErrorMsg('Permission to access location was denied');
                 return;
             }
 
             let location = await Location.getCurrentPositionAsync({});
-            console.log(location);
             setLocation(location);
         }
 
@@ -132,6 +127,7 @@ export const MapScreen = ({visible, onClose}: ShopModalProps) => {
                             onCalloutPress={() => console.log(selectedStore?.id)}
                         >
                             <Callout>
+
                                 <View style={{ alignItems: 'center', width: 150, height: 380,
                                 }}>
                                     <Image
@@ -155,6 +151,7 @@ export const MapScreen = ({visible, onClose}: ShopModalProps) => {
                 </MapView>
 
                 <View style={styles.buttonContainer}>
+
                     <Button title="Tắt map" onPress={onClose} />
                 </View>
             </View>
