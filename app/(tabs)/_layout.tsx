@@ -1,4 +1,4 @@
-import { Redirect, Tabs, useSegments, useRouter } from "expo-router";
+import { Redirect, Tabs, useSegments } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Platform } from "react-native";
 
@@ -20,8 +20,7 @@ export default function TabLayout() {
   const page = segment[segment.length - 1];
   const { isSignedIn } = useAuth();
   const { user } = useUser();
-  const router = useRouter();
-  const [isCheckingRedirect, setIsCheckingRedirect] = useState(true);
+  const [isRedirectUpdateInfo, setIsRedirectUpdateInfo] = useState(false);
 
   useEffect(() => {
     // Check if user needs to be redirected (only for signed-in users)
@@ -34,18 +33,16 @@ export default function TabLayout() {
           
           if (userData.phoneNumber === null) {
             // Redirect the user
-            router.replace("/(tabs)/other/update-info");
+            setIsRedirectUpdateInfo(true);
           }
         } catch (error) {
           console.error("Error checking redirect metadata:", error);
-        } finally {
-          setIsCheckingRedirect(false);
         }
       };
       
       checkRedirect();
     } else {
-      setIsCheckingRedirect(false);
+      setIsRedirectUpdateInfo(false);
     }
   }, [isSignedIn, user]);
 
@@ -54,8 +51,8 @@ export default function TabLayout() {
   }
 
   // If we're still checking for redirects, don't render the tabs yet
-  if (isCheckingRedirect) {
-    return null; // Or a loading spinner
+  if (isRedirectUpdateInfo) {
+    return <Redirect href="/(tabs)/other/update-info" />;
   }
 
   // return <Redirect href="/cloudinary-example" />
