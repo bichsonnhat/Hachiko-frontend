@@ -22,6 +22,7 @@ export default function UpdateAdvertisement() {
     const [hasImage, setHasImage] = useState(false);
     const [imageChanged, setImageChanged] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [imageError, setImageError] = useState("");
 
     const {
         control,
@@ -29,7 +30,8 @@ export default function UpdateAdvertisement() {
         setValue,
         getValues,
         reset,
-        formState: {errors},
+        formState: {errors, isValid},
+        trigger,
     } = useForm<IAdvertisement>({
         defaultValues: {
             id: id as string,
@@ -38,6 +40,7 @@ export default function UpdateAdvertisement() {
         },
         mode: "onChange",
     });
+
     const {
         loading: getAdvertisementLoading,
         errorMessage: getAdvertisementErrorMessage,
@@ -49,11 +52,13 @@ export default function UpdateAdvertisement() {
         errorMessage: updateAdvertisementErrorMessage,
         callApi: updateAdvertisementApi,
     } = useApi<void>();
+
     const {
         loading: deleteAdvertisementLoading,
         errorMessage: deleteAdvertisementErrorMessage,
         callApi: deleteAdvertisementApi,
     } = useApi<void>();
+
     const fetchAdvertisementData = async () => {
         try {
             await getAdvertisementApi(async () => {
@@ -70,14 +75,15 @@ export default function UpdateAdvertisement() {
         catch (err) {
             console.log(err)
         }
-
     };
+
     useEffect(() => {
         fetchAdvertisementData();
     }, []);
+
     useEffect(() => {
         navigation.setOptions({
-            headerTitle: `Sửa thông tin quảng cáo ${id}`,
+            headerTitle: `Sửa thông tin quảng cáo ${id}`,
             headerShown: true,
             headerTitleAlign: 'center',
             headerStyle: {
@@ -87,40 +93,69 @@ export default function UpdateAdvertisement() {
             },
         });
     }, [navigation]);
-    const handleImageSelected = (hasSelectedImage: boolean, imageUri: string | null) => {
 
+    const handleImageSelected = (hasSelectedImage: boolean, imageUri: string | null) => {
         const isChanged = imageUri?.startsWith("file:") ?? false;
         setImageChanged(isChanged);
+        setHasImage(hasSelectedImage);
+
+        if (hasSelectedImage) {
+            setImageError("");
+        }
     };
-    if (getAdvertisementLoading ) {
+
+    if (getAdvertisementLoading) {
         return (
             <View className="flex-1 justify-center items-center">
-                <Text>Đang tải thông tin quảng cáo...</Text>
+                <Icon name="loading" size={24} color="#E47905" />
+                <Text className="text-gray-500 mt-2">Đang tải thông tin quảng cáo...</Text>
             </View>
         );
     }
 
+    const validateForm = async (): Promise<boolean> => {
+        // Trigger validation cho tất cả fields
+        const isFormValid = await trigger();
+
+        // Validate image
+        if (!hasImage) {
+            setImageError("Hình ảnh là bắt buộc");
+            return false;
+        } else {
+            setImageError("");
+        }
+
+        return isFormValid;
+    };
+
     const onSubmit = async (data: IAdvertisement) => {
         try {
+            // Validate form trước khi submit
+            const isFormValid = await validateForm();
+            if (!isFormValid) {
+                return;
+            }
+
             let uploadedImageUrl = getValues().imageUrl;
             if (imageChanged) {
-                 const result = await imagePickerRef.current?.upload();
-                 if (result) {
-                     console.log('Upload thành công:', result.secure_url);
-                     uploadedImageUrl = result.secure_url;
-                 } else {
-                     console.warn('Không thể upload hình ảnh');
-                     return;
-                 }
-             }
+                const result = await imagePickerRef.current?.upload();
+                if (result) {
+                    console.log('Upload thành công:', result.secure_url);
+                    uploadedImageUrl = result.secure_url;
+                } else {
+                    console.warn('Không thể upload hình ảnh');
+                    setImageError("Không thể tải lên hình ảnh");
+                    return;
+                }
+            }
+
             const finalData = {
                 ...data,
                 imageUrl: uploadedImageUrl,
             };
-            console.log('Final data to update:', finalData);
+
             await updateAdvertisementApi(async () => {
                 const response = await apiService.put(`/advertisements`, finalData);
-                console.log('Cập nhật quảng cáo thành công:', response.data);
                 router.back();
                 router.replace({
                     pathname: "/(dashboard)/advertisement",
@@ -136,7 +171,15 @@ export default function UpdateAdvertisement() {
     };
 
     const isSubmitDisabled = (): boolean => {
-        return false;
+        return !isValid || !hasImage || updateAdvertisementLoading;
+    };
+
+    const handleSubmitPress = async () => {
+        // Validate form trước khi gọi onSubmit
+        const isFormValid = await validateForm();
+        if (isFormValid) {
+            handleSubmit(onSubmit)();
+        }
     };
 
     const handleDeletePress = () => {
@@ -179,18 +222,27 @@ export default function UpdateAdvertisement() {
                     <View className="px-7">
                         <View>
                             <View>
-                                <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Tên thông
-                                    báo*</Text>
+                                <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">
+                                    Mô tả quảng cáo*
+                                </Text>
                                 <Controller
                                     control={control}
                                     name="description"
-                                    rules={{required: "Tên thông báo là bắt buộc"}}
+                                    rules={{
+                                        required: "Mô tả là bắt buộc",
+                                        minLength: {
+                                            value: 10,
+                                            message: "Mô tả phải có ít nhất 10 ký tự"
+                                        }
+                                    }}
                                     render={({field: {onChange, onBlur, value}}) => (
                                         <TextInput
                                             multiline={true}
                                             numberOfLines={4}
-                                            placeholder="Nhập tên thông báo"
-                                            className="p-[10px] border border-gray-300 rounded-[10px] text-[16px] bg-white mt-[10px]"
+                                            placeholder="Nhập mô tả quảng cáo"
+                                            className={`p-[10px] border rounded-[10px] text-[16px] bg-white mt-[10px] ${
+                                                errors.description ? 'border-red-500' : 'border-gray-300'
+                                            }`}
                                             placeholderTextColor="#9ca3af"
                                             value={value}
                                             onBlur={onBlur}
@@ -206,13 +258,23 @@ export default function UpdateAdvertisement() {
                             </View>
 
                             <View>
-                                <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Hình ảnh*</Text>
-                                <ImagePickerPreview
-                                    ref={imagePickerRef}
-                                    onImageSelected={handleImageSelected}
-                                    initialUri={imageUri}
-                                />
+                                <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">
+                                    Hình ảnh*
+                                </Text>
+                                <View className={`${imageError ? 'border border-red-500 rounded-[10px] p-2 mt-[10px]' : ''}`}>
+                                    <ImagePickerPreview
+                                        ref={imagePickerRef}
+                                        onImageSelected={handleImageSelected}
+                                        initialUri={imageUri}
+                                    />
+                                </View>
+                                {imageError && (
+                                    <Text className="text-red-500 text-[14px] mt-1">
+                                        {imageError}
+                                    </Text>
+                                )}
                             </View>
+
                             <TouchableOpacity
                                 style={{flexDirection: "row", marginTop: 20}}
                                 onPress={handleDeletePress}
@@ -222,22 +284,26 @@ export default function UpdateAdvertisement() {
                                     Xóa quảng cáo này
                                 </Text>
                             </TouchableOpacity>
+
                             <TouchableOpacity
-                                onPress={handleSubmit(onSubmit)}
+                                onPress={handleSubmitPress}
                                 disabled={isSubmitDisabled()}
-                                className={`py-4 px-5 rounded-[10px] items-center mt-[20px] ${isSubmitDisabled() ? 'bg-gray-200' : 'bg-[#f59e0b]'
+                                className={`py-4 px-5 rounded-[10px] items-center mt-[20px] ${
+                                    isSubmitDisabled() ? 'bg-gray-200' : 'bg-[#f59e0b]'
                                 }`}
                             >
                                 <Text
-                                    className={`text-[16px] font-bold ${isSubmitDisabled() ? 'text-gray-500' : 'text-white'
+                                    className={`text-[16px] font-bold ${
+                                        isSubmitDisabled() ? 'text-gray-500' : 'text-white'
                                     }`}
                                 >
-                                    Xong
+                                    {updateAdvertisementLoading ? 'Đang cập nhật...' : 'Xong'}
                                 </Text>
                             </TouchableOpacity>
                         </View>
                     </View>
                 </ScrollView>
+
                 {/* Delete Confirmation Modal */}
                 <Modal
                     visible={showDeleteModal}
