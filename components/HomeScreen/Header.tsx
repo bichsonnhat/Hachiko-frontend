@@ -11,10 +11,12 @@ import { useApi } from '@/hooks/useApi';
 import apiService from '@/constants/config/axiosConfig';
 import { IUser } from '@/constants/interface/user.interface';
 import HeaderActions from '../common/HeaderActions';
+import { useAuth } from '@clerk/clerk-expo';
 
 export default function Header() {
 
     const [user, setUser] = useState<IUser>();
+    const { userId } = useAuth();
 
 
     const {
@@ -27,7 +29,7 @@ export default function Header() {
     const fetchUserData = async () => {
         await callUserApi(async () => {
             const response = await apiService.get<IUser>(
-                "/users/user_2tdF6nKWA3rQQP9n5mKrbt3x7x7"
+                `/users/${userId}`
             );
 
             setUser(response.data);
