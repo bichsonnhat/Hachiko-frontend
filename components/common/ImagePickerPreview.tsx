@@ -12,7 +12,7 @@ export type ImagePickerPreviewRef = {
 
 type Props = {
     initialUri?: string | null;
-    onImageSelected?: (hasImage: boolean) => void;
+    onImageSelected?: (hasImage: boolean, imageUri: string | null) => void;
 };
 
 const ImagePickerPreview = forwardRef<ImagePickerPreviewRef, Props>(({ initialUri, onImageSelected }, ref) => {
@@ -34,9 +34,10 @@ const ImagePickerPreview = forwardRef<ImagePickerPreviewRef, Props>(({ initialUr
         });
 
         if (!result.canceled && result.assets.length > 0) {
-            setImageUri(result.assets[0].uri);
+            const newUri = result.assets[0].uri;
+            setImageUri(newUri);
             if (onImageSelected) {
-                onImageSelected(true);
+                onImageSelected(true, newUri); // Báo là ảnh mới + uri
             }
         }
     };
@@ -50,7 +51,7 @@ const ImagePickerPreview = forwardRef<ImagePickerPreviewRef, Props>(({ initialUr
         reset: () => {
             setImageUri(null);
             if (onImageSelected) {
-                onImageSelected(false);
+                onImageSelected(false, null);
             }
         },
     }));
@@ -77,7 +78,7 @@ const ImagePickerPreview = forwardRef<ImagePickerPreviewRef, Props>(({ initialUr
                         onPress={() => {
                             setImageUri(null);
                             if (onImageSelected) {
-                                onImageSelected(false);
+                                onImageSelected(false, null);
                             }
                         }}
                         className="absolute top-0 bg-black/60 rounded-full p-2"

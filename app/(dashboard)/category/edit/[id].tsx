@@ -21,6 +21,7 @@ export default function UpdateCategory() {
     const [hasTopping, setHasTopping] = useState(false);
     const [imageUri, setImageUri] = useState<string | null>(null);
     const [hasImage, setHasImage] = useState(false);
+    const [imageChanged, setImageChanged] = useState(false);
     const imagePickerRef = useRef<ImagePickerPreviewRef>(null);
     const [originalData, setOriginalData] = useState({
         name: '',
@@ -73,31 +74,37 @@ export default function UpdateCategory() {
     const isSubmitDisabled = (): boolean => {
         const nameUnchanged = categoryName.trim() === originalData.name;
         const toppingUnchanged = hasTopping === originalData.hasToppings;
-        const imageUnchanged = imageUri === originalData.imgUrl;
 
-        const noChange = nameUnchanged && toppingUnchanged && imageUnchanged;
+        const noChange = nameUnchanged && toppingUnchanged && !imageChanged;
         const invalidInput = !categoryName.trim() || !hasImage;
 
         return invalidInput || noChange;
     };
 
-    const handleImageSelected = (hasSelectedImage: boolean) => {
+    const handleImageSelected = (hasSelectedImage: boolean, imageUri: string | null) => {
         setHasImage(hasSelectedImage);
+
+        const isChanged = imageUri?.startsWith("file:") ?? false;
+        setImageChanged(isChanged);
     };
 
     const handleSubmit = async () => {
         try {
             let uploadedImageUrl = originalData.imgUrl;
 
-            if (isSubmitDisabled()) {
+            const shouldUploadImage = imageChanged;
+            if (shouldUploadImage) {
+                console.log("Should");
                 const result = await imagePickerRef.current?.upload();
                 if (result) {
-                    console.log('Upload thành công:', result.secure_url);
                     uploadedImageUrl = result.secure_url;
                 } else {
                     console.warn('Không thể upload hình ảnh');
                     return;
                 }
+            }
+            else {
+                console.log("shouldn't")
             }
 
             const categoryData = {
@@ -130,6 +137,7 @@ export default function UpdateCategory() {
     useEffect(() => {
         fetchCategoryData();
     }, []);
+
 
     if (getCategoryLoading) {
         return (
