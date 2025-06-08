@@ -70,6 +70,12 @@ const tools = [
   },
   {
     id: "6",
+    title: "Quản lí quảng cáo",
+    icon: Bell,
+    route: "/advertisement",
+  },
+  {
+    id: "7",
     title: "Quản lí người dùng",
     icon: User,
     route: "/user",

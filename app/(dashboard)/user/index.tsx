@@ -32,13 +32,6 @@ export default function UsersScreen() {
     return (
         <View className="flex-1 bg-white ">
 
-            <TouchableOpacity
-                className="flex-row items-center px-4 py-3 border-b border-gray-300"
-                onPress={() => router.push("/(dashboard)/user/create")}
-            >
-                <Plus size={24} color="black" />
-                <Text className="ml-2 text-lg font-medium">Thêm người dùng mới</Text>
-            </TouchableOpacity>
 
             <FlatList
                 data={data}

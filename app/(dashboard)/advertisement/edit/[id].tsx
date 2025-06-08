@@ -269,7 +269,7 @@ export default function UpdateNotification() {
                                 />
                             </View>
                             <TouchableOpacity style={{ flexDirection: "row", marginTop: 20 }}
-                                onPress={deleteOnPress}
+                                              onPress={deleteOnPress}
                             >
                                 <Icon name="trash-can-outline" size={20} color="red" />
                                 <Text style={{ color: "red", marginLeft: 5, fontWeight: "bold" }}>
