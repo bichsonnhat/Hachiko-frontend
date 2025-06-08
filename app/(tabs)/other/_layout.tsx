@@ -9,7 +9,6 @@ const OtherLayout = () => {
       <Stack.Screen name="order-history" options={{ headerShown: false }} />
       <Stack.Screen name="shop-feedback" />
       <Stack.Screen name="update-info" />
-      <Stack.Screen name="saved-address" />
       <Stack.Screen name="add-address" />
     </Stack>
   );

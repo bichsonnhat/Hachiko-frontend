@@ -2,25 +2,54 @@ import {
     View, Image, Text, TouchableOpacity, TextInput,
     Platform, ScrollView, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard,
 } from 'react-native';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigation } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import CustomDropDown from '@/components/OtherScreen/CustomDropDown';
+import ImagePickerPreview, { ImagePickerPreviewRef } from '@/components/common/ImagePickerPreview';
+import { useApi } from '@/hooks/useApi';
+import { ICategory } from '@/constants';
+import apiService from '@/constants/config/axiosConfig';
+import { IDropdownItem } from '@/constants/interface/dropdown-item.interface';
 
 export default function AddProduct() {
     const navigation = useNavigation();
     const [productName, setProductName] = useState("");
     const [price, setPrice] = useState("");
     const [description, setDescription] = useState("");
-    const [address, setAddress] = useState("");
-    const [image, setImage] = useState<string | null>(null);
+    const [hasImage, setHasImage] = useState(false);
+    const imagePickerRef = useRef<ImagePickerPreviewRef>(null);
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-    const categoryList = [
-        { label: "Trà", value: "tea" },
-        { label: "Cafe", value: "cafe" },
-        { label: "Nước trái cây", value: "fruit" },
-    ];
+    const [categoryList, setCategoryList] = useState<IDropdownItem[]>([]);
+
+    const {
+        loading: categoryLoading,
+        errorMessage: categoryErrorMessage,
+        callApi: callCategoryApi,
+    } = useApi<void>();
+
+    const {
+        loading: productLoading,
+        errorMessage: productErrorMessage,
+        callApi: callProductApi,
+    } = useApi<void>();
+
+    const fetchCategoryData = async () => {
+        await callCategoryApi(async () => {
+            const { data } = await apiService.get("/categories");
+
+            const mapped = data.map((item: ICategory) => ({
+                label: item.name,
+                value: item.id,
+            }));
+            setCategoryList(mapped);
+        });
+    };
+    useEffect(() => {
+        fetchCategoryData();
+    }, []);
 
     useEffect(() => {
         navigation.setOptions({
@@ -35,89 +64,107 @@ export default function AddProduct() {
         });
     }, [navigation]);
 
-    const onImagePick = async () => {
-        let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
-            allowsEditing: true,
-            quality: 1,
-        });
-        if (!result.canceled && result.assets && result.assets.length > 0) {
-            setImage(result.assets[0].uri);
-            console.log(result);
-        }
-        console.log(result);
+    const handleImageSelected = (hasSelectedImage: boolean) => {
+        setHasImage(hasSelectedImage);
     };
+
+    const isSubmitDisabled = (): boolean => {
+        return !productName.trim() || !price.trim() || !selectedCategory || !hasImage;
+    };
+
+    const handleSubmit = async () => {
+        try {
+            const result = await imagePickerRef.current?.upload();
+            if (result) {
+                const productData = {
+                    title: productName,
+                    price: Number(price),
+                    description,
+                    categoryID: selectedCategory,
+                    imageUrl: result.secure_url,
+                };
+
+                await callProductApi(async () => {
+                    const response = await apiService.post('/products', productData);
+                    console.log('Thêm sản phẩm thành công:', response.data);
+                });
+
+                setProductName('');
+                setPrice('');
+                setDescription('');
+                setSelectedCategory(null);
+                setHasImage(false);
+                imagePickerRef.current?.reset();
+            }
+        } catch (err) {
+            console.error('Lỗi khi thêm sản phẩm:', err);
+        }
+    };
+
 
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <KeyboardAvoidingView
-                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 className="flex-1 bg-white"
             >
-                <ScrollView
-                    contentContainerStyle={{ paddingBottom: 20 }}
-                    keyboardShouldPersistTaps="handled"
-                    nestedScrollEnabled={true}
-                >
+                <ScrollView contentContainerStyle={{ paddingBottom: 20 }} keyboardShouldPersistTaps="handled">
                     <View className="py-0 px-7">
-                        <View>
-                            <View>
-                                <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Tên sản phẩm*</Text>
-                                <TextInput
-                                    placeholder="Nhập tên sản phẩm"
-                                    className="p-[10px] border border-gray-300 rounded-[10px] text-[16px] bg-white mt-[10px]"
-                                    value={productName}
-                                    placeholderTextColor="#9ca3af"
-                                    onChangeText={setProductName}
-                                />
-                            </View>
-                            <View>
-                                <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Giá sản phẩm*</Text>
-                                <TextInput
-                                    placeholder="Nhập giá sản phẩm"
-                                    className="p-[10px] border border-gray-300 rounded-[10px] text-[16px] bg-white mt-[10px]"
-                                    value={price}
-                                    placeholderTextColor="#9ca3af"
-                                    onChangeText={setPrice}
-                                />
-                            </View>
-                            <View>
-                                <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Mô tả</Text>
-                                <TextInput
-                                    placeholder="Nhập mô tả"
-                                    className="p-[10px] border border-gray-300 rounded-[10px] text-[16px] bg-white mt-[10px]"
-                                    value={description}
-                                    placeholderTextColor="#9ca3af"
-                                    onChangeText={setDescription}
-                                />
-                            </View>
-                            <View style={{ zIndex: 1000 }}>
-                                <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]" >Danh mục*</Text>
-                                <CustomDropDown items={categoryList} placeholder="Chọn danh mục" />
-                            </View>
-                            <View>
-                                <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Hình ảnh*</Text>
-                                <TouchableOpacity className="mt-3" onPress={onImagePick}>
-                                    {!image ? (
-                                        <Image
-                                            source={require('./../../../assets/images/Profile/camera.png')}
-                                            className="w-[150px] h-[150px]"
-                                        />
-                                    ) : (
-                                        <Image
-                                            source={{ uri: image }}
-                                            className="w-[150px] h-[150px] rounded-2xl"
-                                        />
-                                    )}
-                                </TouchableOpacity>
-                            </View>
+                        <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Tên sản phẩm*</Text>
+                        <TextInput
+                            placeholder="Nhập tên sản phẩm"
+                            className="p-[10px] border border-gray-300 rounded-[10px] text-[16px] bg-white mt-[10px]"
+                            value={productName}
+                            placeholderTextColor="#9ca3af"
+                            onChangeText={setProductName}
+                        />
 
+                        <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Giá sản phẩm*</Text>
+                        <TextInput
+                            placeholder="Nhập giá sản phẩm"
+                            keyboardType="numeric"
+                            className="p-[10px] border border-gray-300 rounded-[10px] text-[16px] bg-white mt-[10px]"
+                            value={price}
+                            placeholderTextColor="#9ca3af"
+                            onChangeText={setPrice}
+                        />
+
+                        <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Mô tả</Text>
+                        <TextInput
+                            placeholder="Nhập mô tả"
+                            className="p-[10px] border border-gray-300 rounded-[10px] text-[16px] bg-white mt-[10px]"
+                            value={description}
+                            placeholderTextColor="#9ca3af"
+                            onChangeText={setDescription}
+                        />
+
+                        <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Danh mục*</Text>
+                        <View style={{ zIndex: 10 }}>
+                            <CustomDropDown
+                                items={categoryList}
+                                placeholder="Chọn danh mục"
+                                onSelect={(value) => setSelectedCategory(value)}
+                            />
                         </View>
-                        <TouchableOpacity className='bg-gray-200 py-4 px-5 rounded-[10px] items-center mt-[15px]'>
-                            <Text className='text-white text-[16px] font-bold'>Xong</Text>
+
+                        <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Hình ảnh*</Text>
+                        <ImagePickerPreview
+                            ref={imagePickerRef}
+                            onImageSelected={handleImageSelected}
+                        />
+
+                        <TouchableOpacity
+                            onPress={handleSubmit}
+                            disabled={isSubmitDisabled()}
+                            className={`py-4 px-5 rounded-[10px] items-center mt-[20px] ${isSubmitDisabled() ? 'bg-gray-200' : 'bg-[#f59e0b]'}`}
+                        >
+                            <Text className={`text-[16px] font-bold ${isSubmitDisabled() ? 'text-gray-500' : 'text-white'}`}>
+                                Xong
+                            </Text>
                         </TouchableOpacity>
                     </View>
                 </ScrollView>
+
             </KeyboardAvoidingView>
         </TouchableWithoutFeedback>
     )

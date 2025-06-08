@@ -75,21 +75,6 @@ export default function OtherScreen() {
             </View>
             <ChevronRight size={15} color="black" />
           </TouchableOpacity>
-          <TouchableOpacity className="p-4 flex-row items-center border-b border-gray-200 justify-between"
-            onPress={() => router.push("/other/saved-address")}>
-            <View className="flex-row items-center gap-2">
-              <MapPinHouseIcon size={20} color="black" />
-              <Text className="ml-2 text-gray-700">Địa chỉ đã lưu</Text>
-            </View>
-            <ChevronRight size={15} color="black" />
-          </TouchableOpacity>
-          <TouchableOpacity className="p-4 flex-row items-center border-b border-gray-200 justify-between">
-            <View className="flex-row items-center gap-2">
-              <Settings size={20} color="black" />
-              <Text className="ml-2 text-gray-700">Cài đặt</Text>
-            </View>
-            <ChevronRight size={15} color="black" />
-          </TouchableOpacity>
           <TouchableOpacity onPress={() => signOut()} className="p-4 flex-row items-center justify-between">
             <View className="flex-row items-center gap-2">
               <LogOut size={20} color="black" />

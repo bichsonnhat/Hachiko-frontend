@@ -15,6 +15,7 @@ interface OrderMapModalProps {
     onClose: () => void;
     setSelectedStoreId?: (storeId: string) => void;
     setSelectedStoreItem?: Dispatch<SetStateAction<IStore | null>>;
+
     setShippingFee: Dispatch<SetStateAction<number>>;
 }
 
@@ -23,6 +24,7 @@ const COLORS = {
     red: '#FF0000',
     blue: '#0000FF'
 };
+
 export const OrderMapModal = ({visible, onClose, setSelectedStoreId,setSelectedStoreItem,setShippingFee}: OrderMapModalProps) => {
     const [location, setLocation] = useState<Location.LocationObject | null>(null);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -35,6 +37,7 @@ export const OrderMapModal = ({visible, onClose, setSelectedStoreId,setSelectedS
     const getRoute = async (fromLat: number, fromLong: number, toLat: number, toLong: number) => {
         try {
             const url = `https://api.locationiq.com/v1/directions/driving/${fromLong},${fromLat};${toLong},${toLat}?key=pk.b9cc0f340e91ba9cdd679d5da8a156bc&overview=full`;
+
             console.log("Fetching route from:",url);
             const response = await axios.get<RouteResponse>(url);
             console.log("Route response:", response.data);
@@ -46,6 +49,7 @@ export const OrderMapModal = ({visible, onClose, setSelectedStoreId,setSelectedS
                 return {latitude: coordPair[0], longitude: coordPair[1]};
             });
             setCoordinates(formattedCoordinates);
+
             const distance = response.data.routes[0].legs[0].distance
             const shippingFee = Math.ceil(distance / 1000) * 5000;
             setShippingFee(shippingFee);
@@ -119,6 +123,7 @@ export const OrderMapModal = ({visible, onClose, setSelectedStoreId,setSelectedS
                 >
                     {location && (
                         <Marker
+
                             draggable={true}
                             coordinate={{
                                 latitude: location.coords.latitude,
@@ -144,6 +149,7 @@ export const OrderMapModal = ({visible, onClose, setSelectedStoreId,setSelectedS
                                 }
                                 onClose()
                             }}
+
                             title={store.name}
                         >
                             <Callout >

@@ -163,6 +163,42 @@ export const useCloudinary = () => {
     }
   };
 
+  /**
+   * Upload a local image URI to Cloudinary
+   * @param {string} uri - Local image URI
+   * @param {object} options - Upload options
+   * @returns {Promise<object | null>} - The upload result or null on failure
+   */
+  const uploadImageFromUri = async (uri: string, options: { folder?: string } = {}): Promise<any | null> => {
+    const { folder = 'hachiko' } = options;
+
+    try {
+      setIsUploading(true);
+      setUploadProgress(0);
+      setUploadError(null);
+
+      // Start fake progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress((prev) => {
+          const newProgress = prev + 0.05;
+          return newProgress > 0.9 ? 0.9 : newProgress;
+        });
+      }, 100);
+
+      // Upload image
+      const result = await uploadImage(uri, folder);
+
+      clearInterval(progressInterval);
+      setUploadProgress(1);
+      setIsUploading(false);
+      return result;
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : 'Failed to upload image');
+      setIsUploading(false);
+      return null;
+    }
+  };
+
   return {
     pickAndUploadImage,
     takePhotoAndUpload,
@@ -171,6 +207,7 @@ export const useCloudinary = () => {
     isUploading,
     uploadProgress,
     uploadError,
+    uploadImageFromUri
   };
 };
 

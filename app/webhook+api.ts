@@ -4,10 +4,10 @@ import { Webhook } from 'svix';
 
 // Function to get the Clerk webhook secret from environment variables
 const getWebhookSecret = (): string => {
-  const secret = process.env.CLERK_WEBHOOK_SECRET;
+  const secret = process.env.EXPO_PUBLIC_CLERK_WEBHOOK_SECRET;
   if (!secret) {
-    console.error('CLERK_WEBHOOK_SECRET is not defined in environment variables');
-    throw new Error('CLERK_WEBHOOK_SECRET is not defined');
+    console.error('EXPO_PUBLIC_CLERK_WEBHOOK_SECRET is not defined in environment variables');
+    throw new Error('EXPO_PUBLIC_CLERK_WEBHOOK_SECRET is not defined');
   }
   return secret;
 };

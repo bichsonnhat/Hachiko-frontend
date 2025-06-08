@@ -69,7 +69,6 @@ export default function SearchScreen() {
         fetchCategoryData();
     }, [debouncedSearchText]);
 
-    // Implement load more function for pagination
     const loadMoreProducts = () => {
         if (page < totalPages && !loading) {
             const nextPage = page + 1;

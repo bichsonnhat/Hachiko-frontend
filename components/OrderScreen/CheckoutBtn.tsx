@@ -641,6 +641,7 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
             statusBarTranslucent={true}
           >
             <View className="flex-1 bg-black/50 justify-center items-center">
+
               <OrderMapModal visible={openStoreModal} onClose={()=>{setOpenStoreModal(false)}} setSelectedStoreId={setStoreId} setShippingFee={setShippingFee} />
               <View className="w-full h-full bg-gray-100" style={{ paddingTop: insets.top }}>
                 <ScrollView
