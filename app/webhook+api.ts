@@ -1,4 +1,4 @@
-import { ProductFromAPI } from '@/constants/app.interface';
+import { ProductFromAPI, UserFromAPI } from '@/constants/app.interface';
 import apiService from '@/constants/config/axiosConfig';
 import { Webhook } from 'svix';
 
@@ -67,14 +67,10 @@ export async function POST(request: Request) {
             firstName: eventData.first_name,
             lastName: eventData.last_name,
             isAdmin: false,
-            phoneNumber: eventData.phone_numbers?.[0]?.phone_numbers,
           };
-          const response = await apiService.post<ProductFromAPI[]>(
-            "/users",
-            userData
-          );
+          const { data } = await apiService.post("/users", userData);
           
-          console.log('User successfully synchronized with backend:', response.data);
+          console.log('User successfully synchronized with backend:', data);
         } catch (error) {
           console.error('Error syncing user to backend:', error);
           // Note: We don't return an error response here to ensure Clerk marks the webhook as successful

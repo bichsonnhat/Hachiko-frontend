@@ -94,6 +94,7 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
   }, []);
 
   //cái này cần api current user hay gì đó, kiểu đăng nhập từ clerk thì call api để lấy rồi lưu vô store, lúc xài thì lấy ra thôi
+  
   const userId = "user_2xtymyaMoP8EhMJCay8ab9plDBU";
   const username = "Nguyen Van A";
   const userphone = "0123456789";
@@ -327,27 +328,46 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
         }
         
         await callVoucherApi(async () => {
-          // Use the correct endpoint for fetching available user vouchers
-          const { data } = await apiService.get<UserVoucher[]>(
-            `/user-vouchers/user/${userId}/available`
-          );
-          if (data && data.length > 0) {
-            // Extract voucher IDs from the user-voucher mappings
-            const voucherIds = data.map(mapping => mapping.voucherId);
-            
-            // Fetch details for each voucher
-            const voucherPromises = voucherIds.map(id => 
-              apiService.get<IVoucher>(`/vouchers/${id}`).then(response => response.data)
+          try {
+            // Use the correct endpoint for fetching available user vouchers
+            const { data } = await apiService.get<UserVoucher[]>(
+              `/user-vouchers/user/${userId}/available`
             );
             
-            const voucherDetails = await Promise.all(voucherPromises);
-            setVoucher(voucherDetails);
-          } else {
+            if (data && data.length > 0) {
+              // Extract voucher IDs from the user-voucher mappings
+              const voucherIds = data.map(mapping => mapping.voucherId);
+              
+              try {
+                // Fetch details for each voucher
+                const voucherPromises = voucherIds.map(id => 
+                  apiService.get<IVoucher>(`/vouchers/${id}`)
+                    .then(response => response.data)
+                    .catch(error => {
+                      console.error(`Error fetching voucher ${id}:`, error);
+                      return null; // Return null for failed vouchers
+                    })
+                );
+                
+                const voucherResults = await Promise.all(voucherPromises);
+                // Filter out any null results from failed requests
+                const validVouchers = voucherResults.filter(v => v !== null) as IVoucher[];
+                setVoucher(validVouchers);
+              } catch (error) {
+                console.error("Error fetching voucher details:", error);
+                setVoucher([]);
+              }
+            } else {
+              setVoucher([]);
+            }
+          } catch (error) {
+            console.error("Error fetching user-vouchers:", error);
             setVoucher([]);
           }
         });
       } catch (error) {
-        console.error("Error fetching vouchers:", error);
+        console.error("Error in fetchUserVouchers:", error);
+        setVoucher([]);
       }
     };
     fetchStores();
@@ -420,6 +440,17 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
             }
           } catch (error) {
             console.error("Error fetching voucher details:", error);
+            // If we can't get the voucher details, don't apply any discount
+            setIsFreeShip(false);
+            setPercentDiscount(0);
+            setPriceDiscount(0);
+            
+            // Show an alert to the user
+            Alert.alert(
+              "Thông báo",
+              "Không thể áp dụng voucher. Vui lòng thử lại sau.",
+              [{ text: "OK" }]
+            );
           }
         };
         
@@ -430,15 +461,24 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
 
   // Handle when user selects a voucher from dropdown
   useEffect(() => {
-    // Skip if the coupon was set by the voucherId prop
-    if (coupon === voucherId) return;
-    
-    const voucherSelected = voucher.find((v) => v.id === coupon);
-    if (!voucherSelected) return;
-    const { isFreeShip, discountPercent, discountPrice } = voucherSelected;
-    setIsFreeShip(isFreeShip);
-    setPercentDiscount(discountPercent);
-    setPriceDiscount(discountPrice);
+    try {
+      // Skip if the coupon was set by the voucherId prop
+      if (coupon === voucherId) return;
+      
+      const voucherSelected = voucher.find((v) => v.id === coupon);
+      if (!voucherSelected) return;
+      
+      const { isFreeShip, discountPercent, discountPrice } = voucherSelected;
+      setIsFreeShip(isFreeShip);
+      setPercentDiscount(discountPercent || 0);
+      setPriceDiscount(discountPrice || 0);
+    } catch (error) {
+      console.error("Error processing selected voucher:", error);
+      // Reset values in case of error
+      setIsFreeShip(false);
+      setPercentDiscount(0);
+      setPriceDiscount(0);
+    }
   }, [coupon, voucherId, voucher]);
 
   useEffect(() => {

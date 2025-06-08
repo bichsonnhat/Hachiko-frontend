@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { IFullOrder, OrderRecord, OrderStatus } from "@/constants";
 import { useApi } from "@/hooks/useApi";
 import apiService from "@/constants/config/axiosConfig";
+import { useAuth } from "@clerk/clerk-expo";
 
 type PendingOrdersProps = {
   onOrderChange: () => void;
@@ -15,7 +16,7 @@ export const PendingOrders: React.FC<PendingOrdersProps> = ({
   orderChanged,
 }) => {
   //hard coded data for user
-  const userId = "67fe6f866bcac94e258e3a20";
+  const { userId } = useAuth();
 
   const router = useRouter();
   const { errorMessage, callApi: callPendingOrderApi } = useApi<void>();

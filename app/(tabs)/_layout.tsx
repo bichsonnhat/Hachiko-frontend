@@ -1,5 +1,5 @@
-import { Redirect, Tabs, useSegments } from "expo-router";
-import React from "react";
+import { Redirect, Tabs, useSegments, useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import { Platform } from "react-native";
 
 import { HapticTab } from "@/components/HapticTab";
@@ -11,17 +11,51 @@ import Feather from "@expo/vector-icons/Feather";
 import Entypo from "@expo/vector-icons/Entypo";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-import { useAuth } from "@clerk/clerk-expo";
+import { useAuth, useUser } from "@clerk/clerk-expo";
+import apiService from "@/constants/config/axiosConfig";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const segment = useSegments();
   const page = segment[segment.length - 1];
   const { isSignedIn } = useAuth();
+  const { user } = useUser();
+  const router = useRouter();
+  const [isCheckingRedirect, setIsCheckingRedirect] = useState(true);
 
+  useEffect(() => {
+    // Check if user needs to be redirected (only for signed-in users)
+    if (isSignedIn && user) {
+      const checkRedirect = async () => {
+        try {
+          // Check if the user has a redirect URL in their metadata
+          const response = await apiService.get(`/users/${user.id}`);
+          const userData = response.data;
+          
+          if (userData.phoneNumber === null) {
+            // Redirect the user
+            router.replace("/(tabs)/other/update-info");
+          }
+        } catch (error) {
+          console.error("Error checking redirect metadata:", error);
+        } finally {
+          setIsCheckingRedirect(false);
+        }
+      };
+      
+      checkRedirect();
+    } else {
+      setIsCheckingRedirect(false);
+    }
+  }, [isSignedIn, user]);
 
   if (!isSignedIn) {
     return <Redirect href="/auth" />;
+  }
+
+  // If we're still checking for redirects, don't render the tabs yet
+  if (isCheckingRedirect) {
+    return null; // Or a loading spinner
   }
 
   // return <Redirect href="/cloudinary-example" />

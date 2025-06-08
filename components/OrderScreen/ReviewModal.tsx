@@ -16,6 +16,7 @@ import { StarRating } from '@/components/ui';
 import { IProduct, IProductReviews, IReviewCreate } from '@/constants';
 import { useApi } from '@/hooks/useApi';
 import apiService from '@/constants/config/axiosConfig';
+import { useAuth } from '@clerk/clerk-expo';
 
 interface ReviewModalProps {
   visible: boolean;
@@ -23,13 +24,13 @@ interface ReviewModalProps {
   product: IProduct;
 }
 
-const USER_ID = "67ea8e54c54fd6723fbf8f0e";
-
 export const ReviewModal: React.FC<ReviewModalProps> = ({
   visible,
   onClose,
   product
 }) => {
+  const { userId } = useAuth();
+
   const insets = useSafeAreaInsets();
   const [reviewData, setReviewData] = useState<IProductReviews | null>(null);
   const [userRating, setUserRating] = useState(0);
@@ -44,7 +45,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
 
   const fetchReviews = async () => {
     await callReviewsApi(async () => {
-      const { data } = await apiService.get(`/reviews/product/${product.id}?userId=${USER_ID}`);
+      const { data } = await apiService.get(`/reviews/product/${product.id}?userId=${userId}`);
       setReviewData(data);
       
       // Set user's existing review if any
@@ -69,7 +70,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
     setIsSubmitting(true);
     try {
       const reviewPayload: IReviewCreate = {
-        userId: USER_ID,
+        userId: userId || "",
         productId: product.id || '',
         rating: userRating,
         comment: userComment.trim()
@@ -217,7 +218,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
                     </Text>
                     
                     {reviewData.reviews
-                      .filter(review => review.userId !== USER_ID)
+                      .filter(review => review.userId !== userId)
                       .map((review, index) => (
                         <View key={index} className="mb-4 p-3 bg-gray-50 rounded-lg">
                           <View className="flex-row items-start mb-2">
@@ -243,7 +244,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
                 )}
 
                 {/* No Reviews Message */}
-                {reviewData && reviewData.reviews.filter(r => r.userId !== USER_ID).length === 0 && (
+                {reviewData && reviewData.reviews.filter(r => r.userId !== userId).length === 0 && (
                   <View className="p-4">
                     <Text className="text-gray-500 text-center">
                       Chưa có đánh giá nào từ khách hàng khác

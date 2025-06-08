@@ -41,3 +41,14 @@ export interface Category {
     name: string;
     image: string;
 }
+
+export interface UserFromAPI {
+    id: string,
+    firstName: string,
+    lastName: string,
+    birthDate: string,
+    email: string,
+    phoneNumber: string,
+    gender: string,
+    isAdmin: boolean
+}

@@ -20,13 +20,12 @@ import { useApi } from "@/hooks/useApi";
 import apiService from "@/constants/config/axiosConfig";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { ReviewModal } from "./ReviewModal";
+import { useAuth } from "@clerk/clerk-expo";
 
 type DrinkSlotHorizontalProps = {
   drink: IProduct;
   check: (categoryId: string) => boolean;
 };
-
-const USER_ID = "67ea8e54c54fd6723fbf8f0e";
 
 const TOPPINGS = [
   { id: "1", name: "Trái Vải", price: 8000 },
@@ -43,6 +42,7 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
   const { cart, addNewToCart, addExistingToCart, checkExist } = useCartStore();
   const { callApi: callFavouriteApi } = useApi<void>();
   const insets = useSafeAreaInsets();
+  const { userId } = useAuth();
 
   const [modalVisible, setModalVisible] = useState(false);
   const [reviewModalVisible, setReviewModalVisible] = useState(false);
@@ -124,7 +124,7 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
   const fetchFavouriteStatus = useCallback(async () => {
     await callFavouriteApi(async () => {
       const { data } = await apiService.get(
-        `/favourite-products/${USER_ID}/${drink.id}`
+        `/favourite-products/${userId}/${drink.id}`
       );
       setIsFavourite(!!data);
     });
@@ -140,7 +140,7 @@ export const DrinkSlotHorizontal: React.FC<DrinkSlotHorizontalProps> = ({
     } else {
       await callFavouriteApi(async () => {
         const sendData: IFavouriteProduct = {
-          userId: USER_ID,
+          userId: userId || "",
           productId: drink.id ?? "",
         };
         await apiService.post(`/favourite-products`, sendData);

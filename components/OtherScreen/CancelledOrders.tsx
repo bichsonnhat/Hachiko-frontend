@@ -5,6 +5,7 @@ import { useBoolean } from "@/hooks/useBoolean";
 import React, { useEffect, useState } from "react";
 import { IFullOrder, OrderRecord, OrderStatus } from "@/constants";
 import apiService from "@/constants/config/axiosConfig";
+import { useAuth } from "@clerk/clerk-expo";
 
 type CancelledOrdersProps = {
   orderChanged: boolean;
@@ -14,7 +15,7 @@ export const CancelledOrders: React.FC<CancelledOrdersProps> = ({
   orderChanged,
 }) => {
   //hard coded data for user
-  const userId = "67fe6f866bcac94e258e3a20";
+  const { userId } = useAuth();
 
   const router = useRouter();
   const { errorMessage, callApi: callCancelledOrderApi } = useApi<void>();

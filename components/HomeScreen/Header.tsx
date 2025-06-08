@@ -1,21 +1,15 @@
-import { View, Text, Image, TouchableOpacity } from 'react-native'
+import { View, Text, Image } from 'react-native'
 import React, { useEffect, useState } from 'react'
-import { ThemedView } from '../ThemedView'
-import { ThemedText } from '../ThemedText'
-import BadgeButton from './BadgeButton';
-import { Ticket, Bell } from 'lucide-react-native';
-import { Colors } from '@/constants/Colors';
-import NotificationButton from './NotificationButton';
-import { router, useFocusEffect } from 'expo-router';
 import { useApi } from '@/hooks/useApi';
 import apiService from '@/constants/config/axiosConfig';
 import { IUser } from '@/constants/interface/user.interface';
 import HeaderActions from '../common/HeaderActions';
+import { useAuth } from '@clerk/clerk-expo';
 
 export default function Header() {
 
     const [user, setUser] = useState<IUser>();
-
+    const { userId } = useAuth();
 
     const {
         loading: userLoading,
@@ -27,7 +21,7 @@ export default function Header() {
     const fetchUserData = async () => {
         await callUserApi(async () => {
             const response = await apiService.get<IUser>(
-                "/users/user_2tdF6nKWA3rQQP9n5mKrbt3x7x7"
+                `/users/${userId}`
             );
 
             setUser(response.data);
