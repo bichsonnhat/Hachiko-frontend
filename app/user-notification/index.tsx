@@ -6,19 +6,22 @@ import { useNavigation } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Text, FlatList, TouchableOpacity, View, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '@clerk/clerk-expo';
+import { SwipeListView } from 'react-native-swipe-list-view';
 
 export default function NotificationList() {
     const navigation = useNavigation();
     const [combinedNotifications, setCombinedNotifications] = useState<CombinedNotification[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const { userId } = useAuth();
 
     const fetchCombinedNotifications = async () => {
         setLoading(true);
 
         try {
             const userNotificationsResponse = await apiService.get<IUserNotification[]>(
-                "/user-notifications/user/user_2tdF6nKWA3rQQP9n5mKrbt3x7x7"
+                `/user-notifications/user/${userId}`
             );
 
             const combined = await Promise.all(
@@ -186,7 +189,7 @@ export default function NotificationList() {
                 </View>
 
             ) : (
-                <FlatList
+                <SwipeListView
                     data={combinedNotifications}
                     keyExtractor={(item) => item.id}
                     contentContainerStyle={{ padding: 12 }}
@@ -245,6 +248,39 @@ export default function NotificationList() {
                         </TouchableOpacity>
 
                     )}
+                    renderHiddenItem={({ item }) => (
+                        <View style={{
+                            flex: 1,
+                            justifyContent: 'flex-end',
+                            alignItems: 'center',
+                            flexDirection: 'row',
+                            marginBottom: 12,
+                            marginRight: 12,
+                        }}>
+                            <TouchableOpacity
+                                style={{
+                                    backgroundColor: '#ef4444',
+                                    width: 80,
+                                    height: '90%',
+                                    borderRadius: 12,
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                }}
+                                onPress={async () => {
+                                    try {
+                                        await apiService.delete(`/user-notifications/${item.id}`);
+                                        setCombinedNotifications(prev => prev.filter(n => n.id !== item.id));
+                                    } catch (error) {
+                                        Alert.alert("Lỗi", "Không thể xóa thông báo");
+                                    }
+                                }}
+                            >
+                                <Ionicons name="trash" size={24} color="#fff" />
+                                <Text style={{ color: '#fff', fontWeight: 'bold', marginTop: 4 }}>Xóa</Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
+                    rightOpenValue={-80}
                 />
             )}
         </View>

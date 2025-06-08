@@ -20,6 +20,7 @@ export default function UpdateShop() {
     const [address, setAddress] = useState("");
     const [imageUri, setImageUri] = useState<string | null>(null);
     const [hasImage, setHasImage] = useState(false);
+    const [imageChanged, setImageChanged] = useState(false);
     const imagePickerRef = useRef<ImagePickerPreviewRef>(null);
 
     const [originalData, setOriginalData] = useState({
@@ -84,16 +85,18 @@ export default function UpdateShop() {
         const addressUnchanged = address.trim() === originalData.address;
         const longitudeUnchanged = longitude === originalData.longitude;
         const latitudeUnchanged = latitude === originalData.latitude;
-        const imageUnchanged = imageUri === originalData.imageURL;
 
-        const noChange = nameUnchanged && addressUnchanged && longitudeUnchanged && latitudeUnchanged && imageUnchanged;
+        const noChange = nameUnchanged && addressUnchanged && longitudeUnchanged && latitudeUnchanged && !imageChanged;
         const invalidInput = !shopName.trim() || !address.trim() || !longitude.trim() || !latitude.trim() || !hasImage;
 
         return invalidInput || noChange;
     };
 
-    const handleImageSelected = (hasSelectedImage: boolean) => {
+    const handleImageSelected = (hasSelectedImage: boolean, imageUri: string | null) => {
         setHasImage(hasSelectedImage);
+
+        const isChanged = imageUri?.startsWith("file:") ?? false;
+        setImageChanged(isChanged);
     };
 
     const handleSubmit = async () => {
@@ -102,9 +105,8 @@ export default function UpdateShop() {
         const addressUnchanged = address.trim() === originalData.address;
         const longitudeUnchanged = longitude === originalData.longitude;
         const latitudeUnchanged = latitude === originalData.latitude;
-        const imageUnchanged = imageUri === originalData.imageURL;
 
-        const noChange = nameUnchanged && addressUnchanged && longitudeUnchanged && latitudeUnchanged && imageUnchanged;
+        const noChange = nameUnchanged && addressUnchanged && longitudeUnchanged && latitudeUnchanged && !imageChanged;
         if (noChange) {
             console.log("Không có thay đổi nào để cập nhật.");
             return;
@@ -114,7 +116,7 @@ export default function UpdateShop() {
             let uploadedImageUrl = originalData.imageURL;
 
             // Nếu ảnh thay đổi thì upload lên Cloudinary
-            if (!imageUnchanged && imagePickerRef.current) {
+            if (imageChanged && imagePickerRef.current) {
                 const result = await imagePickerRef.current.upload();
                 if (result) {
                     uploadedImageUrl = result.secure_url;

@@ -8,7 +8,7 @@ export default function Category() {
             id: 1,
             image: require('@/assets/images/Category/item_1.png'),
             name: "Giao hàng",
-            path: '/profile/update-notification'
+            path: '/order'
         },
         {
             id: 2,
