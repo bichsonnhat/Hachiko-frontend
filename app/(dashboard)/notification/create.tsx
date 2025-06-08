@@ -1,9 +1,9 @@
 import {
     View, Image, Text, TouchableOpacity, TextInput, Pressable,
-    Platform, ScrollView, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard,
+    Platform, ScrollView, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, Alert,
 } from 'react-native';
 import React, {useEffect, useRef, useState} from 'react';
-import {useNavigation} from 'expo-router';
+import {useNavigation, useRouter} from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -13,7 +13,7 @@ import {INotification} from '@/constants/interface/notification.interface';
 import {useApi} from "@/hooks/useApi";
 
 export default function AddNotification() {
-
+    const router = useRouter()
     const navigation = useNavigation();
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
@@ -96,7 +96,9 @@ export default function AddNotification() {
                 setPublishDate('');
                 setHasImage(false);
                 imagePickerRef.current?.reset();
-                navigation.goBack();
+                Alert.alert("Thành công", "Thông báo đã được tạo thành công!", [
+                    { text: "OK", onPress: () => router.back() }
+                ]);
             }
         } catch (err) {
             console.error('Lỗi upload:', err);

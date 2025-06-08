@@ -51,6 +51,7 @@ export default function AdvertisementScreen() {
                     console.warn("Lỗi parse updatedAdvertisement", err);
                 }
             }
+            fetchAdvertisementsData()
         }, [])
     );
 

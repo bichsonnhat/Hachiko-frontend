@@ -1,9 +1,9 @@
 import {
     View, Image, Text, TouchableOpacity, TextInput, Pressable,
-    Platform, ScrollView, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard,
+    Platform, ScrollView, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, Alert,
 } from 'react-native';
 import React, {useEffect, useRef, useState} from 'react';
-import {useNavigation} from 'expo-router';
+import {useNavigation, useRouter} from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -22,7 +22,7 @@ export default function AddAdvertisement() {
     const imagePickerRef = useRef<ImagePickerPreviewRef>(null);
     const [hasImage, setHasImage] = useState(false);
     const [imageError, setImageError] = useState("");
-
+    const router = useRouter();
     const {
         control,
         handleSubmit,
@@ -104,7 +104,10 @@ export default function AddAdvertisement() {
 
             await callAdvertisementApi(async () => {
                 const response = await apiService.post('/advertisements', finalData);
-                console.log(response.data);
+                console.log('Thêm quảng cáo thành công:', response.data);
+                Alert.alert("Thành công", "Quảng cáo đã được tạo thành công!", [
+                    { text: "OK", onPress: () => router.back() }
+                ]);
             });
         } catch (err) {
             console.error('Lỗi upload:', err);

@@ -61,6 +61,7 @@ export default function NotificationsScreen() {
                     prev.filter((cat) => cat.id !== deletedId)
                 );
             }
+            fetchNotificationsData();
         }, [])
     );
 
