@@ -1,12 +1,15 @@
 import {
     View, Text, TextInput, ScrollView, KeyboardAvoidingView,
     Platform, TouchableWithoutFeedback, Keyboard, TouchableOpacity,
+    StyleSheet,
+    Button,
 } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigation } from 'expo-router';
 import ImagePickerPreview, { ImagePickerPreviewRef } from '@/components/common/ImagePickerPreview';
 import { useApi } from '@/hooks/useApi';
 import apiService from '@/constants/config/axiosConfig';
+import MapModal from '@/components/common/MapModal';
 
 export default function AddShop() {
     const navigation = useNavigation();
@@ -16,6 +19,7 @@ export default function AddShop() {
     const [address, setAddress] = useState('');
     const [hasImage, setHasImage] = useState(false);
     const imagePickerRef = useRef<ImagePickerPreviewRef>(null);
+    const [modalVisible, setModalVisible] = useState<boolean>(false);
 
     const {
         loading: shopLoading,
@@ -79,6 +83,20 @@ export default function AddShop() {
         }
     };
 
+    const handleAddressPress = () => {
+        setModalVisible(true);
+    };
+    const handleConfirm = ({ address, lat, lon }: { address: string; lat: number; lon: number }) => {
+        setAddress(address);
+        setLatitude(lat.toString());
+        setLongitude(lon.toString());
+        setModalVisible(false);
+    };
+
+    const handleCancel = () => {
+        setModalVisible(false);
+    };
+
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <KeyboardAvoidingView
@@ -96,33 +114,51 @@ export default function AddShop() {
                             onChangeText={setShopName}
                         />
 
+                        <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Địa chỉ*</Text>
+                        <TouchableOpacity onPress={handleAddressPress} activeOpacity={0.8}>
+                            <View
+                                style={{
+                                    padding: 10,
+                                    borderWidth: 1,
+                                    borderColor: '#d1d5db',
+                                    borderRadius: 10,
+                                    backgroundColor: '#fff',
+                                    marginTop: 10,
+                                    minHeight: 48,
+                                    justifyContent: 'center',
+                                }}
+                            >
+                                <Text
+                                    style={{
+                                        fontSize: 16,
+                                        color: address ? '#111827' : '#9ca3af',
+                                    }}
+                                    numberOfLines={2}
+                                    ellipsizeMode="tail"
+                                >
+                                    {address || 'Nhập địa chỉ'}
+                                </Text>
+                            </View>
+                        </TouchableOpacity>
+
                         <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Kinh độ*</Text>
                         <TextInput
                             placeholder="Nhập kinh độ"
-                            className="p-[10px] border border-gray-300 rounded-[10px] text-[16px] bg-white mt-[10px]"
+                            className="p-[10px] border border-gray-300 rounded-[10px] text-[16px] bg-gray-200 mt-[10px]"
                             value={longitude}
                             placeholderTextColor="#9ca3af"
-                            onChangeText={setLongitude}
+                            editable={false}
                             keyboardType="numeric"
                         />
 
                         <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Vĩ độ*</Text>
                         <TextInput
                             placeholder="Nhập vĩ độ"
-                            className="p-[10px] border border-gray-300 rounded-[10px] text-[16px] bg-white mt-[10px]"
+                            className="p-[10px] border border-gray-300 rounded-[10px] text-[16px] bg-gray-200 mt-[10px]"
                             value={latitude}
                             placeholderTextColor="#9ca3af"
-                            onChangeText={setLatitude}
+                            editable={false}
                             keyboardType="numeric"
-                        />
-
-                        <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Địa chỉ*</Text>
-                        <TextInput
-                            placeholder="Nhập địa chỉ"
-                            className="p-[10px] border border-gray-300 rounded-[10px] text-[16px] bg-white mt-[10px]"
-                            value={address}
-                            placeholderTextColor="#9ca3af"
-                            onChangeText={setAddress}
                         />
 
                         <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Hình ảnh*</Text>
@@ -144,9 +180,18 @@ export default function AddShop() {
                                 Xong
                             </Text>
                         </TouchableOpacity>
+
+                        <MapModal
+                            visible={modalVisible}
+                            initialAddress={address}
+                            initialLat={latitude ? parseFloat(latitude) : null}
+                            initialLon={longitude ? parseFloat(longitude) : null}
+                            onConfirm={handleConfirm}
+                            onCancel={handleCancel}
+                        />
                     </View>
                 </ScrollView>
             </KeyboardAvoidingView>
         </TouchableWithoutFeedback>
     );
-}
+};
