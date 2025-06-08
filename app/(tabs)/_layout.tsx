@@ -1,5 +1,5 @@
 import { Redirect, Tabs, useSegments } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Platform } from "react-native";
 
 import { HapticTab } from "@/components/HapticTab";
@@ -11,59 +11,16 @@ import Feather from "@expo/vector-icons/Feather";
 import Entypo from "@expo/vector-icons/Entypo";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-import { useAuth, useUser } from "@clerk/clerk-expo";
-import apiService from "@/constants/config/axiosConfig";
+import { useAuth } from "@clerk/clerk-expo";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-  const segments = useSegments();
-  const page = segments[segments.length - 1];
+  const segment = useSegments();
+  const page = segment[segment.length - 1];
   const { isSignedIn } = useAuth();
-  const { user } = useUser();
-  const [isRedirectUpdateInfo, setIsRedirectUpdateInfo] = useState(false);
-
-  // Check if we're already on the update-info page to prevent redirect loop
-  const isAlreadyOnUpdateInfoPage = 
-    segments.length >= 2 && 
-    segments[0] === "(tabs)" && 
-    segments[1] === "other" && 
-    page === "update-info";
-
-  useEffect(() => {
-    // Check if user needs to be redirected (only for signed-in users)
-    // But don't redirect if we're already on the update-info page
-    if (isSignedIn && user && !isAlreadyOnUpdateInfoPage) {
-      const checkRedirect = async () => {
-        try {
-          // Check if the user has a redirect URL in their metadata
-          const response = await apiService.get(`/users/${user.id}`);
-          const userData = response.data;
-          
-          if (userData.phoneNumber === null) {
-            // Redirect the user
-            setIsRedirectUpdateInfo(true);
-          } else {
-            setIsRedirectUpdateInfo(false);
-          }
-        } catch (error) {
-          console.error("Error checking redirect metadata:", error);
-          setIsRedirectUpdateInfo(false);
-        }
-      };
-      
-      checkRedirect();
-    } else {
-      setIsRedirectUpdateInfo(false);
-    }
-  }, [isSignedIn, user, isAlreadyOnUpdateInfoPage]);
 
   if (!isSignedIn) {
     return <Redirect href="/auth" />;
-  }
-
-  // If we need to redirect and we're not already on the update-info page
-  if (isRedirectUpdateInfo && !isAlreadyOnUpdateInfoPage) {
-    return <Redirect href="/(tabs)/other/update-info" />;
   }
 
   // return <Redirect href="/cloudinary-example" />
