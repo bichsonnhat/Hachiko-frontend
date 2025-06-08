@@ -1,6 +1,6 @@
 import {
     View, Image, Text, TouchableOpacity, TextInput, Pressable,
-    Platform, ScrollView, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard,
+    Platform, ScrollView, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, Modal,
 } from 'react-native';
 import React, {useEffect, useRef, useState} from 'react';
 import {useNavigation, useLocalSearchParams, useRouter} from 'expo-router';
@@ -10,67 +10,74 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import {useApi} from "@/hooks/useApi";
 import apiService from "@/constants/config/axiosConfig";
 import ImagePickerPreview, {ImagePickerPreviewRef} from "@/components/common/ImagePickerPreview";
-import {INotification} from "@/constants/interface/notification.interface";
+import {IAdvertisement} from '@/constants/interface/advertisement.interface';
+import {Controller, useForm} from "react-hook-form";
 
-export default function UpdateNotification() {
+export default function UpdateAdvertisement() {
     const router = useRouter();
-    const { id } = useLocalSearchParams();
+    const {id} = useLocalSearchParams();
     const navigation = useNavigation();
-    const [title, setTitle] = useState("");
-    const [description, setDescription] = useState("");
-    const [publishDate, setPublishDate] = useState("");
-    const [date, setDate] = useState<Date>(new Date());
-    const [showPicker, setShowPicker] = useState(false);
     const imagePickerRef = useRef<ImagePickerPreviewRef>(null);
     const [imageUri, setImageUri] = useState<string | undefined>(undefined);
     const [hasImage, setHasImage] = useState(false);
-    const [originalData, setOriginalData] = useState<INotification>({
-        id: '',
-        title: '',
-        description: '',
-        date: '',
-        imageUrl: '',
+    const [imageChanged, setImageChanged] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+    const {
+        control,
+        handleSubmit,
+        setValue,
+        getValues,
+        reset,
+        formState: {errors},
+    } = useForm<IAdvertisement>({
+        defaultValues: {
+            id: id as string,
+            description: "",
+            imageUrl: ""
+        },
+        mode: "onChange",
     });
     const {
-        loading: getNotificationLoading,
-        errorMessage: getNotificationErrorMessage,
-        callApi: getNotificationApi,
+        loading: getAdvertisementLoading,
+        errorMessage: getAdvertisementErrorMessage,
+        callApi: getAdvertisementApi,
     } = useApi<void>();
 
     const {
-        loading: updateNotificationLoading,
-        errorMessage: updateNotificationErrorMessage,
-        callApi: updateNotificationApi,
+        loading: updateAdvertisementLoading,
+        errorMessage: updateAdvertisementErrorMessage,
+        callApi: updateAdvertisementApi,
     } = useApi<void>();
     const {
-        loading: deleteNotificationLoading,
-        errorMessage: deleteNotificationErrorMessage,
-        callApi: deleteNotificationApi,
+        loading: deleteAdvertisementLoading,
+        errorMessage: deleteAdvertisementErrorMessage,
+        callApi: deleteAdvertisementApi,
     } = useApi<void>();
-    const fetchNotificationData = async () => {
-        await getNotificationApi(async () => {
-            const { data } = await apiService.get<INotification>(`/notifications/${id}`);
-            setTitle(data.title);
-            setDescription(data.description);
-            setPublishDate(data.date);
-            setImageUri(data.imageUrl);
-            setDate(new Date(data.date));
-            setHasImage(!!data.imageUrl);
-            setOriginalData({
-                id: data.id,
-                title: data.title,
-                description: data.description,
-                date: data.date,
-                imageUrl: data.imageUrl,
-            })
-        });
+    const fetchAdvertisementData = async () => {
+        try {
+            await getAdvertisementApi(async () => {
+                const {data} = await apiService.get<IAdvertisement>(`/advertisements/${id}`);
+                reset({
+                    id: data.id,
+                    description: data.description,
+                    imageUrl: data.imageUrl
+                });
+                setImageUri(data.imageUrl);
+                setHasImage(!!data.imageUrl);
+            });
+        }
+        catch (err) {
+            console.log(err)
+        }
+
     };
     useEffect(() => {
-        fetchNotificationData();
+        fetchAdvertisementData();
     }, []);
     useEffect(() => {
         navigation.setOptions({
-            headerTitle: `Sửa thông tin thông báo ${id}`,
+            headerTitle: `Sửa thông tin quảng cáo ${id}`,
             headerShown: true,
             headerTitleAlign: 'center',
             headerStyle: {
@@ -80,110 +87,83 @@ export default function UpdateNotification() {
             },
         });
     }, [navigation]);
-    const handleImageSelected = (hasSelectedImage: boolean) => {
-        setHasImage(hasSelectedImage);
-    };
-    const toggleDatePicker = () => {
-        setShowPicker(!showPicker);
-    };
+    const handleImageSelected = (hasSelectedImage: boolean, imageUri: string | null) => {
 
-    const onChange = ({ type }: { type: string }, selectedDate?: Date) => {
-        if (type === "set" && selectedDate) {
-            setDate(selectedDate);
-            if (Platform.OS === "android") {
-                toggleDatePicker();
-                setPublishDate(formatDate(selectedDate));
-            }
-        } else {
-            toggleDatePicker();
-        }
+        const isChanged = imageUri?.startsWith("file:") ?? false;
+        setImageChanged(isChanged);
     };
-
-    const confirmIOSDate = () => {
-        setPublishDate(formatDate(date));
-        toggleDatePicker();
-    };
-
-    const formatDate = (rawDate: Date) => {
-        let date = new Date(rawDate);
-        let year = date.getFullYear();
-        let month = (date.getMonth() + 1).toString().padStart(2, "0");
-        let day = date.getDate().toString().padStart(2, "0");
-        return `${day}-${month}-${year}`;
-    };
-    if (getNotificationLoading){
+    if (getAdvertisementLoading ) {
         return (
             <View className="flex-1 justify-center items-center">
-                <Text>Đang tải thông tin thông báo...</Text>
+                <Text>Đang tải thông tin quảng cáo...</Text>
             </View>
-        )
+        );
     }
 
-    const handleSubmit = async () => {
+    const onSubmit = async (data: IAdvertisement) => {
         try {
-            let uploadedImageUrl = originalData.imageUrl ;
-
-            if (isSubmitDisabled()) {
-                const result = await imagePickerRef.current?.upload();
-                if (result) {
-                    console.log('Upload thành công:', result.secure_url);
-                    uploadedImageUrl = result.secure_url;
-                } else {
-                    console.warn('Không thể upload hình ảnh');
-                    return;
-                }
-            }
-            const notificationData: INotification = {
-                id: id as string,
-                title: title.trim(),
-                description: description.trim(),
-                date: publishDate,
+            let uploadedImageUrl = getValues().imageUrl;
+            if (imageChanged) {
+                 const result = await imagePickerRef.current?.upload();
+                 if (result) {
+                     console.log('Upload thành công:', result.secure_url);
+                     uploadedImageUrl = result.secure_url;
+                 } else {
+                     console.warn('Không thể upload hình ảnh');
+                     return;
+                 }
+             }
+            const finalData = {
+                ...data,
                 imageUrl: uploadedImageUrl,
             };
-            await updateNotificationApi(async () => {
-                await apiService.put(`/notifications`, notificationData);
+            console.log('Final data to update:', finalData);
+            await updateAdvertisementApi(async () => {
+                const response = await apiService.put(`/advertisements`, finalData);
+                console.log('Cập nhật quảng cáo thành công:', response.data);
+                router.back();
+                router.replace({
+                    pathname: "/(dashboard)/advertisement",
+                    params: {
+                        updatedAdvertisement: JSON.stringify(response.data),
+                    },
+                });
             });
 
-            setOriginalData(notificationData);
-            console.log('Cập nhật thành công');
-            router.back();
-
-            router.replace({
-                pathname: "/(dashboard)/notification",
-                params: {
-                    updatedCategory: JSON.stringify(notificationData),
-                },
-            });
         } catch (err) {
             console.error('Lỗi upload hoặc update:', err);
         }
     };
 
     const isSubmitDisabled = (): boolean => {
-
-        const invalidInput = !title.trim() ;
-
-        return invalidInput;
+        return false;
     };
 
-    async function deleteOnPress() {
+    const handleDeletePress = () => {
+        setShowDeleteModal(true);
+    };
+
+    const handleDeleteCancel = () => {
+        setShowDeleteModal(false);
+    };
+
+    const handleDeleteConfirm = async () => {
+        setShowDeleteModal(false);
         try {
-            await deleteNotificationApi(async () => {
-                await apiService.delete(`/notifications/${id}`);
+            await deleteAdvertisementApi(async () => {
+                await apiService.delete(`/advertisements/${id}`);
             });
             router.back();
             router.replace({
-                pathname: "/(dashboard)/notification",
+                pathname: "/(dashboard)/advertisement",
                 params: {
                     deletedCategory: id
                 },
             });
+        } catch (error) {
+            console.error("Error deleting Advertisement:", error);
         }
-        catch (error) {
-            console.error("Error deleting notification:", error);
-        }
-
-    }
+    };
 
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -192,74 +172,39 @@ export default function UpdateNotification() {
                 className="flex-1 bg-white"
             >
                 <ScrollView
-                    contentContainerStyle={{ paddingBottom: 20 }}
+                    contentContainerStyle={{paddingBottom: 20}}
                     keyboardShouldPersistTaps="handled"
                     nestedScrollEnabled={true}
                 >
                     <View className="px-7">
                         <View>
                             <View>
-                                <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Tên thông báo*</Text>
-                                <TextInput
-                                    placeholder="Nhập tên thông báo"
-                                    className="p-[10px] border border-gray-300 rounded-[10px] text-[16px] bg-white mt-[10px]"
-                                    value={title}
-                                    placeholderTextColor="#9ca3af"
-                                    onChangeText={setTitle}
-                                />
-                            </View>
-                            <View>
-                                <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Mô tả*</Text>
-                                <TextInput
-                                    placeholder="Nhập mô tả"
-                                    className="p-[10px] border border-gray-300 rounded-[10px] text-[16px] bg-white mt-[10px]"
-                                    value={description}
-                                    placeholderTextColor="#9ca3af"
-                                    onChangeText={setDescription}
-                                />
-                            </View>
-                            <View>
-                                <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Ngày thông báo*</Text>
-                                {showPicker && (
-                                    <DateTimePicker
-                                        mode="date"
-                                        display="spinner"
-                                        value={date}
-                                        onChange={onChange}
-                                        className="h-[120px] mt-[-10px]"
-                                    />
-                                )}
-
-                                {showPicker && Platform.OS === "ios" && (
-                                    <View className="flex-row justify-around">
-                                        <TouchableOpacity
-                                            className="bg-[#11182711] h-[50px] justify-center items-center rounded-[50px] mt-[10px] mb-[15px] px-[20px]"
-                                            onPress={toggleDatePicker}
-                                        >
-                                            <Text className="text-[#E47905] text-[14px] font-medium">Cancel</Text>
-                                        </TouchableOpacity>
-
-                                        <TouchableOpacity
-                                            className="h-[50px] justify-center items-center rounded-[50px] mt-[10px] mb-[15px] px-[20px]"
-                                            onPress={confirmIOSDate}
-                                        >
-                                            <Text className="text-[#fff] text-[14px] font-medium">Confirm</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                )}
-
-                                {!showPicker && (
-                                    <Pressable onPress={toggleDatePicker}>
+                                <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Tên thông
+                                    báo*</Text>
+                                <Controller
+                                    control={control}
+                                    name="description"
+                                    rules={{required: "Tên thông báo là bắt buộc"}}
+                                    render={({field: {onChange, onBlur, value}}) => (
                                         <TextInput
-                                            placeholder="08-06-2004"
+                                            multiline={true}
+                                            numberOfLines={4}
+                                            placeholder="Nhập tên thông báo"
                                             className="p-[10px] border border-gray-300 rounded-[10px] text-[16px] bg-white mt-[10px]"
-                                            editable={false}
-                                            value={publishDate}
-                                            onPressIn={toggleDatePicker}
+                                            placeholderTextColor="#9ca3af"
+                                            value={value}
+                                            onBlur={onBlur}
+                                            onChangeText={onChange}
                                         />
-                                    </Pressable>
+                                    )}
+                                />
+                                {errors.description && (
+                                    <Text className="text-red-500 text-[14px] mt-1">
+                                        {errors.description.message}
+                                    </Text>
                                 )}
                             </View>
+
                             <View>
                                 <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Hình ảnh*</Text>
                                 <ImagePickerPreview
@@ -268,16 +213,17 @@ export default function UpdateNotification() {
                                     initialUri={imageUri}
                                 />
                             </View>
-                            <TouchableOpacity style={{ flexDirection: "row", marginTop: 20 }}
-                                              onPress={deleteOnPress}
+                            <TouchableOpacity
+                                style={{flexDirection: "row", marginTop: 20}}
+                                onPress={handleDeletePress}
                             >
-                                <Icon name="trash-can-outline" size={20} color="red" />
-                                <Text style={{ color: "red", marginLeft: 5, fontWeight: "bold" }}>
-                                    Xóa thông báo này
+                                <Icon name="trash-can-outline" size={20} color="red"/>
+                                <Text style={{color: "red", marginLeft: 5, fontWeight: "bold"}}>
+                                    Xóa quảng cáo này
                                 </Text>
                             </TouchableOpacity>
                             <TouchableOpacity
-                                onPress={handleSubmit}
+                                onPress={handleSubmit(onSubmit)}
                                 disabled={isSubmitDisabled()}
                                 className={`py-4 px-5 rounded-[10px] items-center mt-[20px] ${isSubmitDisabled() ? 'bg-gray-200' : 'bg-[#f59e0b]'
                                 }`}
@@ -292,6 +238,110 @@ export default function UpdateNotification() {
                         </View>
                     </View>
                 </ScrollView>
+                {/* Delete Confirmation Modal */}
+                <Modal
+                    visible={showDeleteModal}
+                    transparent={true}
+                    animationType="fade"
+                    onRequestClose={handleDeleteCancel}
+                >
+                    <View style={{
+                        flex: 1,
+                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        paddingHorizontal: 20
+                    }}>
+                        <View style={{
+                            backgroundColor: 'white',
+                            borderRadius: 15,
+                            padding: 20,
+                            width: '100%',
+                            maxWidth: 350,
+                            shadowColor: '#000',
+                            shadowOffset: {
+                                width: 0,
+                                height: 2,
+                            },
+                            shadowOpacity: 0.25,
+                            shadowRadius: 3.84,
+                            elevation: 5,
+                        }}>
+                            <View style={{alignItems: 'center', marginBottom: 20}}>
+                                <Icon name="alert-circle-outline" size={50} color="#ef4444" />
+                            </View>
+
+                            <Text style={{
+                                fontSize: 18,
+                                fontWeight: 'bold',
+                                textAlign: 'center',
+                                marginBottom: 10,
+                                color: '#1f2937'
+                            }}>
+                                Xác nhận xóa
+                            </Text>
+
+                            <Text style={{
+                                fontSize: 16,
+                                textAlign: 'center',
+                                marginBottom: 25,
+                                color: '#6b7280',
+                                lineHeight: 22
+                            }}>
+                                Bạn có chắc chắn muốn xóa quảng cáo này không? Hành động này không thể hoàn tác.
+                            </Text>
+
+                            <View style={{
+                                flexDirection: 'row',
+                                justifyContent: 'space-between',
+                                gap: 15
+                            }}>
+                                <TouchableOpacity
+                                    onPress={handleDeleteCancel}
+                                    style={{
+                                        flex: 1,
+                                        paddingVertical: 12,
+                                        paddingHorizontal: 20,
+                                        borderRadius: 10,
+                                        borderWidth: 1,
+                                        borderColor: '#d1d5db',
+                                        backgroundColor: 'white',
+                                        alignItems: 'center'
+                                    }}
+                                >
+                                    <Text style={{
+                                        fontSize: 16,
+                                        fontWeight: '600',
+                                        color: '#6b7280'
+                                    }}>
+                                        Hủy
+                                    </Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    onPress={handleDeleteConfirm}
+                                    disabled={deleteAdvertisementLoading}
+                                    style={{
+                                        flex: 1,
+                                        paddingVertical: 12,
+                                        paddingHorizontal: 20,
+                                        borderRadius: 10,
+                                        backgroundColor: deleteAdvertisementLoading ? '#fca5a5' : '#ef4444',
+                                        alignItems: 'center'
+                                    }}
+                                >
+                                    <Text style={{
+                                        fontSize: 16,
+                                        fontWeight: '600',
+                                        color: 'white'
+                                    }}>
+                                        {deleteAdvertisementLoading ? 'Đang xóa...' : 'Xác nhận'}
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </View>
+                </Modal>
             </KeyboardAvoidingView>
         </TouchableWithoutFeedback>
     )

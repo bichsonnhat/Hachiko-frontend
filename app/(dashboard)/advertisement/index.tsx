@@ -4,7 +4,6 @@ import { Plus, Edit, ChevronLeft } from "lucide-react-native";
 import { router, useFocusEffect, useLocalSearchParams, useNavigation } from "expo-router";
 import { useEffect, useState } from "react";
 import { useApi } from "@/hooks/useApi";
-import { ICategory } from "@/constants";
 import apiService from "@/constants/config/axiosConfig";
 import React from "react";
 import {IAdvertisement} from "@/constants/interface/advertisement.interface";

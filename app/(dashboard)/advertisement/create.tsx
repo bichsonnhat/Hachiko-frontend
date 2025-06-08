@@ -36,9 +36,9 @@ export default function AddAdvertisement() {
     });
 
     const {
-        loading: notificationLoading,
-        errorMessage: notificationErrorMessage,
-        callApi: callNotificationApi,
+        loading: advertisementLoading,
+        errorMessage: advertisementErrorMessage,
+        callApi: callAdvertisementApi,
     } = useApi<void>();
     useEffect(() => {
         navigation.setOptions({
@@ -60,14 +60,27 @@ export default function AddAdvertisement() {
         setHasImage(hasSelectedImage);
     };
 
-    async function onSubmit() {
+    const onSubmit= async  (data: ICreateAdvertisement) => {
         try {
-            console.log("submit")
+            const result = await imagePickerRef.current?.upload();
+            if (!result?.secure_url) {
+                console.error("Image upload failed");
+                return;
+            }
+            const finalData = {
+                ...data,
+                imageUrl: result.secure_url,
+            };
+            await callAdvertisementApi(async () => {
+                const response = await apiService.post('/advertisements', finalData);
+                console.log(response.data);
+                console.log("Them quang cao thanh cong")
+            });
         } catch (err) {
             console.error('Lỗi upload:', err);
         }
     }
-    if(notificationLoading) {
+    if(advertisementLoading) {
         return (
             <View className="flex-1 justify-center items-center">
                 <Icon name="loading" size={24} color="#E47905" />

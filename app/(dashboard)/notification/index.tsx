@@ -44,9 +44,9 @@ export default function NotificationsScreen() {
     }, [navigation]);
     useFocusEffect(
         React.useCallback(() => {
-            if (params?.updatedNotification) {
+            if (params?.updateNotification) {
                 try {
-                    const updated = JSON.parse(params.updatedNotification as string) as INotification;
+                    const updated = JSON.parse(params.updateNotification as string) as INotification;
 
                     setNotifications((prev) =>
                         prev.map((cat) => (cat.id === updated.id ? { ...cat, ...updated } : cat))
@@ -55,8 +55,8 @@ export default function NotificationsScreen() {
                     console.warn("Lỗi parse updateNotification", err);
                 }
             }
-            if (params?.deletedCategory) {
-                const deletedId = params.deletedCategory as string;
+            if (params?.deleteNotification) {
+                const deletedId = params.deleteNotification as string;
                 setNotifications((prev) =>
                     prev.filter((cat) => cat.id !== deletedId)
                 );

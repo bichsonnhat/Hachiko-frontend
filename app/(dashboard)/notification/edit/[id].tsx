@@ -162,7 +162,7 @@ export default function UpdateNotification() {
             router.replace({
                 pathname: "/(dashboard)/notification",
                 params: {
-                    updatedCategory: JSON.stringify(notificationData),
+                    updateNotification: JSON.stringify(notificationData),
                 },
             });
         } catch (err) {
@@ -186,7 +186,7 @@ export default function UpdateNotification() {
             router.replace({
                 pathname: "/(dashboard)/notification",
                 params: {
-                    deletedCategory: id
+                    deleteNotification: id
                 },
             });
         }
