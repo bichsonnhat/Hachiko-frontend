@@ -87,7 +87,7 @@ export default function AdvertisementScreen() {
                                 </Text>
                             </View>
                         </View>
-                        <TouchableOpacity onPress={() => router.push(`/(dashboard)/advertisement/edit/${item.id}`}>
+                        <TouchableOpacity onPress={() => router.push(`/(dashboard)/advertisement/edit/${item.id}`)}>
                             <Edit size={24} color="black" />
                         </TouchableOpacity>
                     </View>

@@ -1,10 +1,17 @@
 import {
-    View, Image, Text, TouchableOpacity, TextInput, Pressable,
-    Platform, ScrollView, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard,
+    Keyboard,
+    KeyboardAvoidingView,
+    Platform,
+    Pressable,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    TouchableWithoutFeedback,
+    View,
 } from 'react-native';
 import React, {useEffect, useRef, useState} from 'react';
-import {useNavigation, useLocalSearchParams, useRouter} from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
+import {useLocalSearchParams, useNavigation, useRouter} from 'expo-router';
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {useApi} from "@/hooks/useApi";
@@ -21,6 +28,7 @@ export default function UpdateNotification() {
     const [publishDate, setPublishDate] = useState("");
     const [date, setDate] = useState<Date>(new Date());
     const [showPicker, setShowPicker] = useState(false);
+    const [imageChanged, setImageChanged] = useState(false);
     const imagePickerRef = useRef<ImagePickerPreviewRef>(null);
     const [imageUri, setImageUri] = useState<string | undefined>(undefined);
     const [hasImage, setHasImage] = useState(false);
@@ -80,8 +88,10 @@ export default function UpdateNotification() {
             },
         });
     }, [navigation]);
-    const handleImageSelected = (hasSelectedImage: boolean) => {
+    const handleImageSelected = (hasSelectedImage: boolean, imageUri: string | null) => {
         setHasImage(hasSelectedImage);
+        const isChanged = imageUri?.startsWith("file:") ?? false;
+        setImageChanged(isChanged);
     };
     const toggleDatePicker = () => {
         setShowPicker(!showPicker);
@@ -123,7 +133,8 @@ export default function UpdateNotification() {
         try {
             let uploadedImageUrl = originalData.imageUrl ;
 
-            if (isSubmitDisabled()) {
+            if (imageChanged) {
+                console.log("Should");
                 const result = await imagePickerRef.current?.upload();
                 if (result) {
                     console.log('Upload thành công:', result.secure_url);
