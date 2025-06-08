@@ -23,6 +23,7 @@ export default function EditProduct() {
     const [categoryList, setCategoryList] = useState<IDropdownItem[]>([]);
     const [imageUri, setImageUri] = useState<string | null>(null);
     const [hasImage, setHasImage] = useState(false);
+    const [imageChanged, setImageChanged] = useState(false);
     const imagePickerRef = useRef<ImagePickerPreviewRef>(null);
 
     const [originalData, setOriginalData] = useState({
@@ -94,8 +95,11 @@ export default function EditProduct() {
         });
     }, [navigation]);
 
-    const handleImageSelected = (hasSelectedImage: boolean) => {
+    const handleImageSelected = (hasSelectedImage: boolean, imageUri: string | null) => {
         setHasImage(hasSelectedImage);
+
+        const isChanged = imageUri?.startsWith("file:") ?? false;
+        setImageChanged(isChanged);
     };
 
     const isSubmitDisabled = (): boolean => {
@@ -103,9 +107,8 @@ export default function EditProduct() {
         const priceUnchanged = price.trim() === originalData.price;
         const descUnchanged = (description || '') === (originalData.description || '');
         const categoryUnchanged = selectedCategory === originalData.categoryID;
-        const imageUnchanged = imageUri === originalData.imageUrl;
 
-        const noChange = nameUnchanged && priceUnchanged && descUnchanged && categoryUnchanged && imageUnchanged;
+        const noChange = nameUnchanged && priceUnchanged && descUnchanged && categoryUnchanged && !imageChanged;
         const invalidInput = !productName.trim() || !price.trim() || !selectedCategory || !hasImage;
 
         return invalidInput || noChange;
@@ -116,9 +119,8 @@ export default function EditProduct() {
         const priceUnchanged = price.trim() === originalData.price;
         const descUnchanged = (description || '') === (originalData.description || '');
         const categoryUnchanged = selectedCategory === originalData.categoryID;
-        const imageUnchanged = imageUri === originalData.imageUrl;
 
-        const noChange = nameUnchanged && priceUnchanged && descUnchanged && categoryUnchanged && imageUnchanged;
+        const noChange = nameUnchanged && priceUnchanged && descUnchanged && categoryUnchanged && !imageChanged;
         if (noChange) {
             console.log("Không có thay đổi nào để cập nhật.");
             return;
@@ -127,7 +129,8 @@ export default function EditProduct() {
         try {
             let uploadedImageUrl = originalData.imageUrl;
 
-            if (!imageUnchanged && imagePickerRef.current) {
+            const shouldUploadImage = imageChanged;
+            if (shouldUploadImage && imagePickerRef.current) {
                 const result = await imagePickerRef.current.upload();
                 if (result) {
                     uploadedImageUrl = result.secure_url;
