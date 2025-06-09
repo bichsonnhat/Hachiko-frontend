@@ -7,9 +7,11 @@ import apiService from '@/constants/config/axiosConfig';
 import { useApi } from '@/hooks/useApi';
 import BadgeButton from '@/components/HomeScreen/BadgeButton';
 import NotificationButton from '@/components/HomeScreen/NotificationButton';
+import { useAuth } from '@clerk/clerk-expo';
 
 export default function HeaderActions() {
     const [unseenCount, setUnseenCount] = useState<number>(0);
+    const { userId } = useAuth();
 
     const {
         callApi: callNotificationApi,
@@ -18,7 +20,7 @@ export default function HeaderActions() {
     const fetchNotificationData = async () => {
         await callNotificationApi(async () => {
             const response = await apiService.get(
-                "/user-notifications/user/user_2tdF6nKWA3rQQP9n5mKrbt3x7x7/unseen-count"
+                `/user-notifications/user/${userId}/unseen-count`
             );
             setUnseenCount(response.data);
         });

@@ -28,26 +28,6 @@ export default function Category() {
             name: "Cà phê hạt rang",
             path: '/profile/add-voucher'
         },
-        // {
-        //     id: 5,
-        //     image: require('@/assets/images/Category/item_5.png'),
-        //     name: "Đổi bean",
-        //     path: ''
-        // },
-        // {
-        //     id: 6,
-        //     image: require('@/assets/images/Category/item_6.png')
-        // },
-        // {
-        //     id: 7,
-        //     image: require('@/assets/images/Category/item_7.png')
-        // },
-        // {
-        //     id: 8,
-        //     image: require('@/assets/images/Category/item_8.png'),
-        //     name: "Hạng thành viên",
-        //     path: ''
-        // },
     ]
 
     return (
