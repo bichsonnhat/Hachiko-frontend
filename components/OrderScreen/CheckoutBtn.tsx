@@ -37,13 +37,18 @@ import {
   OrderStatus,
   IProduct,
 } from "@/constants";
+import * as Location from 'expo-location';
+
 import apiService from "@/constants/config/axiosConfig";
 import { useRouter } from "expo-router";
 import { DrinkModal } from "@/components/HomeScreen/DrinkModal";
 import { generateObjectId } from "@/utils/helpers/randomHexString";
 import { ItemType } from "react-native-dropdown-picker";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import {OrderMapModal} from "@/components/OrderScreen/OrderMapModal";
+import MapModal from "../common/MapModal";
+import CombinedMapModal from "./OrderMapModal";
+import { useAuth } from "@clerk/clerk-expo";
+import { IUser } from "@/constants/interface/user.interface";
 
 // Interface for user voucher mapping
 interface UserVoucher {
@@ -62,9 +67,59 @@ type CheckoutBtnProps = {
 
 export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId }) => {
   //hard code for testing
+  const [longitude, setLongitude] = useState<number>();
+  const [latitude, setLatitude] = useState<number>();
   const [shippingFee, setShippingFee] = useState<number>(15000);
-  const address = "Địa chỉ giao hàng";
+  const [address, setAddress] = useState("Địa chỉ giao hàng");
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [user, setUser] = useState<IUser>();
   const insets = useSafeAreaInsets();
+  const { userId } = useAuth();
+
+  useEffect(() => {
+    async function getCurrentLocation() {
+      setIsLoadingLocation(true);
+      try {
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          console.warn('Quyền truy cập vị trí bị từ chối');
+          setIsLoadingLocation(false);
+          return;
+        }
+        let location = await Location.getCurrentPositionAsync({});
+        setLatitude(location.coords.latitude)
+        setLongitude(location.coords.longitude)
+        await fetchAddress(location.coords.latitude, location.coords.longitude);
+      } catch (error) {
+        console.error('Lỗi khi lấy vị trí hiện tại:', error);
+        setAddress('Lỗi khi lấy địa chỉ');
+      } finally {
+        setIsLoadingLocation(false);
+      }
+    }
+    getCurrentLocation();
+  }, []);
+
+  const fetchAddress = async (latitude: number, longitude: number): Promise<void> => {
+    setIsLoadingLocation(true);
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1`,
+        {
+          headers: {
+            'User-Agent': 'MyReactNativeApp/1.0 (phanchauhoang2004@example.com)',
+          },
+        }
+      );
+      const data: any = await response.json();
+      setAddress(data.display_name || 'Không tìm thấy địa chỉ');
+    } catch (error) {
+      console.error('Lỗi khi gọi API Nominatim:', error);
+      setAddress('Lỗi khi lấy địa chỉ');
+    } finally {
+      setIsLoadingLocation(false);
+    }
+  };
 
   // Animation value for the edit button
   const editButtonOpacity = new Animated.Value(0.8);
@@ -94,12 +149,15 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
   }, []);
 
   //cái này cần api current user hay gì đó, kiểu đăng nhập từ clerk thì call api để lấy rồi lưu vô store, lúc xài thì lấy ra thôi
-  const userId = "user_2xtymyaMoP8EhMJCay8ab9plDBU";
-  const username = "Nguyen Van A";
-  const userphone = "0123456789";
 
   const router = useRouter();
   const { errorMessage, callApi: callStoreApi } = useApi<void>();
+  const {
+    loading: userLoading,
+    errorMessage: userError,
+    callApi: callUserApi,
+  } = useApi<void>();
+
   const { errorMessage: voucherErrorMessage, callApi: callVoucherApi } =
     useApi<void>();
   const { errorMessage: checkoutErrorMessage, callApi: callCheckoutApi } =
@@ -108,7 +166,6 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
     useApi<void>();
 
   const [modalVisible, setModalVisible] = useState(false);
-  const [showPopup, setShowPopup] = useState(false);
 
   // DrinkModal states
   const [drinkModalVisible, setDrinkModalVisible] = useState(false);
@@ -140,8 +197,8 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
   const [showPicker, setShowPicker] = useState(false);
 
   const [showCustomerModal, setShowCustomerModal] = useState(false);
-  const [customerName, setCustomerName] = useState(username);
-  const [customerPhone, setCustomerPhone] = useState(userphone);
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("0123456789");
 
   const [voucher, setVoucher] = useState<IVoucher[]>([]);
   const [openCoupon, setOpenCoupon] = useState(false);
@@ -186,8 +243,6 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
   const handleClearInfo = () => {
     setStoreId("");
     setShippingTime(new Date());
-    setCustomerName(username);
-    setCustomerPhone(userphone);
     setCoupon("");
     setPaymentMethod("Tiền mặt");
   };
@@ -239,7 +294,7 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
     const newShippingFee = isFreeShip ? 0 : shippingFee;
     const sendData: IFullOrder = {
       order: {
-        userId,
+        userId: userId ?? "user_2uB6QHmvZojzlQk5o5tb2s1j0xl",
         orderAddress: address,
         orderTime: shippingTime,
         orderCost: priceAfterDiscount + newShippingFee,
@@ -300,6 +355,16 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
   };
 
   useEffect(() => {
+    const fetchUserData = async () => {
+      await callUserApi(async () => {
+        const { data } = await apiService.get(`/users/${userId}`);
+        if (data) {
+          setUser(data);
+          setCustomerName(data.lastName + " " + data.firstName)
+          setCustomerPhone(data.phoneNumber);
+        }
+      });
+    };
     const fetchStores = async () => {
       await callStoreApi(async () => {
         const { data } = await apiService.get("/stores");
@@ -325,7 +390,7 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
           setCoupon(voucherId);
           return;
         }
-        
+
         await callVoucherApi(async () => {
           // Use the correct endpoint for fetching available user vouchers
           const { data } = await apiService.get<UserVoucher[]>(
@@ -334,12 +399,12 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
           if (data && data.length > 0) {
             // Extract voucher IDs from the user-voucher mappings
             const voucherIds = data.map(mapping => mapping.voucherId);
-            
+
             // Fetch details for each voucher
-            const voucherPromises = voucherIds.map(id => 
+            const voucherPromises = voucherIds.map(id =>
               apiService.get<IVoucher>(`/vouchers/${id}`).then(response => response.data)
             );
-            
+
             const voucherDetails = await Promise.all(voucherPromises);
             setVoucher(voucherDetails);
           } else {
@@ -350,6 +415,7 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
         console.error("Error fetching vouchers:", error);
       }
     };
+    fetchUserData();
     fetchStores();
     fetchUserVouchers();
   }, []);
@@ -396,7 +462,7 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
   useEffect(() => {
     if (voucherId && voucherId.length > 0) {
       setCoupon(voucherId);
-      
+
       // If we already have voucher data, find the matching voucher
       if (voucher.length > 0) {
         const selectedVoucher = voucher.find(v => v.id === voucherId);
@@ -422,7 +488,7 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
             console.error("Error fetching voucher details:", error);
           }
         };
-        
+
         fetchSingleVoucher();
       }
     }
@@ -432,7 +498,7 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
   useEffect(() => {
     // Skip if the coupon was set by the voucherId prop
     if (coupon === voucherId) return;
-    
+
     const voucherSelected = voucher.find((v) => v.id === coupon);
     if (!voucherSelected) return;
     const { isFreeShip, discountPercent, discountPrice } = voucherSelected;
@@ -553,12 +619,23 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
     resetModalState();
   };
 
+  const handleCancel = () => {
+    setOpenStoreModal(false);
+  }
+
+  const handleLocationConfirm = ({ address, lat, lon }: { address: string; lat: number; lon: number }) => {
+    setAddress(address);
+    setLongitude(lat);
+    setLongitude(lon);
+  };
+
   return (
     <>
       {cart.length > 0 && (
         <SafeAreaView className="shadow-lg" edges={['bottom']}>
           <TouchableOpacity
             onPress={handleOpenModal}
+            disabled={isLoadingLocation}
             className="absolute bottom-2 mx-10 w-[80%] h-12 rounded-full bg-white flex items-center justify-center"
             style={{
               shadowColor: "#000",
@@ -571,13 +648,17 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
             <View className="flex-row items-center justify-between w-full px-4">
               <View className="flex-row items-center w-[55%]">
                 <MapPin size={20} color="orange" />
-                <Text
-                  className="text-base font-semibold text-black"
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  Định vị giao hàng
-                </Text>
+                {isLoadingLocation ? (
+                  <Text className="ml-2 text-base font-semibold text-black">Đang lấy vị trí...</Text>
+                ) : (
+                  <Text
+                    className="text-base font-semibold text-black"
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    {address}
+                  </Text>
+                )}
               </View>
 
               <View className="flex-row items-center gap-2 rounded-full bg-orange-400 px-2 py-1 w-[45%] justify-evenly">
@@ -601,7 +682,18 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
             statusBarTranslucent={true}
           >
             <View className="flex-1 bg-black/50 justify-center items-center">
-              <OrderMapModal visible={openStoreModal} onClose={()=>{setOpenStoreModal(false)}} setSelectedStoreId={setStoreId} setShippingFee={setShippingFee} />
+              {!isLoadingLocation && (
+                <CombinedMapModal
+                  initialAddress={address}
+                  onClose={handleCancel}
+                  onConfirm={handleLocationConfirm}
+                  initialLat={latitude}
+                  initialLon={longitude}
+                  visible={openStoreModal}
+                  setSelectedStoreId={setStoreId}
+                  setShippingFee={setShippingFee}
+                />
+              )}
               <View className="w-full h-full bg-gray-100" style={{ paddingTop: insets.top }}>
                 <ScrollView
                   className="flex-1"
@@ -630,6 +722,20 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
                         <View className="flex-row items-center rounded-full pl-4">
                           <MapPin size={24} color="orange" />
                         </View>
+                      </View>
+
+                      <View className="flex-1 gap-2 px-4">
+                        <Text className="font-medium text-lg border-gray-200">
+                          Địa chỉ giao hàng
+                        </Text>
+                        <TouchableOpacity
+                          onPress={() => setOpenStoreModal(true)}
+                          className="border border-gray-300 p-4 rounded-lg"
+                        >
+                          <Text>
+                            {address}
+                          </Text>
+                        </TouchableOpacity>
                       </View>
 
                       <View className="flex-1 gap-2">

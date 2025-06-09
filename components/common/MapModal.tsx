@@ -65,41 +65,19 @@ const MapModal: React.FC<MapModalProps> = ({
                 setShowMarker(true); // Hiển thị Marker với tọa độ mặc định nếu lỗi
             }
         }
-        getCurrentLocation();
+        if (initialLat == null || initialLon == null) {
+            getCurrentLocation()
+        }
     }, []);
 
     // Cập nhật state và animate camera khi modal mở hoặc props thay đổi
     useEffect(() => {
-        // Cập nhật địa chỉ
         setAddress(initialAddress || '');
-
-        // Ưu tiên initialLat/initialLon, nếu không có thì lấy từ location, nếu không có nữa thì mặc định TP.HCM
-        const latitude =
-            initialLat != null
-                ? initialLat
-                : location?.coords.latitude ?? 10.7769;
-        const longitude =
-            initialLon != null
-                ? initialLon
-                : location?.coords.longitude ?? 106.7009;
-
-        const newCoordinates: Coordinates = { latitude, longitude };
-        setMarkerCoordinates(newCoordinates);
-
-        // Animate camera khi modal mở
         if (visible) {
-            mapRef.current?.animateToRegion(
-                {
-                    latitude,
-                    longitude,
-                    latitudeDelta: region.latitudeDelta,
-                    longitudeDelta: region.longitudeDelta,
-                },
-                1000
-            );
-            setShowMarker(true); // Hiển thị Marker khi tọa độ đã được xác định
+            fetchCoordinates(address.trim());
+            setShowMarker(true);
         }
-    }, [visible, initialAddress, initialLat, initialLon, location, region.latitudeDelta, region.longitudeDelta]);
+    }, [visible, initialAddress, location, region.latitudeDelta, region.longitudeDelta]);
 
 
     // Hàm gọi API Nominatim để lấy tọa độ từ địa chỉ (forward geocoding)
@@ -120,11 +98,14 @@ const MapModal: React.FC<MapModalProps> = ({
                 setMarkerCoordinates(newCoordinates);
                 setAddress(data[0].display_name);
 
-                mapRef.current?.animateCamera(
+                mapRef.current?.animateToRegion(
                     {
-                        center: newCoordinates,
+                        latitude: newCoordinates.latitude,
+                        longitude: newCoordinates.longitude,
+                        latitudeDelta: region.latitudeDelta,
+                        longitudeDelta: region.longitudeDelta,
                     },
-                    { duration: 1000 }
+                    1000
                 );
             } else {
                 setAddress('Không tìm thấy địa chỉ');
@@ -222,13 +203,15 @@ const MapModal: React.FC<MapModalProps> = ({
                     style={styles.map}
                     initialRegion={region}
                 >
-                    <Marker
-                        coordinate={markerCoordinates}
-                        draggable
-                        onDragEnd={handleMarkerDragEnd}
-                        title="Vị trí của bạn"
-                        description="Kéo và thả để chọn vị trí mới"
-                    />
+                    {showMarker && (
+                        <Marker
+                            coordinate={markerCoordinates}
+                            draggable
+                            onDragEnd={handleMarkerDragEnd}
+                            title="Vị trí của bạn"
+                            description="Kéo và thả để chọn vị trí mới"
+                        />
+                    )}
                 </MapView>
 
                 {/* Hiển thị thông tin */}

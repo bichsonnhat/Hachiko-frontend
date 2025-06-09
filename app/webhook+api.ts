@@ -1,5 +1,6 @@
 import { ProductFromAPI } from '@/constants/app.interface';
 import apiService from '@/constants/config/axiosConfig';
+import { IUser } from '@/constants/interface/user.interface';
 import { Webhook } from 'svix';
 
 // Function to get the Clerk webhook secret from environment variables
@@ -69,7 +70,7 @@ export async function POST(request: Request) {
             isAdmin: false,
             phoneNumber: eventData.phone_numbers?.[0]?.phone_numbers,
           };
-          const response = await apiService.post<ProductFromAPI[]>(
+          const response = await apiService.post<IUser>(
             "/users",
             userData
           );
