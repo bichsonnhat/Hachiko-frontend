@@ -284,8 +284,8 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
         productName: "Đơn hàng " + userId,
         description: "Thanh toán đơn hàng",
         price: priceAfterDiscount + newShippingFee,
-        returnUrl: "exp://172.16.0.191:8081/--/payment/success", //kiểm tra lại url lúc chạy npx expo start, đều là localhost nhưng mà khác mạng thì config ip khác
-        cancelUrl: "exp://172.16.0.191:8081/--/payment/failed",
+        returnUrl: "http://localhost:8081/--/payment/success", //kiểm tra lại url lúc chạy npx expo start, đều là localhost nhưng mà khác mạng thì config ip khác
+        cancelUrl: "http://localhost:8081/--/payment/failed",
       };
       const { data } = await apiService.post("/orders/payos", sendData);
       if (data) {
@@ -312,10 +312,7 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
         recipientName: customerName,
         recipientPhone: customerPhone,
         storeId,
-        orderStatus:
-          paymentMethod === "Tiền mặt"
-            ? OrderStatus.DELIVERING
-            : OrderStatus.PENDING,
+        orderStatus: OrderStatus.DELIVERING,
         createdAt: new Date(),
       },
       orderItems: cart.map((item) => ({
