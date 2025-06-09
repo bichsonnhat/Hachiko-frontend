@@ -14,13 +14,12 @@ import { useApi } from "@/hooks/useApi";
 import apiService from "@/constants/config/axiosConfig";
 import { DrinkModal } from "./DrinkModal";
 import { ReviewModal } from "@/components/OrderScreen/ReviewModal";
+import { useAuth } from "@clerk/clerk-expo";
 
 type DrinkSlotVerticalProps = {
   drink: IProduct;
   check: boolean;
 };
-
-const USER_ID = "67ea8e54c54fd6723fbf8f0e";
 
 export const DrinkSlotVertical: React.FC<DrinkSlotVerticalProps> = ({
   drink,
@@ -28,6 +27,7 @@ export const DrinkSlotVertical: React.FC<DrinkSlotVerticalProps> = ({
 }) => {
   const { cart, addNewToCart, addExistingToCart, checkExist } = useCartStore();
   const { callApi: callFavouriteApi } = useApi<void>();
+  const { userId } = useAuth();
 
   const [modalVisible, setModalVisible] = useState(false);
   const [reviewModalVisible, setReviewModalVisible] = useState(false);
@@ -92,7 +92,7 @@ export const DrinkSlotVertical: React.FC<DrinkSlotVerticalProps> = ({
   const fetchFavouriteStatus = useCallback(async () => {
     await callFavouriteApi(async () => {
       const { data } = await apiService.get(
-        `/favourite-products/${USER_ID}/${drink.id}`
+        `/favourite-products/${userId}/${drink.id}`
       );
       setIsFavourite(!!data);
     });
@@ -108,7 +108,7 @@ export const DrinkSlotVertical: React.FC<DrinkSlotVerticalProps> = ({
     } else {
       await callFavouriteApi(async () => {
         const sendData: IFavouriteProduct = {
-          userId: USER_ID,
+          userId: userId || "",
           productId: drink.id ?? "",
         };
         await apiService.post(`/favourite-products`, sendData);

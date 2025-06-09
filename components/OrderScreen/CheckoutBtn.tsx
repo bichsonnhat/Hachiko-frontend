@@ -268,6 +268,15 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
     });
   };
 
+  const updateVoucherStatus = async (voucherId: string) => {
+    await callVoucherApi(async () => {
+      const { data } = await apiService.put(`/user-vouchers/${voucherId}`, { status: "INACTIVE" });
+      if (data) {
+        console.log("Voucher status updated successfully");
+      }
+    });
+  };
+
   const handleWithPayOS = async () => {
     await callCheckoutApi(async () => {
       const newShippingFee = isFreeShip ? 0 : shippingFee;
@@ -323,6 +332,9 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
     };
     if (checkoutCondition()) {
       checkout(sendData);
+      if (sendData.order.voucherId) {
+        updateVoucherStatus(sendData.order.voucherId);
+      }
       if (paymentMethod === "QR Code") {
         handleWithPayOS();
       }
@@ -412,7 +424,8 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
           }
         });
       } catch (error) {
-        console.error("Error fetching vouchers:", error);
+        console.error("Error in fetchUserVouchers:", error);
+        setVoucher([]);
       }
     };
     fetchUserData();
@@ -486,6 +499,17 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
             }
           } catch (error) {
             console.error("Error fetching voucher details:", error);
+            // If we can't get the voucher details, don't apply any discount
+            setIsFreeShip(false);
+            setPercentDiscount(0);
+            setPriceDiscount(0);
+            
+            // Show an alert to the user
+            Alert.alert(
+              "Thông báo",
+              "Không thể áp dụng voucher. Vui lòng thử lại sau.",
+              [{ text: "OK" }]
+            );
           }
         };
 

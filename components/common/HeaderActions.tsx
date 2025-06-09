@@ -7,14 +7,15 @@ import apiService from '@/constants/config/axiosConfig';
 import { useApi } from '@/hooks/useApi';
 import BadgeButton from '@/components/HomeScreen/BadgeButton';
 import NotificationButton from '@/components/HomeScreen/NotificationButton';
-import { useAuth } from '@clerk/clerk-expo';
 
-export default function HeaderActions() {
+export default function HeaderActions({ userId }: { userId: string }) {
     const [unseenCount, setUnseenCount] = useState<number>(0);
-    const { userId } = useAuth();
+
+    const [voucherCount, setVoucherCount] = useState<number>(0);
 
     const {
         callApi: callNotificationApi,
+        callApi: callVoucherApi,
     } = useApi<void>();
 
     const fetchNotificationData = async () => {
@@ -26,8 +27,16 @@ export default function HeaderActions() {
         });
     };
 
+    const fetchVoucherData = async () => {
+        await callVoucherApi(async () => {
+            const response = await apiService.get(`/user-vouchers/user/${userId}/available`);
+            setVoucherCount(response.data.length);
+        });
+    };
+
     useEffect(() => {
         fetchNotificationData();
+        fetchVoucherData();
     }, []);
 
     useFocusEffect(
@@ -41,7 +50,7 @@ export default function HeaderActions() {
             <BadgeButton
                 className="mr-2"
                 icon={<Ticket size={24} color={Colors.PRIMARY} />}
-                text={11}
+                text={voucherCount}
             />
             <TouchableOpacity onPress={() => router.push('/user-notification')}>
                 <NotificationButton icon={<Bell size={24} color="black" />} count={unseenCount} />

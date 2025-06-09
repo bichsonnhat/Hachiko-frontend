@@ -43,13 +43,13 @@ export default function CouponScreen() {
     const [voucherDetails, setVoucherDetails] = useState<Voucher[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    // const { userId } = useAuth();
-    const userId = "user_2xtymyaMoP8EhMJCay8ab9plDBU";
+    const { userId } = useAuth();
 
     const safeHeight = StatusBar.currentHeight || 0;
     
     useEffect(() => {
         if (userId) {
+            console.log("userId", userId);
             fetchUserVouchers();
         }
     }, [userId]);

@@ -16,10 +16,11 @@ import apiService from "@/constants/config/axiosConfig";
 import { useBoolean } from "@/hooks/useBoolean";
 import { HeartIcon, SearchIcon } from "lucide-react-native";
 import { router } from 'expo-router';
+import { useAuth } from "@clerk/clerk-expo";
 
 export const Header = () => {
   //hard code userId for testing
-  const userId = "67ea8e54c54fd6723fbf8f0e";
+  const { userId } = useAuth(); 
 
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [favouriteProducts, setFavouriteProducts] =
@@ -96,7 +97,7 @@ export const Header = () => {
         handleModalClose={handleModalClose}
         drinks={favouriteProducts}
         handleUnlike={handleUnlike}
-        userId={userId}
+        userId={userId || ""}
       />
     </>
   );

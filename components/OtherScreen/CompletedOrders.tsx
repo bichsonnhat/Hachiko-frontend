@@ -5,6 +5,7 @@ import { useApi } from "@/hooks/useApi";
 import { useEffect, useState } from "react";
 import { IFullOrder, OrderRecord, OrderStatus } from "@/constants";
 import apiService from "@/constants/config/axiosConfig";
+import { useAuth } from "@clerk/clerk-expo";
 
 type CompletedOrdersProps = {
   orderChanged: boolean;
@@ -14,7 +15,7 @@ export const CompletedOrders: React.FC<CompletedOrdersProps> = ({
   orderChanged,
 }) => {
   //hard coded data for user
-  const userId = "67fe6f866bcac94e258e3a20";
+  const { userId } = useAuth();
 
   const router = useRouter();
   const { errorMessage, callApi: callCompletedOrdreApi } = useApi<void>();
