@@ -1,15 +1,45 @@
-import { View, Text, TouchableOpacity, FlatList, Image } from "react-native"
-import { Plus, Edit, Calendar, Truck, Percent, DollarSign } from "lucide-react-native"
+import {View, Text, TouchableOpacity, FlatList, Image, Modal} from "react-native"
+import {Plus, Edit, Calendar, Truck, Percent, DollarSign, Trash, TrashIcon} from "lucide-react-native"
 import {router, useFocusEffect, useNavigation} from "expo-router"
-import {useCallback, useEffect, useState } from "react"
+import React, {useCallback, useEffect, useState } from "react"
 import { useApi } from "@/hooks/useApi"
 import apiService from "@/constants/config/axiosConfig"
 import {IVoucher} from "@/constants";
+import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 
 export default function VouchersScreen() {
     const navigation = useNavigation()
     const [data, setData] = useState<IVoucher[]>([])
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [selectedVoucher, setSelectedVoucher] = useState<IVoucher | null>(null)
+    const {
+        loading: deleteVoucherLoading,
+        errorMessage: deleteVoucherErrorMessage,
+        callApi: deleteVoucherApi,
+    } = useApi<void>();
+    const handleDeletePress = () => {
+        setShowDeleteModal(true);
+    };
 
+    const handleDeleteCancel = () => {
+        setShowDeleteModal(false);
+    };
+
+    const handleDeleteConfirm = async () => {
+        setShowDeleteModal(false);
+        if (!selectedVoucher) return;
+        try {
+            await deleteVoucherApi(async () => {
+                await apiService.delete(`/vouchers/${selectedVoucher.id}`);
+            });
+            fetchVouchersData();
+        } catch (error) {
+            console.error("Error deleting Voucher:", error);
+        }
+        finally {
+            setSelectedVoucher(null);
+        }
+    };
     useEffect(() => {
         navigation.setOptions({
             headerTitle: "Quản lý voucher",
@@ -73,6 +103,15 @@ export default function VouchersScreen() {
                         <Text className="text-lg font-bold text-gray-800 flex-1" numberOfLines={1}>
                             {item.title}
                         </Text>
+                        <TouchableOpacity
+                            onPress={() => {
+                                setSelectedVoucher(item)
+                                setShowDeleteModal(true)
+                            }}
+                            className="ml-2 p-2 rounded-full bg-red-50"
+                        >
+                            <TrashIcon size={18} color="red" />
+                        </TouchableOpacity>
                         <TouchableOpacity
                             onPress={() => router.push(`/(dashboard)/voucher/edit/${item.id}`)}
                             className="ml-2 p-2 rounded-full bg-gray-50"
@@ -180,6 +219,110 @@ export default function VouchersScreen() {
                     <Text className="text-red-600 text-center">{vouchersErrorMessage}</Text>
                 </View>
             )}
+            {/* Delete Confirmation Modal */}
+            <Modal
+                visible={showDeleteModal}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={handleDeleteCancel}
+            >
+                <View style={{
+                    flex: 1,
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    paddingHorizontal: 20
+                }}>
+                    <View style={{
+                        backgroundColor: 'white',
+                        borderRadius: 15,
+                        padding: 20,
+                        width: '100%',
+                        maxWidth: 350,
+                        shadowColor: '#000',
+                        shadowOffset: {
+                            width: 0,
+                            height: 2,
+                        },
+                        shadowOpacity: 0.25,
+                        shadowRadius: 3.84,
+                        elevation: 5,
+                    }}>
+                        <View style={{alignItems: 'center', marginBottom: 20}}>
+                            <Icon name="alert-circle-outline" size={50} color="#ef4444" />
+                        </View>
+
+                        <Text style={{
+                            fontSize: 18,
+                            fontWeight: 'bold',
+                            textAlign: 'center',
+                            marginBottom: 10,
+                            color: '#1f2937'
+                        }}>
+                            Xác nhận xóa
+                        </Text>
+
+                        <Text style={{
+                            fontSize: 16,
+                            textAlign: 'center',
+                            marginBottom: 25,
+                            color: '#6b7280',
+                            lineHeight: 22
+                        }}>
+                            Bạn có chắc chắn muốn xóa Voucher này không? Hành động này không thể hoàn tác.
+                        </Text>
+
+                        <View style={{
+                            flexDirection: 'row',
+                            justifyContent: 'space-between',
+                            gap: 15
+                        }}>
+                            <TouchableOpacity
+                                onPress={handleDeleteCancel}
+                                style={{
+                                    flex: 1,
+                                    paddingVertical: 12,
+                                    paddingHorizontal: 20,
+                                    borderRadius: 10,
+                                    borderWidth: 1,
+                                    borderColor: '#d1d5db',
+                                    backgroundColor: 'white',
+                                    alignItems: 'center'
+                                }}
+                            >
+                                <Text style={{
+                                    fontSize: 16,
+                                    fontWeight: '600',
+                                    color: '#6b7280'
+                                }}>
+                                    Hủy
+                                </Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                onPress={handleDeleteConfirm}
+                                disabled={deleteVoucherLoading}
+                                style={{
+                                    flex: 1,
+                                    paddingVertical: 12,
+                                    paddingHorizontal: 20,
+                                    borderRadius: 10,
+                                    backgroundColor: deleteVoucherLoading ? '#fca5a5' : '#ef4444',
+                                    alignItems: 'center'
+                                }}
+                            >
+                                <Text style={{
+                                    fontSize: 16,
+                                    fontWeight: '600',
+                                    color: 'white'
+                                }}>
+                                    {deleteVoucherLoading ? 'Đang xóa...' : 'Xác nhận'}
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </View>
     )
 }
