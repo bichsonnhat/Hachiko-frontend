@@ -8,13 +8,13 @@ import { ThemedView } from "../ThemedView";
 import { ThemedText } from "../ThemedText";
 import HeaderActions from "../common/HeaderActions";
 
-export const Header = () => {
+export const Header = ({ userId }: { userId: string }) => {
   return (
     <ThemedView className={"p-5 pt-10"}>
       <ThemedView className={"flex flex-row items-center"}>
         <ThemedText className={"font-medium text-xs"}>Khác</ThemedText>
         <View className={"ml-auto flex flex-row"}>
-          <HeaderActions />
+          <HeaderActions userId={userId} />
         </View>
       </ThemedView>
     </ThemedView>

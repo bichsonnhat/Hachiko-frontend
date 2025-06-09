@@ -2,6 +2,7 @@ import { RatingOrder } from "@/components/OtherScreen";
 import { IFullOrder, IOrderFeedback, OrderStatus } from "@/constants";
 import apiService from "@/constants/config/axiosConfig";
 import { useApi } from "@/hooks/useApi";
+import { useAuth, useUser } from "@clerk/clerk-expo";
 import { useNavigation } from "expo-router";
 import { useEffect, useState } from "react";
 import { View, Text, TextInput, TouchableOpacity } from "react-native";
@@ -10,8 +11,7 @@ import DropDownPicker from "react-native-dropdown-picker";
 
 export default function OrderFeedback() {
   //hard coded data for user
-  const userId = "67fe6f866bcac94e258e3a20";
-  const username = "Nguyễn Văn A";
+  const { user } = useUser();
 
   const { errorMessage, callApi: callSuccessOrderApi } = useApi<void>();
 
@@ -32,8 +32,8 @@ export default function OrderFeedback() {
   const handleSubmit = async () => {
     await callSuccessOrderApi(async () => {
       const payload: IOrderFeedback = {
-        userId: userId,
-        username,
+        userId: user?.id || "",
+        username: user?.fullName || "",
         orderId: selectedOrder,
         feedbackContent: feedback,
         rating: rating,
@@ -53,7 +53,7 @@ export default function OrderFeedback() {
         const queryString = new URLSearchParams({
           orderStatus: OrderStatus.COMPLETED,
         });
-        const url = `/orders/customer/${userId}?${queryString}`;
+        const url = `/orders/customer/${user?.id}?${queryString}`;
         const { data } = await apiService.get(url);
         if (data) {
           const orders = data.map((order: IFullOrder) => {

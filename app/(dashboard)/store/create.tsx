@@ -5,7 +5,7 @@ import {
     Button,
 } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigation } from 'expo-router';
+import {useNavigation, useRouter} from 'expo-router';
 import ImagePickerPreview, { ImagePickerPreviewRef } from '@/components/common/ImagePickerPreview';
 import { useApi } from '@/hooks/useApi';
 import apiService from '@/constants/config/axiosConfig';
@@ -21,6 +21,7 @@ export default function AddShop() {
     const imagePickerRef = useRef<ImagePickerPreviewRef>(null);
     const [modalVisible, setModalVisible] = useState<boolean>(false);
 
+    const router = useRouter();
     const {
         loading: shopLoading,
         errorMessage: shopErrorMessage,
@@ -77,6 +78,7 @@ export default function AddShop() {
                 setLatitude('');
                 setHasImage(false);
                 imagePickerRef.current?.reset();
+                router.back()
             }
         } catch (err) {
             console.error('Lỗi upload:', err);

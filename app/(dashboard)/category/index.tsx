@@ -51,6 +51,7 @@ export default function CategoryScreen() {
                     console.warn("Lỗi parse updatedCategory", err);
                 }
             }
+            fetchCategoryData()
         }, [])
     );
 

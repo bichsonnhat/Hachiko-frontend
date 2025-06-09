@@ -13,11 +13,11 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useApi } from "@/hooks/useApi";
 import apiService from "@/constants/config/axiosConfig";
 import { IRegularFeedback } from "@/constants";
+import { useUser } from "@clerk/clerk-expo";
 
 export default function ShopFeedback() {
   //hard coded data for user
-  const userId = "67fe6f866bcac94e258e3a20";
-  const username = "Nguyễn Văn A";
+  const { user } = useUser()
 
   const { loading, errorMessage, callApi: callFeedbackApi } = useApi<void>();
   const navigation = useNavigation();
@@ -50,8 +50,8 @@ export default function ShopFeedback() {
   const handleSendFeedback = async () => {
     await callFeedbackApi(async () => {
       const payload: IRegularFeedback = {
-        userId: userId,
-        username,
+        userId: user?.id || "",
+        username: user?.fullName || "",
         feedbackContent: feedback,
       };
       const { data } = await apiService.post("/feedback/regular", payload);

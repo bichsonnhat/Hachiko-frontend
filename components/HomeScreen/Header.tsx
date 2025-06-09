@@ -1,12 +1,5 @@
-import { View, Text, Image, TouchableOpacity } from 'react-native'
+import { View, Text, Image } from 'react-native'
 import React, { useEffect, useState } from 'react'
-import { ThemedView } from '../ThemedView'
-import { ThemedText } from '../ThemedText'
-import BadgeButton from './BadgeButton';
-import { Ticket, Bell } from 'lucide-react-native';
-import { Colors } from '@/constants/Colors';
-import NotificationButton from './NotificationButton';
-import { router, useFocusEffect } from 'expo-router';
 import { useApi } from '@/hooks/useApi';
 import apiService from '@/constants/config/axiosConfig';
 import { IUser } from '@/constants/interface/user.interface';
@@ -17,7 +10,6 @@ export default function Header() {
 
     const [user, setUser] = useState<IUser>();
     const { userId } = useAuth();
-
 
     const {
         loading: userLoading,
@@ -49,7 +41,7 @@ export default function Header() {
             <View className={"flex flex-row items-center"}>
                 <Image source={require('@/assets/images/peach_tea.png')} />
                 <Text className={"font-semibold "}>{user?.firstName} ơi, Hi-Tea đi!</Text>
-                <HeaderActions />
+                <HeaderActions userId={userId} />
             </View>
         </View>
     )

@@ -28,7 +28,6 @@ export default function Category() {
             name: "Thông tin cá nhân",
             path: '/(tabs)/other/update-info'
         },
-
     ]
 
     return (

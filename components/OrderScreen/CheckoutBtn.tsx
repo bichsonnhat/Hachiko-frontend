@@ -262,10 +262,35 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
     await callCheckoutApi(async () => {
       const { data } = await apiService.post("/orders", order);
       if (data) {
+        // If a voucher was used, update its status to inactive
+        if (coupon && coupon.length > 0) {
+          // Update voucher status outside the checkout API call to avoid blocking checkout completion
+          updateVoucherStatus(coupon).catch(err => 
+            console.error("Failed to update voucher status:", err)
+          );
+        }
         Alert.alert("Thông báo", "Đặt hàng thành công!");
         handleClearStorage();
       }
     });
+  };
+
+  const updateVoucherStatus = async (voucherId: string) => {
+    try {
+      // First, find the user-voucher mapping ID for this voucher ID
+      const { data: userVouchers } = await apiService.get<UserVoucher[]>(`/user-vouchers/user/${userId}/available`);
+      const userVoucherMapping = userVouchers.find((uv: UserVoucher) => uv.voucherId === voucherId);
+      
+      if (userVoucherMapping) {
+        // Update the status of the specific user-voucher mapping
+        await apiService.put(`/user-vouchers/${userVoucherMapping.id}`, { status: "INACTIVE" });
+        console.log(`Voucher ${voucherId} marked as inactive`);
+      } else {
+        console.log(`Could not find user-voucher mapping for voucher ${voucherId}`);
+      }
+    } catch (error) {
+      console.error("Error updating voucher status:", error);
+    }
   };
 
   const handleWithPayOS = async () => {
@@ -275,8 +300,8 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
         productName: "Đơn hàng " + userId,
         description: "Thanh toán đơn hàng",
         price: priceAfterDiscount + newShippingFee,
-        returnUrl: "exp://172.16.0.191:8081/--/payment/success", //kiểm tra lại url lúc chạy npx expo start, đều là localhost nhưng mà khác mạng thì config ip khác
-        cancelUrl: "exp://172.16.0.191:8081/--/payment/failed",
+        returnUrl: "http://localhost:8081/--/payment/success", //kiểm tra lại url lúc chạy npx expo start, đều là localhost nhưng mà khác mạng thì config ip khác
+        cancelUrl: "http://localhost:8081/--/payment/failed",
       };
       const { data } = await apiService.post("/orders/payos", sendData);
       if (data) {
@@ -303,10 +328,7 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
         recipientName: customerName,
         recipientPhone: customerPhone,
         storeId,
-        orderStatus:
-          paymentMethod === "Tiền mặt"
-            ? OrderStatus.DELIVERING
-            : OrderStatus.PENDING,
+        orderStatus: OrderStatus.DELIVERING,
         createdAt: new Date(),
       },
       orderItems: cart.map((item) => ({
@@ -412,7 +434,8 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
           }
         });
       } catch (error) {
-        console.error("Error fetching vouchers:", error);
+        console.error("Error in fetchUserVouchers:", error);
+        setVoucher([]);
       }
     };
     fetchUserData();
@@ -486,6 +509,17 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
             }
           } catch (error) {
             console.error("Error fetching voucher details:", error);
+            // If we can't get the voucher details, don't apply any discount
+            setIsFreeShip(false);
+            setPercentDiscount(0);
+            setPriceDiscount(0);
+            
+            // Show an alert to the user
+            Alert.alert(
+              "Thông báo",
+              "Không thể áp dụng voucher. Vui lòng thử lại sau.",
+              [{ text: "OK" }]
+            );
           }
         };
 
@@ -1031,7 +1065,16 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
                             Phí vận chuyển
                           </Text>
                           <Text className="font-medium text-lg">
-                            {(isFreeShip ? 0 : shippingFee).toLocaleString()}đ
+                            {isFreeShip ? (
+                                <View className={"flex flex-row items-center gap-1"}>
+                                  <Text className="line-through text-gray-500 text-lg ">
+                                    {shippingFee.toLocaleString()}đ
+                                  </Text>
+                                  <Text className={"text-lg"}> 0đ</Text>
+                                </View>
+                            ) : (
+                                <Text>{shippingFee.toLocaleString()}đ</Text>
+                            )}
                           </Text>
                         </View>
 
