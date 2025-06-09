@@ -1,9 +1,9 @@
 import React from "react";
-import { View, Text, Image, TouchableOpacity, Modal, Dimensions } from "react-native";
+import { View, Text, Image, TouchableOpacity, Modal, Dimensions, Linking } from "react-native";
 import { Locate, Navigation } from "lucide-react-native";
 import Slider from "@/components/HomeScreen/Slider";
-import {IStore, Store} from "@/constants";
-import {useRouter} from "expo-router";
+import { IStore, Store } from "@/constants";
+import { useRouter } from "expo-router";
 
 interface ShopModalProps {
     store?: IStore;
@@ -11,6 +11,11 @@ interface ShopModalProps {
     onClose: () => void;
 }
 const { height } = Dimensions.get('window');
+
+const openGoogleMaps = (store: IStore) => {
+    const url = `https://www.google.com/maps/search/?api=1&query=${store.latitude},${store.longitude}`;
+    Linking.openURL(url);
+};
 
 const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose, store }) => {
     const router = useRouter();
@@ -49,10 +54,11 @@ const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose, store }) => {
 
                 {/* Nút đặt hàng */}
                 <TouchableOpacity className="bg-orange-500 p-5 items-center "
-                                  onPress={() => router.push("/(tabs)/order")}
+                    onPress={() => store && openGoogleMaps(store)}
+                    disabled={!store}
 
                 >
-                    <Text className="text-white font-bold text-xl">Đặt mang đi</Text>
+                    <Text className="text-white font-bold text-xl">Đến cửa hàng mua</Text>
                     <Text className="text-white opacity-80">Tự đến lấy tại cửa hàng này</Text>
                 </TouchableOpacity>
             </View>

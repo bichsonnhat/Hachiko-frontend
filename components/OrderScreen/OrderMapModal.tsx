@@ -128,31 +128,27 @@ const CombinedMapModal: React.FC<CombinedMapModalProps> = ({
 
     // Cập nhật state và animate camera khi modal mở hoặc props thay đổi
     useEffect(() => {
-        setAddress(initialAddress || '');
-
-        // Ưu tiên initialLat/initialLon, nếu không có thì lấy từ location, nếu không có nữa thì mặc định TP.HCM
         const latitude =
-            initialLat != null ? initialLat : location?.coords.latitude ?? 10.7769;
+            initialLat != null
+                ? initialLat
+                : location?.coords.latitude ?? 10.7769;
         const longitude =
-            initialLon != null ? initialLon : location?.coords.longitude ?? 106.7009;
+            initialLon != null
+                ? initialLon
+                : location?.coords.longitude ?? 106.7009;
 
-        const newCoordinates: Coordinates = { latitude, longitude };
-        setMarkerCoordinates(newCoordinates);
-
-        // Animate camera khi modal mở để Marker ở giữa bản đồ
         if (visible) {
             mapRef.current?.animateToRegion(
                 {
-                    latitude,
-                    longitude,
+                    latitude: latitude,
+                    longitude: longitude,
                     latitudeDelta: region.latitudeDelta,
                     longitudeDelta: region.longitudeDelta,
                 },
                 1000
             );
-            setShowMarker(true); // Hiển thị Marker khi tọa độ đã được xác định
         }
-    }, [visible, initialAddress, initialLat, initialLon, location, region.latitudeDelta, region.longitudeDelta]);
+    }, [visible, initialLat, initialLon, region.latitudeDelta, region.longitudeDelta]);
 
     // Lấy đường đi khi chọn cửa hàng
     useEffect(() => {
@@ -162,6 +158,15 @@ const CombinedMapModal: React.FC<CombinedMapModalProps> = ({
                 markerCoordinates.longitude,
                 selectedStore.latitude,
                 selectedStore.longitude
+            );
+            mapRef.current?.animateToRegion(
+                {
+                    latitude: selectedStore.latitude,
+                    longitude: selectedStore.longitude,
+                    latitudeDelta: 0.01,
+                    longitudeDelta: 0.01,
+                },
+                800
             );
         } else {
             setCoordinates([]);
@@ -277,7 +282,7 @@ const CombinedMapModal: React.FC<CombinedMapModalProps> = ({
             lon: markerCoordinates.longitude,
         });
         setSelectedStoreId && selectedStore && setSelectedStoreId(selectedStore.id || "")
-        const shippingFee = Math.ceil(distance / 1000) * 5000;
+        const shippingFee = Math.ceil(distance / 1000) * 3000;
         console.log(shippingFee);
         setShippingFee(shippingFee);
         onClose()
@@ -364,16 +369,17 @@ const CombinedMapModal: React.FC<CombinedMapModalProps> = ({
                 </MapView>
 
                 {/* Hiển thị thông tin */}
-                <View style={styles.infoContainer}>
+                {selectedStore && <View style={styles.infoContainer}>
                     <Text style={styles.text}>Latitude: {markerCoordinates.latitude}</Text>
                     <Text style={styles.text}>Longitude: {markerCoordinates.longitude}</Text>
-                    {selectedStore && (
-                        <Text style={styles.text}>Cửa hàng: {selectedStore.name}</Text>
-                    )}
+                    <Text style={styles.text}>Cửa hàng:  <Text style={{ fontWeight: 'bold', color: '#f59e0b' }}>{selectedStore.name}</Text></Text>
+                    <Text style={styles.text}>
+                        Địa chỉ: {selectedStore.address}
+                    </Text>
                     {distance && (
                         <Text style={styles.text}>Khoảng cách: {(distance / 1000).toFixed(2)} km</Text>
                     )}
-                </View>
+                </View>}
 
                 {/* Nút Xác nhận và Hủy */}
                 <View style={styles.buttonContainer}>
