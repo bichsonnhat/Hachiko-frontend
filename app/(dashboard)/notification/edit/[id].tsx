@@ -1,23 +1,81 @@
 import {
-    View, Image, Text, TouchableOpacity, TextInput, Pressable,
-    Platform, ScrollView, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard,
+    Keyboard,
+    KeyboardAvoidingView,
+    Platform,
+    Pressable,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    TouchableWithoutFeedback,
+    View,
 } from 'react-native';
-import React, { useEffect, useState } from 'react';
-import { useNavigation, useLocalSearchParams } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
+import React, {useEffect, useRef, useState} from 'react';
+import {useLocalSearchParams, useNavigation, useRouter} from 'expo-router';
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import DateTimePicker from '@react-native-community/datetimepicker';
+import {useApi} from "@/hooks/useApi";
+import apiService from "@/constants/config/axiosConfig";
+import ImagePickerPreview, {ImagePickerPreviewRef} from "@/components/common/ImagePickerPreview";
+import {INotification} from "@/constants/interface/notification.interface";
 
 export default function UpdateNotification() {
+    const router = useRouter();
     const { id } = useLocalSearchParams();
     const navigation = useNavigation();
-    const [categoryName, setCategoryName] = useState("");
+    const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
-    const [pulishDate, setPublishDate] = useState("");
+    const [publishDate, setPublishDate] = useState("");
     const [date, setDate] = useState<Date>(new Date());
-    const [image, setImage] = useState<string | null>(null);
     const [showPicker, setShowPicker] = useState(false);
+    const [imageChanged, setImageChanged] = useState(false);
+    const imagePickerRef = useRef<ImagePickerPreviewRef>(null);
+    const [imageUri, setImageUri] = useState<string | undefined>(undefined);
+    const [hasImage, setHasImage] = useState(false);
+    const [originalData, setOriginalData] = useState<INotification>({
+        id: '',
+        title: '',
+        description: '',
+        date: '',
+        imageUrl: '',
+    });
+    const {
+        loading: getNotificationLoading,
+        errorMessage: getNotificationErrorMessage,
+        callApi: getNotificationApi,
+    } = useApi<void>();
 
+    const {
+        loading: updateNotificationLoading,
+        errorMessage: updateNotificationErrorMessage,
+        callApi: updateNotificationApi,
+    } = useApi<void>();
+    const {
+        loading: deleteNotificationLoading,
+        errorMessage: deleteNotificationErrorMessage,
+        callApi: deleteNotificationApi,
+    } = useApi<void>();
+    const fetchNotificationData = async () => {
+        await getNotificationApi(async () => {
+            const { data } = await apiService.get<INotification>(`/notifications/${id}`);
+            setTitle(data.title);
+            setDescription(data.description);
+            setPublishDate(data.date);
+            setImageUri(data.imageUrl);
+            setDate(new Date(data.date));
+            setHasImage(!!data.imageUrl);
+            setOriginalData({
+                id: data.id,
+                title: data.title,
+                description: data.description,
+                date: data.date,
+                imageUrl: data.imageUrl,
+            })
+        });
+    };
+    useEffect(() => {
+        fetchNotificationData();
+    }, []);
     useEffect(() => {
         navigation.setOptions({
             headerTitle: `Sửa thông tin thông báo ${id}`,
@@ -30,7 +88,11 @@ export default function UpdateNotification() {
             },
         });
     }, [navigation]);
-
+    const handleImageSelected = (hasSelectedImage: boolean, imageUri: string | null) => {
+        setHasImage(hasSelectedImage);
+        const isChanged = imageUri?.startsWith("file:") ?? false;
+        setImageChanged(isChanged);
+    };
     const toggleDatePicker = () => {
         setShowPicker(!showPicker);
     };
@@ -59,19 +121,80 @@ export default function UpdateNotification() {
         let day = date.getDate().toString().padStart(2, "0");
         return `${day}-${month}-${year}`;
     };
+    if (getNotificationLoading){
+        return (
+            <View className="flex-1 justify-center items-center">
+                <Text>Đang tải thông tin thông báo...</Text>
+            </View>
+        )
+    }
 
-    const onImagePick = async () => {
-        let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
-            allowsEditing: true,
-            quality: 1,
-        });
-        if (!result.canceled && result.assets && result.assets.length > 0) {
-            setImage(result.assets[0].uri);
-            console.log(result);
+    const handleSubmit = async () => {
+        try {
+            let uploadedImageUrl = originalData.imageUrl ;
+
+            if (imageChanged) {
+                console.log("Should");
+                const result = await imagePickerRef.current?.upload();
+                if (result) {
+                    console.log('Upload thành công:', result.secure_url);
+                    uploadedImageUrl = result.secure_url;
+                } else {
+                    console.warn('Không thể upload hình ảnh');
+                    return;
+                }
+            }
+            const notificationData: INotification = {
+                id: id as string,
+                title: title.trim(),
+                description: description.trim(),
+                date: publishDate,
+                imageUrl: uploadedImageUrl,
+            };
+            await updateNotificationApi(async () => {
+                await apiService.put(`/notifications`, notificationData);
+            });
+
+            setOriginalData(notificationData);
+            console.log('Cập nhật thành công');
+            router.back();
+
+            router.replace({
+                pathname: "/(dashboard)/notification",
+                params: {
+                    updateNotification: JSON.stringify(notificationData),
+                },
+            });
+        } catch (err) {
+            console.error('Lỗi upload hoặc update:', err);
         }
-        console.log(result);
     };
+
+    const isSubmitDisabled = (): boolean => {
+
+        const invalidInput = !title.trim() ;
+
+        return invalidInput;
+    };
+
+    async function deleteOnPress() {
+        try {
+            await deleteNotificationApi(async () => {
+                await apiService.delete(`/notifications/${id}`);
+            });
+            router.back();
+            router.replace({
+                pathname: "/(dashboard)/notification",
+                params: {
+                    deleteNotification: id
+                },
+            });
+        }
+        catch (error) {
+            console.error("Error deleting notification:", error);
+        }
+
+    }
 
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -91,9 +214,9 @@ export default function UpdateNotification() {
                                 <TextInput
                                     placeholder="Nhập tên thông báo"
                                     className="p-[10px] border border-gray-300 rounded-[10px] text-[16px] bg-white mt-[10px]"
-                                    value={categoryName}
+                                    value={title}
                                     placeholderTextColor="#9ca3af"
-                                    onChangeText={setCategoryName}
+                                    onChangeText={setTitle}
                                 />
                             </View>
                             <View>
@@ -142,7 +265,7 @@ export default function UpdateNotification() {
                                             placeholder="08-06-2004"
                                             className="p-[10px] border border-gray-300 rounded-[10px] text-[16px] bg-white mt-[10px]"
                                             editable={false}
-                                            value={pulishDate}
+                                            value={publishDate}
                                             onPressIn={toggleDatePicker}
                                         />
                                     </Pressable>
@@ -150,28 +273,32 @@ export default function UpdateNotification() {
                             </View>
                             <View>
                                 <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Hình ảnh*</Text>
-                                <TouchableOpacity className="mt-3" onPress={onImagePick}>
-                                    {!image ? (
-                                        <Image
-                                            source={require('./../../../../assets/images/Profile/camera.png')}
-                                            className="w-[150px] h-[150px]"
-                                        />
-                                    ) : (
-                                        <Image
-                                            source={{ uri: image }}
-                                            className="w-[150px] h-[150px] rounded-2xl"
-                                        />
-                                    )}
-                                </TouchableOpacity>
+                                <ImagePickerPreview
+                                    ref={imagePickerRef}
+                                    onImageSelected={handleImageSelected}
+                                    initialUri={imageUri}
+                                />
                             </View>
-                            <TouchableOpacity style={{ flexDirection: "row", marginTop: 20 }}>
+                            <TouchableOpacity style={{ flexDirection: "row", marginTop: 20 }}
+                                onPress={deleteOnPress}
+                            >
                                 <Icon name="trash-can-outline" size={20} color="red" />
                                 <Text style={{ color: "red", marginLeft: 5, fontWeight: "bold" }}>
                                     Xóa thông báo này
                                 </Text>
                             </TouchableOpacity>
-                            <TouchableOpacity className='bg-gray-200 py-4 px-5 rounded-[10px] items-center mt-[15px]'>
-                                <Text className='text-white text-[16px] font-bold'>Xong</Text>
+                            <TouchableOpacity
+                                onPress={handleSubmit}
+                                disabled={isSubmitDisabled()}
+                                className={`py-4 px-5 rounded-[10px] items-center mt-[20px] ${isSubmitDisabled() ? 'bg-gray-200' : 'bg-[#f59e0b]'
+                                }`}
+                            >
+                                <Text
+                                    className={`text-[16px] font-bold ${isSubmitDisabled() ? 'text-gray-500' : 'text-white'
+                                    }`}
+                                >
+                                    Xong
+                                </Text>
                             </TouchableOpacity>
                         </View>
                     </View>

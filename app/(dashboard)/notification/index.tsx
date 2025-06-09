@@ -1,23 +1,36 @@
 import { View, Text, TouchableOpacity, FlatList, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Plus, Edit, ChevronLeft } from "lucide-react-native";
-import {router, useNavigation} from "expo-router";
-import {useEffect, useState} from "react";
+import {router, useFocusEffect, useLocalSearchParams, useNavigation} from "expo-router";
+import React, {useEffect, useState} from "react";
+import {INotification} from "@/constants/interface/notification.interface";
+import {useApi} from "@/hooks/useApi";
+import apiService from "@/constants/config/axiosConfig";
+import {ICategory} from "@/constants";
 
-const notifications = [
-    { id: "1", name: "Thông báo 1" },
-    { id: "2", name: "Thông báo 2" },
-    { id: "3", name: "Thông báo 3" },
-    { id: "4", name: "Thông báo 4" },
-    { id: "5", name: "Thông báo 5" },
-    { id: "6", name: "Thông báo 6" },
-    { id: "7", name: "Thông báo 7" },
-    { id: "8", name: "Thông báo 8" },
-];
+
 
 export default function NotificationsScreen() {
     const navigation = useNavigation();
-    const [data, setData] = useState(notifications);
+    const [notifications, setNotifications] = useState<INotification[]>([]);
+    const params = useLocalSearchParams();
+
+    const {
+        loading: notificationLoading,
+        errorMessage: notificationErrorMessage,
+        callApi: callNotificationApi,
+    } = useApi<void>();
+
+    const fetchNotificationsData = async () => {
+        await callNotificationApi(async () => {
+            const { data } = await apiService.get("/notifications");
+            console.log("Fetched notifications:", data);
+            setNotifications(data);
+        });
+    };
+    useEffect(() => {
+        fetchNotificationsData();
+    }, []);
     useEffect(() => {
         navigation.setOptions({
             headerTitle: "Quản lý thông báo",
@@ -29,6 +42,29 @@ export default function NotificationsScreen() {
             },
         });
     }, [navigation]);
+    useFocusEffect(
+        React.useCallback(() => {
+            if (params?.updateNotification) {
+                try {
+                    const updated = JSON.parse(params.updateNotification as string) as INotification;
+
+                    setNotifications((prev) =>
+                        prev.map((cat) => (cat.id === updated.id ? { ...cat, ...updated } : cat))
+                    );
+                } catch (err) {
+                    console.warn("Lỗi parse updateNotification", err);
+                }
+            }
+            if (params?.deleteNotification) {
+                const deletedId = params.deleteNotification as string;
+                setNotifications((prev) =>
+                    prev.filter((cat) => cat.id !== deletedId)
+                );
+            }
+            fetchNotificationsData();
+        }, [])
+    );
+
     return (
         <View className="flex-1 bg-white ">
 
@@ -41,21 +77,36 @@ export default function NotificationsScreen() {
             </TouchableOpacity>
 
             <FlatList
-                data={data}
+                data={notifications}
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
-                    <View className="flex-row items-center justify-between px-4 py-3 border-b border-gray-300">
-                        <View className="flex-row items-center">
+                    <View className="flex-row items-start justify-between px-4 py-3 border-b border-gray-300">
+                        <View className="flex-row items-start flex-1 mr-3">
                             <Image
-                                source={{ uri: "https://via.placeholder.com/40" }} // Ảnh placeholder
+                                source={{ uri: item.imageUrl || "https://placehold.co/600x400" }}
                                 className="w-10 h-10 rounded-full bg-yellow-200"
                             />
-                            <View className="ml-3">
-                                <Text className="text-lg font-semibold">{item.name}</Text>
-                                <Text className="text-gray-500 text-sm">ID thông báo {item.id}</Text>
+                            <View className="ml-3 flex-1">
+                                <Text
+                                    className="text-lg font-semibold"
+                                    numberOfLines={0}
+                                    style={{ flexWrap: 'wrap' }}
+                                >
+                                    {item.title}
+                                </Text>
+                                <Text
+                                    className="text-gray-500 text-sm"
+                                    numberOfLines={0}
+                                    style={{ flexWrap: 'wrap' }}
+                                >
+                                    {item.description}
+                                </Text>
                             </View>
                         </View>
-                        <TouchableOpacity onPress={() => router.push(`/(dashboard)/notification/edit/${item.id}`)}>
+                        <TouchableOpacity
+                            onPress={() => router.push(`/(dashboard)/notification/edit/${item.id}`)}
+                            className="ml-2"
+                        >
                             <Edit size={24} color="black" />
                         </TouchableOpacity>
                     </View>
