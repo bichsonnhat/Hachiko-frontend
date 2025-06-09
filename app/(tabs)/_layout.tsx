@@ -76,7 +76,6 @@ export default function TabLayout() {
     "order-history",
     "update-info",
     "add-address",
-    "saved-address",
     "[id]",
   ];
 

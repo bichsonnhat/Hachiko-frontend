@@ -1,52 +1,116 @@
 import {
-    View, Image, Text, TouchableOpacity, TextInput, Pressable,
-    Platform, ScrollView, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard,
+    View, Image, Text, TouchableOpacity, TextInput, Pressable, Switch,
+    Platform, ScrollView, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, Alert,
 } from 'react-native';
-import React, { useEffect, useState } from 'react';
-import { useNavigation, useLocalSearchParams } from 'expo-router';
+import React, {useEffect, useRef, useState} from 'react';
+import {useLocalSearchParams, useNavigation, useRouter} from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import CustomDropDown from '@/components/OtherScreen/CustomDropDown';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import CustomMultiSelectDropDown from "@/components/OtherScreen/CustomMultiSelectDropDown";
+import {useForm, Controller} from "react-hook-form";
+import {IVoucher} from "@/constants";
+import ImagePickerPreview, {ImagePickerPreviewRef} from "@/components/common/ImagePickerPreview";
+import apiService from "@/constants/config/axiosConfig";
+import {useApi} from "@/hooks/useApi";
+
+
+export enum VoucherType {
+    DELIVERY = "Delivery",
+    PICKUP = "Pickup",
+}
 
 export default function UpdateVoucher() {
-    const { id } = useLocalSearchParams();
     const navigation = useNavigation();
-    const [voucherName, setVoucherName] = useState("");
-    const [price, setPrice] = useState("");
-    const [description, setDescription] = useState("");
-    const [dueDate, setDueDate] = useState("");
-    const [date, setDate] = useState<Date>(new Date());
-    const [minODC, setMinODC] = useState("");
-    const [minODP, setMinODP] = useState("");
-    const [valueDB, setValueDB] = useState("");
-    const [valueI, setValueI] = useState("");
-    const [image, setImage] = useState<string | null>(null);
+    const {id} = useLocalSearchParams();
+
     const [showPicker, setShowPicker] = useState(false);
-    const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+    const [hasImage, setHasImage] = useState(false);
+    const imagePickerRef = useRef<ImagePickerPreviewRef>(null);
+    const [imageError, setImageError] = useState("");
+    const router = useRouter();
+    const [imageChanged, setImageChanged] = useState(false);
+    const [imageUri, setImageUri] = useState<string>('');
+    useEffect(() => {
+        console.log("imageUri:", imageUri);
+    }, [imageUri]);
+    const handleImageSelected = (hasSelectedImage: boolean, imageUri: string | null) => {
+        const isChanged = imageUri?.startsWith("file:") ?? false;
+        setImageChanged(isChanged);
+        setHasImage(hasSelectedImage);
+
+        if (hasSelectedImage) {
+            setImageError("");
+        }
+    };
+
+    const {
+        control,
+        handleSubmit,
+        setValue,
+        getValues,
+        watch,
+        reset,
+        formState: {errors},
+        trigger,
+        setError,
+        clearErrors,
+    } = useForm<IVoucher>({
+        defaultValues: {
+            title: "",
+            description: "",
+            imgUrl: "",
+            discountPrice: 0,
+            discountPercent: 0,
+            isFreeShip: false,
+            minOrderPrice: 0,
+            minOrderItem: 0,
+            type: VoucherType.DELIVERY,
+            expiryDate: new Date(),
+        },
+        mode: "onChange",
+    });
+
+    const watchedType = watch("type");
+    const watchedDiscountPrice = watch("discountPrice");
+    const watchedDiscountPercent = watch("discountPercent");
+    const watchedMinOrderPrice = watch("minOrderPrice");
+    const watchedExpiryDate = watch("expiryDate");
 
     const typeList = [
-        { label: "Tại chỗ", value: "sit" },
-        { label: "Mang đi", value: "takeaway" },
+        {label: "Giao hàng", value: VoucherType.DELIVERY},
+        {label: "Tới lấy", value: VoucherType.PICKUP},
     ];
-    const freeShipping = [
-        { label: "0", value: "false" },
-        { label: "1", value: "true" },
-    ];
-    const listUser = [
-        { label: "Nhat", value: "1" },
-        { label: "Hieu", value: "2" },
-        { label: "Huy", value: "3" },
-        { label: "Hoa", value: "4" },
-        { label: "Hanh", value: "5" },
-    ]
-    const handleUserSelect = (values: string[] | null) => {
-        setSelectedUsers(values || []);
-    };
+
+    const {
+        loading: voucherLoading,
+        errorMessage: voucherErrorMessage,
+        callApi: callVoucherApi,
+    } = useApi<void>();
+    const {
+        loading: getVoucherLoading,
+        errorMessage: getVoucherErrorMessage,
+        callApi: getVoucherApi,
+    } = useApi<void>();
+    const fetchVoucherData = async () => {
+        try {
+            await getVoucherApi(async () => {
+                const {data} = await apiService.get<IVoucher>(`/vouchers/${id}`);
+                setImageUri(data.imgUrl);
+                setHasImage(!!data.imgUrl);
+                reset(data);
+
+            });
+        } catch (error) {
+            console.error("Error fetching voucher data:", error);
+
+        }
+    }
+    useEffect(() => {
+        fetchVoucherData();
+    }, []);
     useEffect(() => {
         navigation.setOptions({
-            headerTitle: `Sửa thông tin Voucher ${id}`,
+            headerTitle: "Sửa Voucher",
             headerShown: true,
             headerTitleAlign: 'center',
             headerStyle: {
@@ -57,46 +121,134 @@ export default function UpdateVoucher() {
         });
     }, [navigation]);
 
+    // Validate discount logic
+    useEffect(() => {
+        if (watchedDiscountPrice > 0 && watchedDiscountPercent > 0) {
+            setError("discountPrice", {
+                type: "manual",
+                message: "Chỉ được chọn một trong hai: giá giảm hoặc phần trăm giảm"
+            });
+            setError("discountPercent", {
+                type: "manual",
+                message: "Chỉ được chọn một trong hai: giá giảm hoặc phần trăm giảm"
+            });
+        } else {
+            clearErrors(["discountPrice", "discountPercent"]);
+        }
+    }, [watchedDiscountPrice, watchedDiscountPercent, setError, clearErrors]);
+
     const toggleDatePicker = () => {
         setShowPicker(!showPicker);
     };
 
-    const onChange = ({ type }: { type: string }, selectedDate?: Date) => {
-        if (type === "set" && selectedDate) {
-            setDate(selectedDate);
-            if (Platform.OS === "android") {
-                toggleDatePicker();
-                setDueDate(formatDate(selectedDate));
-            }
+    const onDateChange = (event: any, selectedDate?: Date) => {
+        if (Platform.OS === 'android') {
+            setShowPicker(false);
+        }
+        if (selectedDate) {
+            setValue("expiryDate", selectedDate);
+        }
+    };
+
+    const validateForm = async (): Promise<boolean> => {
+        // Trigger validation cho tất cả fields
+        const isFormValid = await trigger();
+
+        // Validate image
+        if (!hasImage) {
+            setImageError("Hình ảnh là bắt buộc");
+            return false;
         } else {
-            toggleDatePicker();
+            setImageError("");
+        }
+
+        // Validate discount logic
+        if (watchedDiscountPrice > 0 && watchedDiscountPercent > 0) {
+            Alert.alert("Lỗi", "Chỉ được chọn một trong hai: giá giảm hoặc phần trăm giảm");
+            return false;
+        }
+
+        // Validate at least one discount method
+        if (watchedDiscountPrice <= 0 && watchedDiscountPercent <= 0) {
+            Alert.alert("Lỗi", "Phải có ít nhất một loại giảm giá (giá giảm hoặc phần trăm giảm)");
+            return false;
+        }
+
+        // Validate discount percent range
+        if (watchedDiscountPercent > 100) {
+            Alert.alert("Lỗi", "Phần trăm giảm không được vượt quá 100%");
+            return false;
+        }
+
+        // Validate discount price vs min order price
+        if (watchedDiscountPrice > 0 && watchedDiscountPrice >= watchedMinOrderPrice) {
+            Alert.alert("Lỗi", "Giá giảm phải nhỏ hơn giá đơn hàng tối thiểu");
+            return false;
+        }
+
+        // Validate expiry date
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const expiryDate = new Date(watchedExpiryDate);
+        expiryDate.setHours(0, 0, 0, 0);
+
+        if (expiryDate <= today) {
+            Alert.alert("Lỗi", "Ngày hết hạn phải sau ngày hôm nay");
+            return false;
+        }
+
+        return isFormValid;
+    };
+
+    const onSubmit = async (data: IVoucher) => {
+        try {
+            const isFormValid = await validateForm();
+            if (!isFormValid) {
+                return;
+            }
+            let uploadedImageUrl = getValues().imgUrl;
+
+            if (imageChanged && imagePickerRef.current) {
+                const result = await imagePickerRef.current.upload();
+                if (result) {
+                    uploadedImageUrl = result.secure_url;
+                } else {
+                    console.warn('Không thể upload hình ảnh');
+                    return;
+                }
+            }
+
+            const finalData: IVoucher = {
+                ...data,
+                imgUrl: uploadedImageUrl,
+            };
+
+            console.log("Form Data:", finalData);
+
+            await callVoucherApi(async () => {
+                const response = await apiService.put(`/vouchers/${id}`, finalData);
+                console.log(response.data);
+                Alert.alert("Thành công", "Voucher đã được cập nhật thành công!", [
+                    {text: "OK", onPress: () => router.back()}
+                ]);
+            });
+        } catch (error) {
+            console.error("Error submitting form:", error);
+            Alert.alert("Lỗi", "Có lỗi xảy ra khi tạo voucher. Vui lòng thử lại.");
         }
     };
 
-    const confirmIOSDate = () => {
-        setDueDate(formatDate(date));
-        toggleDatePicker();
+    const formatDate = (date: Date | string) => {
+        const parsedDate = new Date(date);
+        if (isNaN(parsedDate.getTime())) return ""; // invalid date
+        return parsedDate.toLocaleDateString('vi-VN');
     };
 
-    const formatDate = (rawDate: Date) => {
-        let date = new Date(rawDate);
-        let year = date.getFullYear();
-        let month = (date.getMonth() + 1).toString().padStart(2, "0");
-        let day = date.getDate().toString().padStart(2, "0");
-        return `${day}-${month}-${year}`;
-    };
 
-    const onImagePick = async () => {
-        let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
-            allowsEditing: true,
-            quality: 1,
-        });
-        if (!result.canceled && result.assets && result.assets.length > 0) {
-            setImage(result.assets[0].uri);
-            console.log(result);
-        }
-        console.log(result);
+    // Helper function to format currency
+    const formatCurrency = (value: string) => {
+        const numericValue = value.replace(/[^0-9]/g, '');
+        return numericValue.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     };
 
     return (
@@ -106,161 +258,331 @@ export default function UpdateVoucher() {
                 className="flex-1 bg-white"
             >
                 <ScrollView
-                    contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }}
+                    contentContainerStyle={{flexGrow: 1, paddingBottom: 20}}
                     keyboardShouldPersistTaps="handled"
                     nestedScrollEnabled={true}
                 >
                     <View className="flex-1 px-7">
+                        {/* Tên voucher */}
                         <View>
-                            <View>
-                                <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Tên voucher*</Text>
-                                <TextInput
-                                    placeholder="Nhập tên voucher"
-                                    className="p-[10px] border border-gray-300 rounded-[10px] text-[16px] bg-white mt-[10px]"
-                                    value={voucherName}
-                                    placeholderTextColor="#9ca3af"
-                                    onChangeText={setVoucherName}
-                                />
-                            </View>
-                            <View style={{ zIndex: 1000 }}>
-                                <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]" >Loại voucher*</Text>
-                                <CustomDropDown items={typeList} placeholder="Chọn loại voucher" />
-                            </View>
-                            <View style={{ zIndex: 500 }}>
-                                <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]" >FreeShipping*</Text>
-                                <CustomDropDown items={freeShipping} placeholder="0 / 1" />
-                            </View>
-                            <View>
-                                <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Ngày thông báo*</Text>
-                                {showPicker && (
-                                    <DateTimePicker
-                                        mode="date"
-                                        display="spinner"
-                                        value={date}
-                                        onChange={onChange}
-                                        className="h-[120px] mt-[-10px]"
+                            <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Tên voucher*</Text>
+                            <Controller
+                                control={control}
+                                rules={{
+                                    required: "Tên voucher là bắt buộc",
+                                    minLength: {value: 3, message: "Tên voucher phải có ít nhất 3 ký tự"},
+                                    maxLength: {value: 100, message: "Tên voucher không được vượt quá 100 ký tự"}
+                                }}
+                                render={({field: {onChange, onBlur, value}}) => (
+                                    <TextInput
+                                        placeholder="Nhập tên voucher"
+                                        className="p-[10px] border border-gray-300 rounded-[10px] text-[16px] bg-white mt-[10px]"
+                                        value={value}
+                                        onBlur={onBlur}
+                                        onChangeText={onChange}
+                                        placeholderTextColor="#9ca3af"
                                     />
                                 )}
+                                name="title"
+                            />
+                            {errors.title && <Text className="text-red-500 text-sm mt-1">{errors.title.message}</Text>}
+                        </View>
 
-                                {showPicker && Platform.OS === "ios" && (
-                                    <View className="flex-row justify-around">
-                                        <TouchableOpacity
-                                            className="bg-[#11182711] h-[50px] justify-center items-center rounded-[50px] mt-[10px] mb-[15px] px-[20px]"
-                                            onPress={toggleDatePicker}
-                                        >
-                                            <Text className="text-[#E47905] text-[14px] font-medium">Cancel</Text>
-                                        </TouchableOpacity>
-
-                                        <TouchableOpacity
-                                            className="h-[50px] justify-center items-center rounded-[50px] mt-[10px] mb-[15px] px-[20px]"
-                                            onPress={confirmIOSDate}
-                                        >
-                                            <Text className="text-[#fff] text-[14px] font-medium">Confirm</Text>
-                                        </TouchableOpacity>
-                                    </View>
+                        {/* Loại voucher */}
+                        <View style={{zIndex: 1000}}>
+                            <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Loại voucher*</Text>
+                            <Controller
+                                control={control}
+                                rules={{required: "Loại voucher là bắt buộc"}}
+                                render={({field: {onChange, value}}) => (
+                                    <CustomDropDown
+                                        items={typeList}
+                                        placeholder="Chọn loại voucher"
+                                        onSelect={(selectedValue) => onChange(selectedValue)}
+                                        value={value}
+                                    />
                                 )}
+                                name="type"
+                            />
+                            {errors.type && <Text className="text-red-500 text-sm mt-1">{errors.type.message}</Text>}
+                        </View>
 
-                                {!showPicker && (
-                                    <Pressable onPress={toggleDatePicker}>
+                        {/* Mô tả */}
+                        <View>
+                            <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Mô tả</Text>
+                            <Controller
+                                control={control}
+                                rules={{
+                                    maxLength: {value: 500, message: "Mô tả không được vượt quá 500 ký tự"}
+                                }}
+                                render={({field: {onChange, onBlur, value}}) => (
+                                    <TextInput
+                                        placeholder="Nhập mô tả voucher"
+                                        className="p-[10px] border border-gray-300 rounded-[10px] text-[16px] bg-white mt-[10px]"
+                                        value={value}
+                                        onBlur={onBlur}
+                                        onChangeText={onChange}
+                                        placeholderTextColor="#9ca3af"
+                                        multiline
+                                        numberOfLines={3}
+                                        textAlignVertical="top"
+                                    />
+                                )}
+                                name="description"
+                            />
+                            {errors.description &&
+                                <Text className="text-red-500 text-sm mt-1">{errors.description.message}</Text>}
+                        </View>
+
+                        {/* Discount Section */}
+                        <View className="bg-gray-50 p-4 rounded-[10px] mt-[15px]">
+                            <Text className="text-[16px] text-gray-700 font-semibold mb-3">Thông tin giảm giá*</Text>
+                            <Text className="text-[14px] text-gray-500 mb-3">Chọn một trong hai loại giảm giá:</Text>
+
+                            <View>
+                                <Text className="text-[16px] text-gray-500 font-semibold mt-[10px]">Giá giảm
+                                    (VND)</Text>
+                                <Controller
+                                    control={control}
+                                    rules={{
+                                        validate: (value) => {
+                                            if (value < 0) return "Giá giảm không được âm";
+                                            if (value > 0 && watchedDiscountPercent > 0) {
+                                                return "Chỉ được chọn một trong hai loại giảm giá";
+                                            }
+                                            return true;
+                                        }
+                                    }}
+                                    render={({field: {onChange, onBlur, value}}) => (
                                         <TextInput
-                                            placeholder="08-06-2004"
+                                            placeholder="Nhập giá giảm (VND)"
                                             className="p-[10px] border border-gray-300 rounded-[10px] text-[16px] bg-white mt-[10px]"
-                                            editable={false}
-                                            value={dueDate}
-                                            onPressIn={toggleDatePicker}
-                                        />
-                                    </Pressable>
-                                )}
-                            </View>
-                            <View>
-                                <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Mô tả</Text>
-                                <TextInput
-                                    placeholder="Nhập mô tả"
-                                    className="p-[10px] border border-gray-300 rounded-[10px] text-[16px] bg-white mt-[10px]"
-                                    value={description}
-                                    placeholderTextColor="#9ca3af"
-                                    onChangeText={setDescription}
-                                />
-                            </View>
-                            <View>
-                                <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Min Order Capacity*</Text>
-                                <TextInput
-                                    placeholder="Nhập Min Order Capacity"
-                                    className="p-[10px] border border-gray-300 rounded-[10px] text-[16px] bg-white mt-[10px]"
-                                    value={minODC}
-                                    placeholderTextColor="#9ca3af"
-                                    onChangeText={setMinODC}
-                                />
-                            </View>
-                            <View>
-                                <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Min Order Price*</Text>
-                                <TextInput
-                                    placeholder="Nhập Min Order Price"
-                                    className="p-[10px] border border-gray-300 rounded-[10px] text-[16px] bg-white mt-[10px]"
-                                    value={minODP}
-                                    placeholderTextColor="#9ca3af"
-                                    onChangeText={setMinODP}
-                                />
-                            </View>
-                            <View>
-                                <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Value Double*</Text>
-                                <TextInput
-                                    placeholder="Nhập Value Double"
-                                    className="p-[10px] border border-gray-300 rounded-[10px] text-[16px] bg-white mt-[10px]"
-                                    value={valueDB}
-                                    placeholderTextColor="#9ca3af"
-                                    onChangeText={setValueDB}
-                                />
-                            </View>
-                            <View>
-                                <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Value Integer*</Text>
-                                <TextInput
-                                    placeholder="Nhập Value Integer"
-                                    className="p-[10px] border border-gray-300 rounded-[10px] text-[16px] bg-white mt-[10px]"
-                                    value={valueI}
-                                    placeholderTextColor="#9ca3af"
-                                    onChangeText={setValueI}
-                                />
-                            </View>
-                            <View style={{ zIndex: 500 }}>
-                                <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]" >Áp dụng</Text>
-                                <CustomMultiSelectDropDown
-                                    items={listUser}
-                                    placeholder="Chọn người dùng"
-                                    onSelect={handleUserSelect}
-                                    defaultValues={[]}
-                                    zIndex={500}
-                                />
-                            </View>
-                            <View>
-                                <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Hình ảnh*</Text>
-                                <TouchableOpacity className="mt-3" onPress={onImagePick}>
-                                    {!image ? (
-                                        <Image
-                                            source={require('./../../../../assets/images/Profile/camera.png')}
-                                            className="w-[150px] h-[150px]"
-                                        />
-                                    ) : (
-                                        <Image
-                                            source={{ uri: image }}
-                                            className="w-[150px] h-[150px] rounded-2xl"
+                                            value={value > 0 ? formatCurrency(value.toString()) : ''}
+                                            onBlur={onBlur}
+                                            onChangeText={(text) => {
+                                                const numericValue = text.replace(/[^0-9]/g, '');
+                                                onChange(Number(numericValue) || 0);
+                                            }}
+                                            placeholderTextColor="#9ca3af"
+                                            keyboardType="numeric"
                                         />
                                     )}
-                                </TouchableOpacity>
+                                    name="discountPrice"
+                                />
+                                {errors.discountPrice &&
+                                    <Text className="text-red-500 text-sm mt-1">{errors.discountPrice.message}</Text>}
+                            </View>
+
+                            <View>
+                                <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Phần trăm giảm
+                                    (%)</Text>
+                                <Controller
+                                    control={control}
+                                    rules={{
+                                        validate: (value) => {
+                                            if (value < 0) return "Phần trăm giảm không được âm";
+                                            if (value > 100) return "Phần trăm giảm không được vượt quá 100%";
+                                            if (value > 0 && watchedDiscountPrice > 0) {
+                                                return "Chỉ được chọn một trong hai loại giảm giá";
+                                            }
+                                            return true;
+                                        }
+                                    }}
+                                    render={({field: {onChange, onBlur, value}}) => (
+                                        <TextInput
+                                            placeholder="Nhập phần trăm giảm (0-100)"
+                                            className="p-[10px] border border-gray-300 rounded-[10px] text-[16px] bg-white mt-[10px]"
+                                            value={value > 0 ? value.toString() : ''}
+                                            onBlur={onBlur}
+                                            onChangeText={(text) => {
+                                                const numericValue = Number(text) || 0;
+                                                if (numericValue <= 100) {
+                                                    onChange(numericValue);
+                                                }
+                                            }}
+                                            placeholderTextColor="#9ca3af"
+                                            keyboardType="numeric"
+                                        />
+                                    )}
+                                    name="discountPercent"
+                                />
+                                {errors.discountPercent &&
+                                    <Text className="text-red-500 text-sm mt-1">{errors.discountPercent.message}</Text>}
                             </View>
                         </View>
-                        <TouchableOpacity style={{ flexDirection: "row", marginTop: 20 }}>
-                            <Icon name="trash-can-outline" size={20} color="red" />
-                            <Text style={{ color: "red", marginLeft: 5, fontWeight: "bold" }}>
-                                Xóa voucher này
+
+                        {/* Free Ship Switch */}
+                        <View className="flex-row items-center justify-between mt-[15px] bg-gray-50 p-4 rounded-[10px]">
+                            <View className="flex-1">
+                                <Text className="text-[16px] text-gray-500 font-semibold">Miễn phí vận chuyển</Text>
+                                <Text className="text-[14px] text-gray-400 mt-1">Áp dụng miễn phí ship cho đơn
+                                    hàng</Text>
+                            </View>
+                            <Controller
+                                control={control}
+                                render={({field: {onChange, value}}) => (
+                                    <Switch
+                                        value={value}
+                                        onValueChange={onChange}
+                                    />
+                                )}
+                                name="isFreeShip"
+                            />
+                        </View>
+
+                        {/* Min Order Price */}
+                        <View>
+                            <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Giá đơn hàng tối
+                                thiểu*</Text>
+                            <Controller
+                                control={control}
+                                rules={{
+                                    required: "Giá đơn hàng tối thiểu là bắt buộc",
+                                    validate: (value) => {
+                                        if (value <= 0) return "Giá đơn hàng tối thiểu phải lớn hơn 0";
+                                        if (watchedDiscountPrice > 0 && value <= watchedDiscountPrice) {
+                                            return "Giá đơn hàng tối thiểu phải lớn hơn giá giảm";
+                                        }
+                                        return true;
+                                    }
+                                }}
+                                render={({field: {onChange, onBlur, value}}) => (
+                                    <TextInput
+                                        placeholder="Nhập giá đơn hàng tối thiểu"
+                                        className="p-[10px] border border-gray-300 rounded-[10px] text-[16px] bg-white mt-[10px]"
+                                        value={value > 0 ? formatCurrency(value.toString()) : ''}
+                                        onBlur={onBlur}
+                                        onChangeText={(text) => {
+                                            const numericValue = text.replace(/[^0-9]/g, '');
+                                            onChange(Number(numericValue) || 0);
+                                        }}
+                                        placeholderTextColor="#9ca3af"
+                                        keyboardType="numeric"
+                                    />
+                                )}
+                                name="minOrderPrice"
+                            />
+                            {errors.minOrderPrice &&
+                                <Text className="text-red-500 text-sm mt-1">{errors.minOrderPrice.message}</Text>}
+                        </View>
+
+                        {/* Min Order Item */}
+                        <View>
+                            <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Số lượng sản phẩm tối
+                                thiểu*</Text>
+                            <Controller
+                                control={control}
+                                rules={{
+                                    required: "Số lượng sản phẩm tối thiểu là bắt buộc",
+                                    validate: (value) => {
+                                        if (value <= 0) return "Số lượng sản phẩm tối thiểu phải lớn hơn 0";
+                                        return true;
+                                    }
+                                }}
+                                render={({field: {onChange, onBlur, value}}) => (
+                                    <TextInput
+                                        placeholder="Nhập số lượng sản phẩm tối thiểu"
+                                        className="p-[10px] border border-gray-300 rounded-[10px] text-[16px] bg-white mt-[10px]"
+                                        value={value > 0 ? value.toString() : ''}
+                                        onBlur={onBlur}
+                                        onChangeText={(text) => onChange(Number(text) || 0)}
+                                        placeholderTextColor="#9ca3af"
+                                        keyboardType="numeric"
+                                    />
+                                )}
+                                name="minOrderItem"
+                            />
+                            {errors.minOrderItem &&
+                                <Text className="text-red-500 text-sm mt-1">{errors.minOrderItem.message}</Text>}
+                        </View>
+
+                        {/* Ngày hết hạn */}
+                        <View>
+                            <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">Ngày hết hạn*</Text>
+                            <Controller
+                                control={control}
+                                rules={{
+                                    required: "Ngày hết hạn là bắt buộc",
+                                    validate: (value) => {
+                                        const today = new Date();
+                                        today.setHours(0, 0, 0, 0);
+                                        const expiryDate = new Date(value);
+                                        expiryDate.setHours(0, 0, 0, 0);
+
+                                        if (expiryDate <= today) {
+                                            return "Ngày hết hạn phải sau ngày hôm nay";
+                                        }
+                                        return true;
+                                    }
+                                }}
+                                render={({field: {value}}) => (
+                                    <TouchableOpacity
+                                        onPress={toggleDatePicker}
+                                        className="p-[10px] border border-gray-300 rounded-[10px] bg-white mt-[10px]"
+                                    >
+                                        <Text className={`text-[16px] ${value ? 'text-gray-800' : 'text-gray-400'}`}>
+                                            {value ? formatDate(value) : "Chọn ngày hết hạn"}
+                                        </Text>
+                                    </TouchableOpacity>
+                                )}
+                                name="expiryDate"
+                            />
+                            {errors.expiryDate &&
+                                <Text className="text-red-500 text-sm mt-1">{errors.expiryDate.message}</Text>}
+
+                            {showPicker && (
+                                <DateTimePicker
+                                    value={new Date(watch("expiryDate") || new Date())}
+                                    mode="date"
+                                    display="default"
+                                    onChange={onDateChange}
+                                    minimumDate={new Date(Date.now() + 24 * 60 * 60 * 1000)} // Tomorrow
+                                />
+                            )}
+                        </View>
+
+                        {/* Hình ảnh */}
+                        <View>
+                            <Text className="text-[16px] text-gray-500 font-semibold mt-[15px]">
+                                Hình ảnh voucher*
                             </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity className='bg-gray-200 py-4 px-5 rounded-[10px] items-center mt-[15px]'>
-                            <Text className='text-white text-[16px] font-bold'>Xong</Text>
+                            <Text className="text-[14px] text-gray-400 mt-1">
+                                Chọn hình ảnh đại diện cho voucher
+                            </Text>
+                            <View
+                                className={`${imageError ? 'border border-red-500 rounded-[10px] p-2 mt-[10px]' : ''}`}>
+                                <ImagePickerPreview
+                                    ref={imagePickerRef}
+                                    onImageSelected={handleImageSelected}
+                                    initialUri={imageUri}
+                                />
+                            </View>
+                            {imageError && (
+                                <Text className="text-red-500 text-[14px] mt-1">
+                                    {imageError}
+                                </Text>
+                            )}
+                        </View>
+
+                        {/* Error Message */}
+                        {voucherErrorMessage && (
+                            <View className="bg-red-50 border border-red-200 rounded-[10px] p-3 mt-[15px]">
+                                <Text className="text-red-600 text-[14px]">{voucherErrorMessage}</Text>
+                            </View>
+                        )}
+
+                        {/* Submit Button */}
+                        <TouchableOpacity
+                            onPress={handleSubmit(onSubmit)}
+                            disabled={voucherLoading}
+                            className={`${voucherLoading ? 'bg-gray-400' : 'bg-blue-500'} py-4 px-5 rounded-[10px] items-center mt-[15px]`}>
+                            <Text className='text-white text-[16px] font-bold'>
+                                {voucherLoading ? 'Đang sửa...' : 'Sửa Voucher'}
+                            </Text>
                         </TouchableOpacity>
                     </View>
                 </ScrollView>
             </KeyboardAvoidingView>
         </TouchableWithoutFeedback>
-    )
+    );
 }

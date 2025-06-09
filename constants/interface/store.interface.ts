@@ -7,6 +7,7 @@ export interface IStore {
     imageURL: string,
     longitude: number,
     latitude: number,
+    distance?: number,
 }
 
 export interface IStoreDropdown {
