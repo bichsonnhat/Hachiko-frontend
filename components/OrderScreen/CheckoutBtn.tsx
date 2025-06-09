@@ -262,6 +262,13 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
     await callCheckoutApi(async () => {
       const { data } = await apiService.post("/orders", order);
       if (data) {
+        // If a voucher was used, update its status to inactive
+        if (coupon && coupon.length > 0) {
+          // Update voucher status outside the checkout API call to avoid blocking checkout completion
+          updateVoucherStatus(coupon).catch(err => 
+            console.error("Failed to update voucher status:", err)
+          );
+        }
         Alert.alert("Thông báo", "Đặt hàng thành công!");
         handleClearStorage();
       }
@@ -269,12 +276,21 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
   };
 
   const updateVoucherStatus = async (voucherId: string) => {
-    await callVoucherApi(async () => {
-      const { data } = await apiService.put(`/user-vouchers/${voucherId}`, { status: "INACTIVE" });
-      if (data) {
-        console.log("Voucher status updated successfully");
+    try {
+      // First, find the user-voucher mapping ID for this voucher ID
+      const { data: userVouchers } = await apiService.get<UserVoucher[]>(`/user-vouchers/user/${userId}/available`);
+      const userVoucherMapping = userVouchers.find((uv: UserVoucher) => uv.voucherId === voucherId);
+      
+      if (userVoucherMapping) {
+        // Update the status of the specific user-voucher mapping
+        await apiService.put(`/user-vouchers/${userVoucherMapping.id}`, { status: "INACTIVE" });
+        console.log(`Voucher ${voucherId} marked as inactive`);
+      } else {
+        console.log(`Could not find user-voucher mapping for voucher ${voucherId}`);
       }
-    });
+    } catch (error) {
+      console.error("Error updating voucher status:", error);
+    }
   };
 
   const handleWithPayOS = async () => {
@@ -329,9 +345,6 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
     };
     if (checkoutCondition()) {
       checkout(sendData);
-      if (sendData.order.voucherId) {
-        updateVoucherStatus(sendData.order.voucherId);
-      }
       if (paymentMethod === "QR Code") {
         handleWithPayOS();
       }
