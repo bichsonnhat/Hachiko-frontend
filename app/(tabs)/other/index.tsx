@@ -19,7 +19,7 @@ export default function OtherScreen() {
 
   return (
     <View className="flex h-full">
-      <Header />
+      <Header userId={user?.id ?? ""} />
       <ScrollView className="flex-1 p-4 h-full">
         <Text className="text-lg font-semibold text-gray-700 mb-2">
           Tiện ích

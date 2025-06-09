@@ -268,6 +268,15 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
     });
   };
 
+  const updateVoucherStatus = async (voucherId: string) => {
+    await callVoucherApi(async () => {
+      const { data } = await apiService.put(`/user-vouchers/${voucherId}`, { status: "INACTIVE" });
+      if (data) {
+        console.log("Voucher status updated successfully");
+      }
+    });
+  };
+
   const handleWithPayOS = async () => {
     await callCheckoutApi(async () => {
       const newShippingFee = isFreeShip ? 0 : shippingFee;
@@ -323,6 +332,9 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
     };
     if (checkoutCondition()) {
       checkout(sendData);
+      if (sendData.order.voucherId) {
+        updateVoucherStatus(sendData.order.voucherId);
+      }
       if (paymentMethod === "QR Code") {
         handleWithPayOS();
       }

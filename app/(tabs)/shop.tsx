@@ -12,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import * as Location from "expo-location";
 import {useApi} from "@/hooks/useApi";
 import apiService from "@/constants/config/axiosConfig";
+import { useAuth } from "@clerk/clerk-expo";
 
 function calculateDistance(latitude1: number, longitude1: number, latitude2: number, longitude2: number) {
     const toRadian = (n: number) => (n * Math.PI) / 180
@@ -46,6 +47,7 @@ export default function ShopScreen() {
     const [stores, setStores] = useState<IStore[]>([]);
     const [loading, setLoading] = useState(false);
     const [sectionData, setSectionData] = useState<SectionItem[]>([]);
+    const { userId } = useAuth();
 
     const processStoresWithDistance = (storesData: IStore[], userLocation: Location.LocationObject | null) => {
         if (!userLocation) {
@@ -151,7 +153,7 @@ export default function ShopScreen() {
 
     return (
         <SafeAreaView className="flex-1 bg-white" edges={['bottom', 'left', 'right']}>
-            <ShopHeader />
+            <ShopHeader userId={userId} />
 
             <View className="flex-1 bg-white">
                 {loading ? (

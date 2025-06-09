@@ -2,16 +2,13 @@ import { View, Text, TextInput, TouchableOpacity, StatusBar, Platform } from 're
 import React, { useState } from 'react'
 import { ThemedView } from '../ThemedView'
 import { ThemedText } from '../ThemedText'
-import { Ticket, Bell, Search, Map } from 'lucide-react-native';
+import { Search, Map } from 'lucide-react-native';
 import { Colors } from '@/constants/Colors';
-import BadgeButton from "@/components/HomeScreen/BadgeButton";
-import NotificationButton from "@/components/HomeScreen/NotificationButton";
-import { router, useNavigation } from "expo-router";
 import { MapScreen } from "@/components/ShopScreen/MapScreen";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import HeaderActions from '../common/HeaderActions';
 
-export default function ShopHeader() {
+export default function ShopHeader({ userId }: { userId: string }) {
     const [isOpen, setIsOpen] = useState(false)
     const insets = useSafeAreaInsets();
 
@@ -25,7 +22,7 @@ export default function ShopHeader() {
             <View className={"px-5 py-3"}>
                 <ThemedView className={"flex flex-row items-center"}>
                     <ThemedText className={"font-bold text-xl"}>Cửa hàng</ThemedText>
-                    <HeaderActions />
+                    <HeaderActions userId={userId} />
                 </ThemedView>
                 <ThemedView className={`flex-row mt-2 items-center justify-between py-2`}>
                     <View className={`flex-row items-center bg-gray-200 rounded-lg px-3 py-2 flex-1`}>

@@ -41,7 +41,7 @@ export default function Header() {
             <View className={"flex flex-row items-center"}>
                 <Image source={require('@/assets/images/peach_tea.png')} />
                 <Text className={"font-semibold "}>{user?.firstName} ơi, Hi-Tea đi!</Text>
-                <HeaderActions />
+                <HeaderActions userId={userId} />
             </View>
         </View>
     )
