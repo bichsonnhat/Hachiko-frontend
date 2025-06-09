@@ -70,6 +70,7 @@ export default function ProductsScreen() {
                     console.warn("Lỗi parse updatedProduct", err);
                 }
             }
+            fetchProductData()
         }, [])
     );
 

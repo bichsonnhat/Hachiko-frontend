@@ -1052,7 +1052,16 @@ export const CheckoutBtn: FC<CheckoutBtnProps> = ({ getProductName, voucherId })
                             Phí vận chuyển
                           </Text>
                           <Text className="font-medium text-lg">
-                            {(isFreeShip ? 0 : shippingFee).toLocaleString()}đ
+                            {isFreeShip ? (
+                                <View className={"flex flex-row items-center gap-1"}>
+                                  <Text className="line-through text-gray-500 text-lg ">
+                                    {shippingFee.toLocaleString()}đ
+                                  </Text>
+                                  <Text className={"text-lg"}> 0đ</Text>
+                                </View>
+                            ) : (
+                                <Text>{shippingFee.toLocaleString()}đ</Text>
+                            )}
                           </Text>
                         </View>
 

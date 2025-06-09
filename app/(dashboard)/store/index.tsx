@@ -51,6 +51,7 @@ export default function StoresScreen() {
                     console.warn("Lỗi parse updatedStore", err);
                 }
             }
+            fetchStoreData()
         }, [])
     );
 
