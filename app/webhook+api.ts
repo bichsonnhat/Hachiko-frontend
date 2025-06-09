@@ -1,5 +1,6 @@
 import { ProductFromAPI, UserFromAPI } from '@/constants/app.interface';
 import apiService from '@/constants/config/axiosConfig';
+import { IUser } from '@/constants/interface/user.interface';
 import { Webhook } from 'svix';
 
 // Function to get the Clerk webhook secret from environment variables
@@ -68,9 +69,12 @@ export async function POST(request: Request) {
             lastName: eventData.last_name,
             isAdmin: false,
           };
-          const { data } = await apiService.post("/users", userData);
+          const response = await apiService.post<IUser>(
+            "/users",
+            userData
+          );
           
-          console.log('User successfully synchronized with backend:', data);
+          console.log('User successfully synchronized with backend:', response.data);
         } catch (error) {
           console.error('Error syncing user to backend:', error);
           // Note: We don't return an error response here to ensure Clerk marks the webhook as successful

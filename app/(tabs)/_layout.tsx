@@ -12,16 +12,55 @@ import Entypo from "@expo/vector-icons/Entypo";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useAuth } from "@clerk/clerk-expo";
+import { useUser } from "@clerk/clerk-expo";
 import apiService from "@/constants/config/axiosConfig";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-  const segment = useSegments();
-  const page = segment[segment.length - 1];
-  const { isSignedIn } = useAuth();
-  const { userId } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const segments = useSegments();
+  const page = segments[segments.length - 1];
+  const { isSignedIn, userId } = useAuth();
+  const { user } = useUser();
+  const [isRedirectUpdateInfo, setIsRedirectUpdateInfo] = useState(false);
+  const [hasCheckedPhone, setHasCheckedPhone] = useState(false);
+
+  // Check if we're already on the update-info page to prevent redirect loop
+
+  const isInOtherTab =
+    segments.length >= 2 &&
+    segments[0] === "(tabs)" &&
+    segments[1] === "other";
+
+  const isOnUpdateInformation =
+    segments.length === 1 && segments[0] === "update-information";
+
+  useEffect(() => {
+    if (isSignedIn && user && !hasCheckedPhone) {
+      const checkRedirect = async () => {
+        try {
+          const response = await apiService.get(`/users/${user.id}`);
+          const userData = response.data;
+
+          if (
+            (!userData.phoneNumber || userData.phoneNumber.trim() === "") &&
+            !isInOtherTab &&
+            !isOnUpdateInformation
+          ) {
+            setIsRedirectUpdateInfo(true);
+          }
+
+          setHasCheckedPhone(true);
+        } catch (error) {
+          console.error("Error checking redirect metadata:", error);
+          setHasCheckedPhone(true);
+        }
+      };
+
+      checkRedirect();
+    }
+  }, [isSignedIn, user, isInOtherTab, isOnUpdateInformation, hasCheckedPhone]);
 
   if (!isSignedIn) {
     return <Redirect href="/auth" />;
@@ -49,6 +88,12 @@ export default function TabLayout() {
   if (!isLoading && isAdmin) {
     return <Redirect href="/dashboard" />;
   }
+  // If we need to redirect and we're not already on the update-info page
+  if (isRedirectUpdateInfo) {
+    return <Redirect href="/update-information" />;
+  }
+
+  // return <Redirect href="/cloudinary-example" />
 
   const pageToHideTabBar = [
     "order-feedback",
