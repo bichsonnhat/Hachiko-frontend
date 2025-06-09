@@ -16,6 +16,10 @@ import { View, Text, ScrollView, TouchableOpacity } from "react-native";
 export default function OtherScreen() {
   const router = useRouter();
   const { signOut, user } = useClerk();
+  
+  function handleSignOut() {
+    signOut();
+  }
 
   return (
     <View className="flex h-full">
@@ -75,7 +79,7 @@ export default function OtherScreen() {
             </View>
             <ChevronRight size={15} color="black" />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => signOut()} className="p-4 flex-row items-center justify-between">
+          <TouchableOpacity onPress={handleSignOut} className="p-4 flex-row items-center justify-between">
             <View className="flex-row items-center gap-2">
               <LogOut size={20} color="black" />
               <Text className="ml-2 text-gray-700">Đăng xuất</Text>

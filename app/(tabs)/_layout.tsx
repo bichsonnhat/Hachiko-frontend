@@ -1,6 +1,6 @@
 import { Redirect, Tabs, useSegments } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Platform } from "react-native";
+import { Platform, View } from "react-native";
 
 import { HapticTab } from "@/components/HapticTab";
 import { IconSymbol } from "@/components/ui/IconSymbol";
@@ -15,6 +15,9 @@ import { useAuth } from "@clerk/clerk-expo";
 import { useUser } from "@clerk/clerk-expo";
 import apiService from "@/constants/config/axiosConfig";
 
+// Define valid redirect paths
+type RedirectPath = "/auth" | "/dashboard" | "/update-information" | null;
+
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const [isAdmin, setIsAdmin] = useState(false);
@@ -25,9 +28,9 @@ export default function TabLayout() {
   const { user } = useUser();
   const [isRedirectUpdateInfo, setIsRedirectUpdateInfo] = useState(false);
   const [hasCheckedPhone, setHasCheckedPhone] = useState(false);
+  const [redirectPath, setRedirectPath] = useState<RedirectPath>(null);
 
   // Check if we're already on the update-info page to prevent redirect loop
-
   const isInOtherTab =
     segments.length >= 2 &&
     segments[0] === "(tabs)" &&
@@ -36,6 +39,38 @@ export default function TabLayout() {
   const isOnUpdateInformation =
     segments.length === 1 && segments[0] === "update-information";
 
+  // Handle auth check
+  useEffect(() => {
+    if (!isSignedIn) {
+      setRedirectPath("/auth");
+    }
+  }, [isSignedIn]);
+
+  // Get user data
+  useEffect(() => {
+    if (!userId || !isSignedIn) return;
+    
+    const fetchUser = async () => {
+      try {
+        setIsLoading(true);
+        const response = await apiService.get(`/users/${userId}`);
+        const userData = response.data;
+        
+        if (userData.isAdmin === true) {
+          setIsAdmin(true);
+          setRedirectPath("/dashboard");
+        }
+      } catch (error) {
+        console.error("Error fetching user:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchUser();
+  }, [userId, isSignedIn]);
+
+  // Check phone number and redirect if needed
   useEffect(() => {
     if (isSignedIn && user && !hasCheckedPhone) {
       const checkRedirect = async () => {
@@ -49,6 +84,7 @@ export default function TabLayout() {
             !isOnUpdateInformation
           ) {
             setIsRedirectUpdateInfo(true);
+            setRedirectPath("/update-information");
           }
 
           setHasCheckedPhone(true);
@@ -62,38 +98,10 @@ export default function TabLayout() {
     }
   }, [isSignedIn, user, isInOtherTab, isOnUpdateInformation, hasCheckedPhone]);
 
-  if (!isSignedIn) {
-    return <Redirect href="/auth" />;
+  // Handle redirects
+  if (redirectPath) {
+    return <Redirect href={redirectPath} />;
   }
-
-  // Get user data
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        setIsLoading(true);
-        const response = await apiService.get(`/users/${userId}`);
-        const user = response.data;
-        console.log(user.isAdmin);
-        setIsAdmin(user.isAdmin === true);
-      } catch (error) {
-        console.error("Error fetching user:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchUser();
-  }, [userId]); 
-
-  // Redirect admin users to dashboard
-  if (!isLoading && isAdmin) {
-    return <Redirect href="/dashboard" />;
-  }
-  // If we need to redirect and we're not already on the update-info page
-  if (isRedirectUpdateInfo) {
-    return <Redirect href="/update-information" />;
-  }
-
-  // return <Redirect href="/cloudinary-example" />
 
   const pageToHideTabBar = [
     "order-feedback",

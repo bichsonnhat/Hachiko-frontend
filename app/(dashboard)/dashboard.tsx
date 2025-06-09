@@ -19,7 +19,7 @@ import {
   ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuth } from "@clerk/clerk-expo";
+import { useAuth, useClerk } from "@clerk/clerk-expo";
 import { twMerge } from "tailwind-merge";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
@@ -89,8 +89,13 @@ const spacing = 16;
 const cardWidth = (width - spacing * (numColumns + 1)) / numColumns;
 
 export default function Dashboard() {
-  const { signOut } = useAuth();
+  const { signOut } = useClerk();
   const { errorMessage, callApi: callStatisticApi } = useApi<void>();
+
+  function handleSignOut() {
+    signOut();
+    router.replace("/auth");
+  }
 
   const [grids, setGrids] = useState<GridProps[]>([
     {
@@ -204,7 +209,7 @@ export default function Dashboard() {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => signOut()}>
+          <TouchableOpacity onPress={handleSignOut}>
             <ThemedView
               className={`w-12 h-12 mt-3 bg-white rounded-full flex items-center justify-center shadow-md shadow-slate-600`}
             >
