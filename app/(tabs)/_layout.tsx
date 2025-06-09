@@ -1,5 +1,5 @@
 import { Redirect, Tabs, useSegments } from "expo-router";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Platform } from "react-native";
 
 import { HapticTab } from "@/components/HapticTab";
@@ -12,18 +12,43 @@ import Entypo from "@expo/vector-icons/Entypo";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useAuth } from "@clerk/clerk-expo";
+import apiService from "@/constants/config/axiosConfig";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const segment = useSegments();
   const page = segment[segment.length - 1];
   const { isSignedIn } = useAuth();
+  const { userId } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   if (!isSignedIn) {
     return <Redirect href="/auth" />;
   }
 
-  return <Redirect href="/(dashboard)/dashboard" />
+  // Get user data
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        setIsLoading(true);
+        const response = await apiService.get(`/users/${userId}`);
+        const user = response.data;
+        console.log(user.isAdmin);
+        setIsAdmin(user.isAdmin === true);
+      } catch (error) {
+        console.error("Error fetching user:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchUser();
+  }, [userId]); 
+
+  // Redirect admin users to dashboard
+  if (!isLoading && isAdmin) {
+    return <Redirect href="/dashboard" />;
+  }
 
   const pageToHideTabBar = [
     "order-feedback",
