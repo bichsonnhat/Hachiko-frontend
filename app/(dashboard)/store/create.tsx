@@ -20,6 +20,7 @@ export default function AddShop() {
     const [hasImage, setHasImage] = useState(false);
     const imagePickerRef = useRef<ImagePickerPreviewRef>(null);
     const [modalVisible, setModalVisible] = useState<boolean>(false);
+
     const router = useRouter();
     const {
         loading: shopLoading,
