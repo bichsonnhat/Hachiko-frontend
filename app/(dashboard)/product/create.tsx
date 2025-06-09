@@ -3,7 +3,7 @@ import {
     Platform, ScrollView, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard,
 } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigation } from 'expo-router';
+import {useNavigation, useRouter} from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import CustomDropDown from '@/components/OtherScreen/CustomDropDown';
@@ -21,9 +21,8 @@ export default function AddProduct() {
     const [hasImage, setHasImage] = useState(false);
     const imagePickerRef = useRef<ImagePickerPreviewRef>(null);
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-
     const [categoryList, setCategoryList] = useState<IDropdownItem[]>([]);
-
+    const router = useRouter();
     const {
         loading: categoryLoading,
         errorMessage: categoryErrorMessage,
@@ -95,6 +94,7 @@ export default function AddProduct() {
                 setSelectedCategory(null);
                 setHasImage(false);
                 imagePickerRef.current?.reset();
+                router.back();
             }
         } catch (err) {
             console.error('Lỗi khi thêm sản phẩm:', err);

@@ -4,7 +4,7 @@ import {
     Switch,
 } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigation } from 'expo-router';
+import {useNavigation, useRouter} from 'expo-router';
 import ImagePickerPreview, { ImagePickerPreviewRef } from '@/components/common/ImagePickerPreview';
 import { useApi } from '@/hooks/useApi';
 import apiService from '@/constants/config/axiosConfig';
@@ -15,6 +15,7 @@ export default function AddCategory() {
     const [hasTopping, setHasTopping] = useState(false);
     const [hasImage, setHasImage] = useState(false);
     const imagePickerRef = useRef<ImagePickerPreviewRef>(null);
+    const router = useRouter();
 
     const {
         loading: categoryLoading,
@@ -64,6 +65,7 @@ export default function AddCategory() {
                 setHasTopping(false);
                 setHasImage(false);
                 imagePickerRef.current?.reset();
+                router.back();
             }
         } catch (err) {
             console.error('Lỗi upload:', err);
