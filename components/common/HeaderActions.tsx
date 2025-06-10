@@ -11,7 +11,6 @@ import { useAuth } from '@clerk/clerk-expo';
 
 export default function HeaderActions({ userId }: { userId: string }) {
     const [unseenCount, setUnseenCount] = useState<number>(0);
-    const { userId } = useAuth();
 
     const [voucherCount, setVoucherCount] = useState<number>(0);
 
