@@ -5,7 +5,7 @@ import {Colors} from "@/constants/Colors";
 import {Ticket} from "lucide-react-native";
 import React, {useState, useEffect} from "react";
 import VoucherDetailModal from "@/components/VoucherScreen/VoucherDetailModal";
-import { useRouter} from "expo-router";
+import {router, useRouter} from "expo-router";
 import { useAuth } from "@clerk/clerk-expo";
 import apiService from "@/constants/config/axiosConfig";
 
@@ -171,7 +171,7 @@ export default function CouponScreen() {
             <View className={"px-4 bg-[#ff9123]"}>
                 <View className={"flex-row py-2 items-center"}>
                     <Text className={"flex-1 text-xl font-bold text-white"}>Ưu đãi</Text>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={() => router.push('/voucher/my-voucher')}>
                         <ThemedView
                             className={`flex-row h-12 items-center bg-white rounded-full px-4 py-2 shadow-md shadow-slate-600 `}>
                             <Ticket size={24} color={Colors.PRIMARY}/>

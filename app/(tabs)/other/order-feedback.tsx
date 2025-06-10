@@ -55,8 +55,20 @@ export default function OrderFeedback() {
         });
         const url = `/orders/customer/${user?.id}?${queryString}`;
         const { data } = await apiService.get(url);
+        console.log(data)
         if (data) {
-          const orders = data.map((order: IFullOrder) => {
+          const temp : {
+            label: string;
+            value: string;
+          }[] = data.map((item: IFullOrder) => {
+            const totalPrice =item.order.orderCost
+            return {
+              label: `Đơn ${item.order.id} - ${totalPrice.toLocaleString("vi-VN")}đ`,
+              value: item.order.id,
+            };
+          })
+
+          /*const orders = data.map((order: IFullOrder) => {
             const totalPrice = order.orderItems.reduce(
               (prev, current) => prev + current.price * current.quantity,
               0
@@ -67,8 +79,8 @@ export default function OrderFeedback() {
               )}đ`,
               value: order.order.id,
             };
-          });
-          setItems(orders);
+          });*/
+          setItems(temp);
         }
       });
     };

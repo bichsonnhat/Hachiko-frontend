@@ -48,11 +48,14 @@ export default function HeaderActions({ userId }: { userId: string }) {
 
     return (
         <View className="ml-auto flex flex-row">
-            <BadgeButton
-                className="mr-2"
-                icon={<Ticket size={24} color={Colors.PRIMARY} />}
-                text={voucherCount}
-            />
+            <TouchableOpacity onPress={() => router.push('/voucher/my-voucher')}>
+                <BadgeButton
+                    className="mr-2"
+                    icon={<Ticket size={24} color={Colors.PRIMARY} />}
+                    text={voucherCount}
+                />
+            </TouchableOpacity>
+
             <TouchableOpacity onPress={() => router.push('/user-notification')}>
                 <NotificationButton icon={<Bell size={24} color="black" />} count={unseenCount} />
             </TouchableOpacity>
