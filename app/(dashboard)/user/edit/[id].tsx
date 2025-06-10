@@ -401,7 +401,7 @@ export default function UpdateUser() {
                             </View>
 
                             {/* Delete Button */}
-                            <TouchableOpacity
+                           {/* <TouchableOpacity
                                 style={{flexDirection: "row", marginTop: 20}}
                                 onPress={handleDeletePress}
                             >
@@ -409,7 +409,7 @@ export default function UpdateUser() {
                                 <Text style={{color: "red", marginLeft: 5, fontWeight: "bold"}}>
                                     Xóa nguời dùng này
                                 </Text>
-                            </TouchableOpacity>
+                            </TouchableOpacity>*/}
                             {/* Submit Button */}
                             <TouchableOpacity
                                 className='bg-blue-500 py-4 px-5 rounded-[10px] items-center mt-[15px]'

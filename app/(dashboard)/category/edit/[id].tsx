@@ -188,12 +188,12 @@ export default function UpdateCategory() {
                                 onImageSelected={handleImageSelected}
                                 initialUri={imageUri}
                             />
-                            <TouchableOpacity style={{ flexDirection: "row", marginTop: 20 }}>
+                           {/* <TouchableOpacity style={{ flexDirection: "row", marginTop: 20 }}>
                                 <Icon name="trash-can-outline" size={20} color="red" />
                                 <Text style={{ color: "red", marginLeft: 5, fontWeight: "bold" }}>
                                     Xóa danh mục này
                                 </Text>
-                            </TouchableOpacity>
+                            </TouchableOpacity>*/}
                             <TouchableOpacity
                                 onPress={handleSubmit}
                                 disabled={isSubmitDisabled()}

@@ -160,8 +160,8 @@ const DashboardChart = () => {
           />
         </View>
 
-        <Text className="text-xl font-bold">5 sản phẩm bán chạy nhất:</Text>
-        <View className="bg-gray-200 rounded-lg mt-3">
+        <Text className="text-xl font-bold">Top sản phẩm bán chạy nhất:</Text>
+        <View className="border rounded-lg mt-3">
           <View className="flex-row items-center p-3 bg-gray-300 rounded-t-lg">
             <Text className="flex-1 text-center font-bold">Hình ảnh</Text>
             <Text className="flex-1 text-center font-bold">Tên</Text>
